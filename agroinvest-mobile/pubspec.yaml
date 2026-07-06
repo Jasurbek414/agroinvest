@@ -1,0 +1,72 @@
+name: agroinvest_mobile
+description: AgroInvest — Farmer and Investor Connection Platform
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.2
+
+  # HTTP Client
+  dio: ^5.7.0
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.2
+
+  # Image picker (for reports / KYC)
+  image_picker: ^1.1.2
+
+  # File picker
+  file_picker: ^8.1.2
+
+  # Geolocation
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+
+  # Network Image caching
+  cached_network_image: ^3.4.1
+
+  # Graphs & Charts
+  fl_chart: ^0.69.0
+
+  # Shimmer skeleton loading
+  shimmer: ^3.0.0
+
+  # Toast messages
+  fluttertoast: ^8.2.8
+
+  # Dotenv configuration
+  flutter_dotenv: ^5.2.1
+
+  # Date/number formatting
+  intl: ^0.19.0
+
+  # Internet connectivity
+  connectivity_plus: ^6.0.5
+
+  # Animations
+  lottie: ^3.1.2
+
+  # OTP pin field widget
+  pin_code_fields: ^8.0.1
+
+  # Cupertino icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env

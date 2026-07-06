@@ -1,0 +1,15 @@
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_phone ON users(phone_number);
+CREATE INDEX idx_users_kyc ON users(kyc_status);
+CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_farmer ON projects(farmer_id);
+CREATE INDEX idx_projects_asset ON projects(asset_type);
+CREATE INDEX idx_investments_inv ON investments(investor_id);
+CREATE INDEX idx_investments_proj ON investments(project_id);
+CREATE INDEX idx_investments_status ON investments(status);
+CREATE INDEX idx_transactions_user ON transactions(user_id);
+CREATE INDEX idx_transactions_type ON transactions(type);
+CREATE INDEX idx_transactions_date ON transactions(created_at DESC);
+CREATE INDEX idx_reports_project ON reports(project_id);
+CREATE INDEX idx_reports_type ON reports(report_type);
+CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
