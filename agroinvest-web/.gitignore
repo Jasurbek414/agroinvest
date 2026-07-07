@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Deployment-specific API URL (bakes a real domain into the Vite build)
+.env.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -26,16 +26,20 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     long countByKycStatusAndRole(KycStatus kycStatus, UserRole role);
 
     // Backs the admin KYC/Accounts tabs' role filter + name/phone search - both
-    // params are optional (null = "any").
+    // params are optional (null = "any"). Every bind parameter is explicitly cast to
+    // string, including the bare "IS NULL" checks - Postgres cannot infer a type for
+    // a parameter used only in `? IS NULL` (zero type context) and fails with "could
+    // not determine data type of parameter" (or "function lower(bytea) does not
+    // exist" for the ones inside lower(...)) on any request that omits that filter.
     @Query("select u from User u where "
-            + "(:role is null or u.role = :role) and "
-            + "(:q is null or lower(u.fullName) like lower(concat('%', :q, '%')) or u.phoneNumber like concat('%', :q, '%'))")
+            + "(cast(:role as string) is null or u.role = :role) and "
+            + "(cast(:q as string) is null or lower(u.fullName) like lower(concat('%', cast(:q as string), '%')) or u.phoneNumber like concat('%', cast(:q as string), '%'))")
     Page<User> search(@Param("role") UserRole role, @Param("q") String q, Pageable pageable);
 
     // Backs SuperAdminService#getAccounts - restricts the listing to staff roles
     // (admin/moderator/verifier/superadmin) so it's a genuinely separate view from
     // the investor/farmer end-user list, rather than reusing the same generic query.
     @Query("select u from User u where u.role in :roles and "
-            + "(:q is null or lower(u.fullName) like lower(concat('%', :q, '%')) or u.phoneNumber like concat('%', :q, '%'))")
+            + "(cast(:q as string) is null or lower(u.fullName) like lower(concat('%', cast(:q as string), '%')) or u.phoneNumber like concat('%', cast(:q as string), '%'))")
     Page<User> searchByRoles(@Param("roles") List<UserRole> roles, @Param("q") String q, Pageable pageable);
 }

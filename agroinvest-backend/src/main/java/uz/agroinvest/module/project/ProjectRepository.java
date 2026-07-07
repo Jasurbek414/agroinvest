@@ -43,12 +43,18 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     java.math.BigDecimal sumRaisedAmount();
 
     // Backs both the admin ProjectsTab search/filter and the mobile/web AssetType
-    // category filter - status/assetType/q are all optional (null = "any").
+    // category filter - status/assetType/q are all optional (null = "any"). Every
+    // bind parameter is explicitly cast to string, including the bare "IS NULL"
+    // checks - Postgres cannot infer a type for a parameter used only in `? IS NULL`
+    // (zero type context) and fails with "could not determine data type of parameter"
+    // (or, before the LIKE-clause casts, "function lower(bytea) does not exist") on
+    // any request that omits that filter - only ever caught by running against a
+    // real Postgres instance, never by a Mockito-backed unit test.
     @EntityGraph(attributePaths = {"farmer"})
     @Query("select p from Project p where "
-            + "(:status is null or p.status = :status) and "
-            + "(:assetType is null or p.assetType = :assetType) and "
-            + "(:q is null or lower(p.title) like lower(concat('%', :q, '%')) or lower(p.region) like lower(concat('%', :q, '%')))")
+            + "(cast(:status as string) is null or p.status = :status) and "
+            + "(cast(:assetType as string) is null or p.assetType = :assetType) and "
+            + "(cast(:q as string) is null or lower(p.title) like lower(concat('%', cast(:q as string), '%')) or lower(p.region) like lower(concat('%', cast(:q as string), '%')))")
     Page<Project> search(@Param("status") ProjectStatus status, @Param("assetType") AssetType assetType, @Param("q") String q, Pageable pageable);
 
     // Feeds AssetTypeBarChart on the admin dashboard - one row per asset type with its count.

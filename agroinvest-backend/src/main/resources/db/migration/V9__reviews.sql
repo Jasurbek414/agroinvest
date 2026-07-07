@@ -7,7 +7,7 @@ CREATE TABLE reviews (
     investment_id UUID NOT NULL UNIQUE REFERENCES investments(id),
     investor_id UUID NOT NULL REFERENCES users(id),
     farmer_id UUID NOT NULL REFERENCES users(id),
-    rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment TEXT,
     created_at TIMESTAMP DEFAULT now()
 );
