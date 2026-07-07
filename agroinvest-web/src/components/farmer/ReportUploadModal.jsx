@@ -3,9 +3,11 @@ import { submitReport } from '../../api/reports.api';
 import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
 
-// Report type values must match the backend ReportType enum (ROUTINE/EMERGENCY/FINAL
-// are the farmer-submittable ones; VERIFICATION/COMPLETION are set by staff).
+// Report type values must match the backend ReportType enum (DAILY/ROUTINE/
+// EMERGENCY/FINAL are the farmer-submittable ones; VERIFICATION/COMPLETION
+// are set by staff).
 const REPORT_TYPES = [
+  { value: 'DAILY', label: 'Kunlik (Daily)' },
   { value: 'ROUTINE', label: 'Muntazam (Routine)' },
   { value: 'EMERGENCY', label: 'Favqulodda (Emergency)' },
   { value: 'FINAL', label: 'Yakuniy (Final)' },
@@ -18,7 +20,12 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
   const [submitting, setSubmitting] = useState(false);
   const [gps, setGps] = useState(null);
   const [gpsError, setGpsError] = useState(null);
+  const [headcount, setHeadcount] = useState('');
+  const [deaths, setDeaths] = useState('0');
+  const [feedKg, setFeedKg] = useState('');
+  const [avgWeightKg, setAvgWeightKg] = useState('');
   const { showToast } = useToast();
+  const isDaily = reportType === 'DAILY';
 
   const captureGps = () => {
     if (!navigator.geolocation) {
@@ -33,7 +40,11 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!notes.trim()) {
+    if (isDaily && !headcount) {
+      showToast("Joriy bosh sonini kiriting", 'error');
+      return;
+    }
+    if (!isDaily && !notes.trim()) {
       showToast("Hisobot izohini yozish shart", 'error');
       return;
     }
@@ -43,10 +54,18 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
       await submitReport(projectId, {
         reportType,
         mediaUrls,
-        notes,
+        notes: notes || (isDaily ? 'Kunlik hisobot' : ''),
         geoLat: gps?.lat,
         geoLng: gps?.lng,
         geoAccuracy: gps?.accuracy,
+        metrics: isDaily
+          ? {
+              headcount: parseInt(headcount),
+              deaths: deaths ? parseInt(deaths) : 0,
+              feedKg: feedKg ? parseFloat(feedKg) : undefined,
+              avgWeightKg: avgWeightKg ? parseFloat(avgWeightKg) : undefined,
+            }
+          : undefined,
       });
       showToast('Hisobot muvaffaqiyatli yuklandi!');
       onSubmitted?.();
@@ -81,6 +100,51 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
             </select>
           </div>
 
+          {isDaily && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Joriy bosh soni</label>
+                <input
+                  type="number"
+                  value={headcount}
+                  onChange={(e) => setHeadcount(e.target.value)}
+                  placeholder="50"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">O'lim (bugun)</label>
+                <input
+                  type="number"
+                  value={deaths}
+                  onChange={(e) => setDeaths(e.target.value)}
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Yem (kg)</label>
+                <input
+                  type="number"
+                  value={feedKg}
+                  onChange={(e) => setFeedKg(e.target.value)}
+                  placeholder="120"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">O'rtacha vazn (kg)</label>
+                <input
+                  type="number"
+                  value={avgWeightKg}
+                  onChange={(e) => setAvgWeightKg(e.target.value)}
+                  placeholder="42.5"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Dalil rasmlari</label>
             <ImageUploadPicker category="report" urls={mediaUrls} onChange={setMediaUrls} />
@@ -98,14 +162,16 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Joriy izohlar (Notes)</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              Joriy izohlar (Notes){isDaily ? ' - ixtiyoriy' : ''}
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Loyiha joriy holati va parvarish jarayoni"
               rows="3"
               className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
-              required
+              required={!isDaily}
             />
           </div>
 

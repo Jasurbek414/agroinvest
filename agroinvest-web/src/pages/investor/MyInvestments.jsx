@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
 import { getMyInvestments, cancelInvestment } from '../../api/investments.api';
+import { getMyDashboard } from '../../api/dashboard.api';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import StatCard from '../../components/ui/StatCard';
 import { useToast } from '../../components/ui/ToastProvider';
 import { formatAmount, formatDate } from '../../utils/format';
 
@@ -12,11 +15,22 @@ const MyInvestments = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [portfolio, setPortfolio] = useState(null);
   const { showToast } = useToast();
 
   useEffect(() => {
     fetchInvestments();
+    fetchPortfolio();
   }, []);
+
+  const fetchPortfolio = async () => {
+    try {
+      const res = await getMyDashboard();
+      setPortfolio(res.data);
+    } catch (err) {
+      // Non-critical - the investment list below still works without this header.
+    }
+  };
 
   const fetchInvestments = async () => {
     setLoading(true);
@@ -57,6 +71,14 @@ const MyInvestments = () => {
           <h1 className="text-2xl font-bold text-gray-900">Sarmoyalarim</h1>
           <p className="text-sm text-gray-500 mt-1">Siz sarmoya kiritgan faol va yakunlangan qishloq xo'jaligi aktivlari</p>
         </div>
+
+        {portfolio && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard label="Portfel qiymati" value={formatAmount(portfolio.portfolioValue)} icon={Wallet} />
+            <StatCard label="Jami daromad" value={formatAmount(portfolio.totalEarned)} icon={PiggyBank} />
+            <StatCard label="Kutilayotgan qaytim" value={formatAmount(portfolio.expectedPayout)} icon={TrendingUp} />
+          </div>
+        )}
 
         {loading ? (
           <p className="text-gray-500 animate-pulse text-center">Yuklanmoqda...</p>

@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { getMyProjects } from '../../api/projects.api';
+import { getMyDashboard } from '../../api/dashboard.api';
 import ProjectListTab from '../../components/farmer/ProjectListTab';
 import CreateProjectForm from '../../components/farmer/CreateProjectForm';
 import ReportUploadModal from '../../components/farmer/ReportUploadModal';
+import ExpenseFormModal from '../../components/farmer/ExpenseFormModal';
+import VetUploadModal from '../../components/farmer/VetUploadModal';
+import FarmerStatsBar from '../../components/farmer/FarmerStatsBar';
 
 const FarmerDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create'
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [expenseTarget, setExpenseTarget] = useState(null); // { projectId, expensePolicy }
+  const [vetTargetProjectId, setVetTargetProjectId] = useState(null);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchFarmerProjects();
+    fetchStats();
   }, []);
 
   const fetchFarmerProjects = async () => {
@@ -24,6 +32,21 @@ const FarmerDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await getMyDashboard();
+      setStats(res.data);
+    } catch (err) {
+      // Non-critical - the project list below still works without the stats bar.
+      console.error(err);
+    }
+  };
+
+  const refreshAll = () => {
+    fetchFarmerProjects();
+    fetchStats();
   };
 
   return (
@@ -54,18 +77,22 @@ const FarmerDashboard = () => {
           </div>
         </div>
 
+        <FarmerStatsBar stats={stats} />
+
         {activeTab === 'list' ? (
           <ProjectListTab
             projects={projects}
             loading={loading}
             onCreateClick={() => setActiveTab('create')}
             onReportClick={setSelectedProjectId}
+            onExpenseClick={(projectId, expensePolicy) => setExpenseTarget({ projectId, expensePolicy })}
+            onVetClick={setVetTargetProjectId}
           />
         ) : (
           <CreateProjectForm
             onCreated={() => {
               setActiveTab('list');
-              fetchFarmerProjects();
+              refreshAll();
             }}
           />
         )}
@@ -75,7 +102,24 @@ const FarmerDashboard = () => {
         <ReportUploadModal
           projectId={selectedProjectId}
           onClose={() => setSelectedProjectId(null)}
-          onSubmitted={() => setSelectedProjectId(null)}
+          onSubmitted={() => { setSelectedProjectId(null); refreshAll(); }}
+        />
+      )}
+
+      {expenseTarget && (
+        <ExpenseFormModal
+          projectId={expenseTarget.projectId}
+          expensePolicy={expenseTarget.expensePolicy}
+          onClose={() => setExpenseTarget(null)}
+          onSubmitted={() => { setExpenseTarget(null); refreshAll(); }}
+        />
+      )}
+
+      {vetTargetProjectId && (
+        <VetUploadModal
+          projectId={vetTargetProjectId}
+          onClose={() => setVetTargetProjectId(null)}
+          onSubmitted={() => { setVetTargetProjectId(null); refreshAll(); }}
         />
       )}
     </div>

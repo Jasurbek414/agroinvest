@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { Plus, X, Loader2 } from 'lucide-react';
+import { Plus, X, Loader2, FileText } from 'lucide-react';
 import { uploadFile } from '../../api/uploads.api';
 
 // Reusable multi-image picker: uploads each selected file to real object storage and
 // reports the resulting public URLs back to the parent form. Replaces the previous
 // pattern of a free-text "media URL" field defaulting to a hardcoded mock photo.
-const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5 }) => {
+const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5, accept = 'image/jpeg,image/png,image/webp' }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
@@ -36,7 +36,19 @@ const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5 }) => {
       <div className="flex flex-wrap gap-3">
         {urls.map((url, i) => (
           <div key={url} className="relative w-20 h-20">
-            <img src={url} alt={`Yuklangan rasm ${i + 1}`} className="w-20 h-20 object-cover rounded-xl border border-gray-100" />
+            {url.toLowerCase().endsWith('.pdf') ? (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-xl border border-gray-100 bg-gray-50 text-gray-500"
+              >
+                <FileText size={20} />
+                <span className="text-[9px] font-bold">PDF</span>
+              </a>
+            ) : (
+              <img src={url} alt={`Yuklangan fayl ${i + 1}`} className="w-20 h-20 object-cover rounded-xl border border-gray-100" />
+            )}
             <button
               type="button"
               onClick={() => removeAt(i)}
@@ -58,7 +70,7 @@ const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5 }) => {
           </button>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFileChange} />
       {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
     </div>
   );

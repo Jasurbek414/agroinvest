@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale } from 'lucide-react';
+import { Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale, Receipt, HeartPulse } from 'lucide-react';
 import { getAdminDashboardStats, getAssetTypeBreakdown, getProjectStatusBreakdown } from '../../api/admin.api';
 import AdminStatsBar from '../../components/admin/AdminStatsBar';
 import WithdrawalsTab from '../../components/admin/tabs/WithdrawalsTab';
@@ -7,6 +7,8 @@ import KycTab from '../../components/admin/tabs/KycTab';
 import ProjectsTab from '../../components/admin/tabs/ProjectsTab';
 import ReportsTab from '../../components/admin/tabs/ReportsTab';
 import DisputesTab from '../../components/admin/tabs/DisputesTab';
+import ExpensesTab from '../../components/admin/tabs/ExpensesTab';
+import VetInspectionsTab from '../../components/admin/tabs/VetInspectionsTab';
 import Card from '../../components/ui/Card';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/ToastProvider';
@@ -18,6 +20,8 @@ const TABS = [
   { key: 'kyc', label: 'KYC Vetting', icon: ShieldCheck },
   { key: 'projects', label: 'Kutilayotgan loyihalar', icon: FolderKanban },
   { key: 'reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList },
+  { key: 'expenses', label: 'Harajatlar', icon: Receipt },
+  { key: 'vetInspections', label: 'Veterinar hujjatlari', icon: HeartPulse },
   { key: 'disputes', label: 'Shikoyatlar', icon: Scale },
 ];
 
@@ -102,6 +106,8 @@ const AdminDashboard = () => {
           {activeTab === 'kyc' && <KycTab onActionDone={refreshAll} />}
           {activeTab === 'projects' && <ProjectsTab onActionDone={refreshAll} />}
           {activeTab === 'reports' && <ReportsTab />}
+          {activeTab === 'expenses' && <ExpensesTab onActionDone={refreshAll} />}
+          {activeTab === 'vetInspections' && <VetInspectionsTab onActionDone={refreshAll} />}
           {activeTab === 'disputes' && <DisputesTab />}
         </div>
       </div>

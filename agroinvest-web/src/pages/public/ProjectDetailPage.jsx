@@ -5,8 +5,12 @@ import { useAuthStore } from '../../store/auth.store';
 import { useToast } from '../../components/ui/ToastProvider';
 import InvestmentModal from '../../components/projects/InvestmentModal';
 import ProjectReportsList from '../../components/projects/ProjectReportsList';
+import ProjectInvestorsList from '../../components/projects/ProjectInvestorsList';
+import ProjectExpensesList from '../../components/projects/ProjectExpensesList';
+import ProjectVetInspectionsList from '../../components/projects/ProjectVetInspectionsList';
 import Badge from '../../components/ui/Badge';
 import { formatAmount } from '../../utils/format';
+import { getAnimalTypeMeta } from '../../utils/animalType';
 
 const ProjectDetailPage = () => {
   const { id } = useParams();
@@ -77,6 +81,7 @@ const ProjectDetailPage = () => {
     title,
     description,
     assetType,
+    animalType,
     riskLevel,
     targetAmount,
     raisedAmount,
@@ -87,9 +92,15 @@ const ProjectDetailPage = () => {
     locationDetails,
     farmerName,
     mediaUrls,
+    investorSharePct,
+    farmerSharePct,
+    farmerContributionValue,
+    farmerContributionVerifiedAt,
+    totalInvestors,
   } = project;
 
   const percent = Math.min(100, Math.round((raisedAmount / targetAmount) * 100));
+  const animalMeta = animalType ? getAnimalTypeMeta(animalType) : null;
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
@@ -98,6 +109,9 @@ const ProjectDetailPage = () => {
         <div className="h-64 bg-gradient-to-r from-green-600 to-green-800 flex items-center justify-center p-8 text-center text-white">
           <div>
             <span className="text-xs uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">{assetType}</span>
+            {animalMeta && (
+              <span className="text-xs uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full ml-2">{animalMeta.label}</span>
+            )}
             <h1 className="text-2xl md:text-4xl font-extrabold mt-3">{title}</h1>
             <p className="mt-2 text-green-100 text-sm">Fermer: {farmerName} | Joylashuv: {region}</p>
           </div>
@@ -106,10 +120,38 @@ const ProjectDetailPage = () => {
         <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main info */}
           <div className="md:col-span-2 space-y-6">
+            {farmerContributionValue > 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-start gap-3">
+                <span className="text-lg">🐄</span>
+                <div>
+                  <p className="text-sm font-bold text-green-800">
+                    Fermer o'z hissasini qo'shdi: {formatAmount(farmerContributionValue)}
+                  </p>
+                  {farmerContributionVerifiedAt && (
+                    <p className="text-[11px] text-green-600 mt-0.5">Admin tomonidan tasdiqlangan ✓</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-3">Loyiha haqida</h2>
               <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{description}</p>
             </div>
+
+            {investorSharePct != null && (
+              <div className="pt-4 border-t border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">Sof foyda taqsimoti</h2>
+                <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-gray-100">
+                  <div className="bg-green-600 h-full" style={{ width: `${investorSharePct}%` }} />
+                  <div className="bg-amber-500 h-full" style={{ width: `${farmerSharePct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs font-semibold mt-2">
+                  <span className="text-green-700">Investorlar {investorSharePct}%</span>
+                  <span className="text-amber-600">Fermer {farmerSharePct}%</span>
+                </div>
+              </div>
+            )}
 
             {mediaUrls && mediaUrls.length > 0 && (
               <div>
@@ -136,6 +178,23 @@ const ProjectDetailPage = () => {
             <div className="pt-6 border-t border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Fermer hisobotlari</h2>
               <ProjectReportsList projectId={id} />
+            </div>
+
+            {totalInvestors > 0 && (
+              <div className="pt-6 border-t border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Sherik investorlar ({totalInvestors})</h2>
+                <ProjectInvestorsList projectId={id} />
+              </div>
+            )}
+
+            <div className="pt-6 border-t border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Harajatlar</h2>
+              <ProjectExpensesList projectId={id} />
+            </div>
+
+            <div className="pt-6 border-t border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Veterinar nazorati</h2>
+              <ProjectVetInspectionsList projectId={id} />
             </div>
           </div>
 

@@ -4,7 +4,7 @@ import Badge from '../ui/Badge';
 import EmptyState from '../ui/EmptyState';
 import { formatAmount } from '../../utils/format';
 
-const ProjectListTab = ({ projects, loading, onCreateClick, onReportClick }) => {
+const ProjectListTab = ({ projects, loading, onCreateClick, onReportClick, onExpenseClick, onVetClick }) => {
   if (loading) {
     return <p className="text-gray-500 animate-pulse text-center">Yuklanmoqda...</p>;
   }
@@ -56,13 +56,27 @@ const ProjectListTab = ({ projects, loading, onCreateClick, onReportClick }) => 
               </div>
             </div>
 
-            {p.status === 'ACTIVE' && (
-              <button
-                onClick={() => onReportClick(p.id)}
-                className="w-full py-2 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-yellow-800 text-xs font-bold rounded-xl transition"
-              >
-                Hisobot yuklash
-              </button>
+            {(p.status === 'ACTIVE' || p.status === 'FUNDING') && (
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => onReportClick(p.id)}
+                  className="py-2 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-yellow-800 text-[11px] font-bold rounded-xl transition"
+                >
+                  Hisobot
+                </button>
+                <button
+                  onClick={() => onExpenseClick(p.id, p.expensePolicy)}
+                  className="py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-[11px] font-bold rounded-xl transition"
+                >
+                  Harajat
+                </button>
+                <button
+                  onClick={() => onVetClick(p.id)}
+                  className="py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 text-[11px] font-bold rounded-xl transition"
+                >
+                  Vet hujjat
+                </button>
+              </div>
             )}
           </div>
         );

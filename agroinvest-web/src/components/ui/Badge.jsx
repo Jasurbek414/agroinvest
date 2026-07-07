@@ -30,6 +30,11 @@ const STATUS_TONE = {
   LOW: 'blue',
   MEDIUM: 'yellow',
   HIGH: 'red',
+  // Vet inspection health verdicts (VetHealthStatus)
+  HEALTHY: 'green',
+  TREATED: 'blue',
+  QUARANTINE: 'yellow',
+  SICK: 'red',
 };
 
 // Exported so charts (e.g. ProjectStatusPieChart) can label the same status
@@ -53,6 +58,10 @@ export const STATUS_LABEL_UZ = {
   LOW: 'Past',
   MEDIUM: "O'rtacha",
   HIGH: 'Yuqori',
+  HEALTHY: "Sog'lom",
+  TREATED: 'Davolangan',
+  QUARANTINE: 'Karantinda',
+  SICK: 'Kasal',
 };
 
 const Badge = ({ status, tone, children, className = '' }) => {

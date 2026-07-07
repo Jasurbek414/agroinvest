@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { createInvestment } from '../../api/investments.api';
 
 const InvestmentModal = ({ project, onClose, onSuccess }) => {
   const [amount, setAmount] = useState('');
   const [shareEstimate, setShareEstimate] = useState(0);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [error, setError] = useState(null);
+  const [kycRequired, setKycRequired] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -32,6 +35,12 @@ const InvestmentModal = ({ project, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setKycRequired(false);
+
+    if (!disclaimerAccepted) {
+      setError("Davom etish uchun daromad kafolatlanmaganligini tasdiqlang");
+      return;
+    }
 
     const numAmt = parseFloat(amount);
     if (isNaN(numAmt)) {
@@ -59,7 +68,11 @@ const InvestmentModal = ({ project, onClose, onSuccess }) => {
       await createInvestment(projectId, numAmt);
       onSuccess();
     } catch (err) {
-      setError(err.error?.message || 'Investitsiya kiritishda xatolik yuz berdi');
+      if (err.error?.code === 'KYC_REQUIRED') {
+        setKycRequired(true);
+      } else {
+        setError(err.error?.message || 'Investitsiya kiritishda xatolik yuz berdi');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,6 +109,13 @@ const InvestmentModal = ({ project, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {kycRequired && (
+            <div className="p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-amber-800 text-xs font-semibold">
+              Sarmoya kiritish uchun avval shaxsingizni tasdiqlang (KYC).{' '}
+              <Link to="/profile/kyc" className="underline font-bold">KYC ga o'tish</Link>
+            </div>
+          )}
+
           {error && (
             <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 text-xs font-semibold">
               {error}
@@ -123,6 +143,16 @@ const InvestmentModal = ({ project, onClose, onSuccess }) => {
             </div>
           )}
 
+          <label className="flex items-start gap-2.5 text-xs text-gray-600 leading-relaxed cursor-pointer">
+            <input
+              type="checkbox"
+              checked={disclaimerAccepted}
+              onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+              className="mt-0.5 rounded border-gray-300 accent-green-600"
+            />
+            Ko'rsatilgan daromad kutilayotgan (taxminiy) ko'rsatkich bo'lib, KAFOLATLANMAGANLIGINI tushunaman va qabul qilaman.
+          </label>
+
           <div className="flex gap-3">
             <button
               type="button"
@@ -133,8 +163,8 @@ const InvestmentModal = ({ project, onClose, onSuccess }) => {
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-xl transition"
+              disabled={loading || !disclaimerAccepted}
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold rounded-xl transition"
             >
               {loading ? 'Tasdiqlanmoqda...' : 'Sotib olish'}
             </button>

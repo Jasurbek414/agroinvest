@@ -33,3 +33,8 @@ export const changeProjectStatus = (id, status, rejectionReason) => {
 export const getMyProjects = (page = 0, size = 12) => {
   return api.get('/projects/my', { params: { page, size } });
 };
+
+// Masked co-investor transparency list (name + share %) for a project.
+export const getProjectInvestors = (id) => {
+  return api.get(`/projects/${id}/investors`);
+};
