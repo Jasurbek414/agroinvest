@@ -12,6 +12,7 @@ import uz.agroinvest.common.enums.WithdrawalStatus;
 import uz.agroinvest.common.exception.ApiException;
 import uz.agroinvest.common.exception.ErrorCode;
 import uz.agroinvest.common.util.EncryptionUtil;
+import uz.agroinvest.module.auth.OtpService;
 import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
@@ -36,6 +37,7 @@ public class WithdrawalService {
     private final TransactionRepository transactionRepository;
     private final EncryptionUtil encryptionUtil;
     private final AuditLogService auditLogService;
+    private final OtpService otpService;
 
     public WithdrawalService(
             WithdrawalRepository withdrawalRepository,
@@ -43,7 +45,8 @@ public class WithdrawalService {
             UserRepository userRepository,
             TransactionRepository transactionRepository,
             EncryptionUtil encryptionUtil,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            OtpService otpService
     ) {
         this.withdrawalRepository = withdrawalRepository;
         this.walletRepository = walletRepository;
@@ -51,7 +54,10 @@ public class WithdrawalService {
         this.transactionRepository = transactionRepository;
         this.encryptionUtil = encryptionUtil;
         this.auditLogService = auditLogService;
+        this.otpService = otpService;
     }
+
+    private static final String WITHDRAWAL_OTP_PURPOSE = "WITHDRAWAL";
 
     @Transactional
     public WithdrawalDto requestWithdrawal(CreateWithdrawalRequest request, UserPrincipal principal) {
@@ -63,6 +69,12 @@ public class WithdrawalService {
         if (user.getKycStatus() != KycStatus.VERIFIED) {
             throw new ApiException(ErrorCode.KYC_REQUIRED, HttpStatus.BAD_REQUEST, "Pul yechish uchun profilingiz tasdiqlangan bo'lishi shart");
         }
+
+        // TZ F-1.8: 2FA on financial operations. The client must have already called
+        // POST /api/v1/auth/send-otp and /verify-otp with purpose=WITHDRAWAL; this
+        // consumes that verified ticket, so a withdrawal cannot be requested without a
+        // fresh OTP round-trip immediately beforehand.
+        otpService.requireVerified(user.getPhoneNumber(), WITHDRAWAL_OTP_PURPOSE);
 
         Wallet wallet = walletRepository.findByUserIdForUpdate(principal.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Hamyon topilmadi"));

@@ -1,7 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/wallet_provider.dart';
 import 'payment_webview_page.dart';
 
@@ -673,29 +675,51 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
+  // TZ F-1.8: withdrawals require a fresh OTP round-trip (2FA) before the request
+  // is submitted, reusing the same /otp route + AuthProvider.sendOtpCode/verifyOtpCode
+  // flow already used at registration - only the purpose differs ("WITHDRAWAL").
   void _submitWithdrawal() async {
-    if (_withdrawFormKey.currentState!.validate()) {
-      Navigator.pop(context);
-      final amt = double.parse(_withdrawAmountController.text);
-      final bank = _bankController.text;
-      final card = _cardController.text;
+    if (!_withdrawFormKey.currentState!.validate()) return;
+    Navigator.pop(context);
 
-      final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-      final success = await walletProvider.requestWithdrawal(amount: amt, bankName: bank, cardNumber: card);
+    final amt = double.parse(_withdrawAmountController.text);
+    final bank = _bankController.text;
+    final card = _cardController.text;
 
-      if (!mounted) return;
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Yechib olish so'rovi qabul qilindi va ko'rib chiqilmoqda"), backgroundColor: AppColors.primary),
-        );
-        _withdrawAmountController.clear();
-        _bankController.clear();
-        _cardController.clear();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(walletProvider.error ?? 'Xatolik yuz berdi'), backgroundColor: AppColors.danger),
-        );
-      }
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final phoneNumber = authProvider.user?['phoneNumber']?.toString();
+    if (phoneNumber == null) return;
+
+    await authProvider.sendOtpCode(phoneNumber, 'WITHDRAWAL');
+    if (!mounted) return;
+    if (authProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.error!), backgroundColor: AppColors.danger),
+      );
+      return;
+    }
+
+    final verified = await context.push<bool>(
+      '/otp',
+      extra: {'phoneNumber': phoneNumber, 'purpose': 'WITHDRAWAL'},
+    );
+    if (!mounted || verified != true) return;
+
+    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    final success = await walletProvider.requestWithdrawal(amount: amt, bankName: bank, cardNumber: card);
+
+    if (!mounted) return;
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Yechib olish so'rovi qabul qilindi va ko'rib chiqilmoqda"), backgroundColor: AppColors.primary),
+      );
+      _withdrawAmountController.clear();
+      _bankController.clear();
+      _cardController.clear();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(walletProvider.error ?? 'Xatolik yuz berdi'), backgroundColor: AppColors.danger),
+      );
     }
   }
 }
