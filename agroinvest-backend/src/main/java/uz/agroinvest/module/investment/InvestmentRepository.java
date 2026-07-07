@@ -26,6 +26,12 @@ public interface InvestmentRepository extends JpaRepository<Investment, UUID> {
     List<Investment> findByProjectId(UUID projectId);
 
     List<Investment> findByProjectIdAndStatus(UUID projectId, InvestmentStatus status);
+
+    // Payout order must be DETERMINISTIC (createdAt, then id as tiebreaker):
+    // the last recipient absorbs the rounding remainder, so ordering decides
+    // who gets the extra tiyin - it must not vary between runs.
+    List<Investment> findByProjectIdAndStatusOrderByCreatedAtAscIdAsc(UUID projectId, InvestmentStatus status);
+
     Optional<Investment> findByIdempotencyKey(String idempotencyKey);
     boolean existsByProjectIdAndInvestorId(UUID projectId, UUID investorId);
 }

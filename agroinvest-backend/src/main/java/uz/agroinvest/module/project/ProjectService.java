@@ -5,7 +5,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.agroinvest.common.enums.AnimalType;
 import uz.agroinvest.common.enums.AssetType;
+import uz.agroinvest.common.enums.ExpensePolicy;
+import uz.agroinvest.common.enums.FundingMode;
 import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.common.enums.KycStatus;
 import uz.agroinvest.common.enums.PaymentProvider;
@@ -18,6 +21,7 @@ import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.dto.CreateProjectRequest;
 import uz.agroinvest.module.project.dto.ProjectDto;
+import uz.agroinvest.module.project.dto.ProjectInvestorDto;
 import uz.agroinvest.module.project.dto.UpdateProjectRequest;
 import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.superadmin.PlatformSettingsService;
@@ -75,9 +79,36 @@ public class ProjectService {
                 ? request.getMinInvestment()
                 : platformSettingsService.getMinInvestmentAmount();
 
+        // Negotiated profit split ("kelishuv asosida"): the farmer proposes the
+        // investor share within platform bounds; farmer share is always the
+        // complement so the V5 shares-sum CHECK (=100) can never be violated.
+        BigDecimal investorSharePct = request.getProposedInvestorSharePct() != null
+                ? request.getProposedInvestorSharePct()
+                : platformSettingsService.getInvestorSharePct();
+        validateInvestorShareBounds(investorSharePct);
+        BigDecimal farmerSharePct = BigDecimal.valueOf(100).subtract(investorSharePct);
+
+        validateLivestockFields(request.getAssetType(), request.getAnimalType(), request.getHeadcount());
+
+        FundingMode fundingMode = request.getFundingMode() != null ? request.getFundingMode() : FundingMode.INVESTOR_FUNDED;
+        BigDecimal contribution = request.getFarmerContributionValue() != null
+                ? request.getFarmerContributionValue() : BigDecimal.ZERO;
+        validateContribution(fundingMode, contribution);
+
+        int reportFrequencyDays = request.getReportFrequencyDays() != null
+                ? request.getReportFrequencyDays()
+                : platformSettingsService.getReportFrequencyDays();
+
         Project project = Project.builder()
                 .farmer(farmer)
                 .assetType(request.getAssetType())
+                .animalType(request.getAnimalType())
+                .headcount(request.getHeadcount())
+                .pricePerHead(request.getPricePerHead())
+                .fundingMode(fundingMode)
+                .farmerContributionValue(contribution)
+                .farmerContributionNotes(request.getFarmerContributionNotes())
+                .expensePolicy(request.getExpensePolicy() != null ? request.getExpensePolicy() : ExpensePolicy.INVESTOR_BUDGET)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .region(request.getRegion())
@@ -88,18 +119,56 @@ public class ProjectService {
                 .maxInvestment(request.getMaxInvestment())
                 .expectedReturnPct(request.getExpectedReturnPct())
                 .commissionPct(platformSettingsService.getCommissionPct())
-                .investorSharePct(platformSettingsService.getInvestorSharePct())
-                .farmerSharePct(platformSettingsService.getFarmerSharePct())
+                .investorSharePct(investorSharePct)
+                .farmerSharePct(farmerSharePct)
                 .durationDays(request.getDurationDays())
                 .riskLevel(request.getRiskLevel())
                 .status(ProjectStatus.PENDING)
                 .mediaUrls(request.getMediaUrls())
                 .totalInvestors(0)
-                .reportFrequencyDays(platformSettingsService.getReportFrequencyDays())
+                .reportFrequencyDays(reportFrequencyDays)
                 .build();
 
         Project savedProject = projectRepository.save(project);
         return mapToDto(savedProject);
+    }
+
+    private void validateInvestorShareBounds(BigDecimal investorSharePct) {
+        BigDecimal min = platformSettingsService.getMinInvestorSharePct();
+        BigDecimal max = platformSettingsService.getMaxInvestorSharePct();
+        if (investorSharePct.compareTo(min) < 0 || investorSharePct.compareTo(max) > 0) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Investor ulushi " + min.stripTrailingZeros().toPlainString() + "% dan "
+                            + max.stripTrailingZeros().toPlainString() + "% gacha bo'lishi kerak");
+        }
+    }
+
+    private void validateLivestockFields(AssetType assetType, AnimalType animalType, Integer headcount) {
+        boolean animalProject = assetType == AssetType.LIVESTOCK || assetType == AssetType.POULTRY;
+        if (animalProject && animalType == null) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Chorvachilik/parrandachilik loyihasi uchun hayvon turini tanlang");
+        }
+        if (animalProject && (headcount == null || headcount < 1)) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Hayvonlar sonini (bosh) kiriting");
+        }
+        if (!animalProject && animalType != null) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Hayvon turi faqat chorvachilik/parrandachilik loyihalarida ko'rsatiladi");
+        }
+    }
+
+    private void validateContribution(FundingMode fundingMode, BigDecimal contribution) {
+        boolean hasContribution = contribution.compareTo(BigDecimal.ZERO) > 0;
+        if (fundingMode == FundingMode.INVESTOR_FUNDED && hasContribution) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Investor mablag'iga asoslangan loyihada fermer hissasi 0 bo'lishi kerak");
+        }
+        if ((fundingMode == FundingMode.FARMER_ASSETS || fundingMode == FundingMode.MIXED) && !hasContribution) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "O'z hayvoni bilan kirishda fermer hissasi qiymatini kiriting");
+        }
     }
 
     @Transactional
@@ -117,6 +186,19 @@ public class ProjectService {
         }
 
         if (request.getAssetType() != null) project.setAssetType(request.getAssetType());
+        if (request.getAnimalType() != null) project.setAnimalType(request.getAnimalType());
+        if (request.getHeadcount() != null) project.setHeadcount(request.getHeadcount());
+        if (request.getPricePerHead() != null) project.setPricePerHead(request.getPricePerHead());
+        if (request.getFundingMode() != null) project.setFundingMode(request.getFundingMode());
+        if (request.getFarmerContributionValue() != null) project.setFarmerContributionValue(request.getFarmerContributionValue());
+        if (request.getFarmerContributionNotes() != null) project.setFarmerContributionNotes(request.getFarmerContributionNotes());
+        if (request.getExpensePolicy() != null) project.setExpensePolicy(request.getExpensePolicy());
+        if (request.getProposedInvestorSharePct() != null) {
+            validateInvestorShareBounds(request.getProposedInvestorSharePct());
+            project.setInvestorSharePct(request.getProposedInvestorSharePct());
+            project.setFarmerSharePct(BigDecimal.valueOf(100).subtract(request.getProposedInvestorSharePct()));
+        }
+        if (request.getReportFrequencyDays() != null) project.setReportFrequencyDays(request.getReportFrequencyDays());
         if (request.getTitle() != null) project.setTitle(request.getTitle());
         if (request.getDescription() != null) project.setDescription(request.getDescription());
         if (request.getRegion() != null) project.setRegion(request.getRegion());
@@ -128,6 +210,11 @@ public class ProjectService {
         if (request.getDurationDays() != null) project.setDurationDays(request.getDurationDays());
         if (request.getRiskLevel() != null) project.setRiskLevel(request.getRiskLevel());
         if (request.getMediaUrls() != null) project.setMediaUrls(request.getMediaUrls());
+
+        // Cross-field consistency must hold for the RESULTING state, whichever
+        // subset of fields this partial update touched.
+        validateLivestockFields(project.getAssetType(), project.getAnimalType(), project.getHeadcount());
+        validateContribution(project.getFundingMode(), project.getFarmerContributionValue());
 
         Project updatedProject = projectRepository.save(project);
         return mapToDto(updatedProject);
@@ -168,6 +255,12 @@ public class ProjectService {
             project.setStatus(ProjectStatus.APPROVED);
             project.setApprovedBy(admin);
             project.setApprovedAt(LocalDateTime.now());
+            // Approving a project with a declared farmer contribution attests the
+            // valuation (admin reviewed photos/documents during vetting).
+            if (project.getFarmerContributionValue() != null
+                    && project.getFarmerContributionValue().compareTo(BigDecimal.ZERO) > 0) {
+                project.setFarmerContributionVerifiedAt(LocalDateTime.now());
+            }
         } else if (status == ProjectStatus.CANCELLED) {
             if (project.getStatus() != ProjectStatus.PENDING && project.getStatus() != ProjectStatus.APPROVED && project.getStatus() != ProjectStatus.FUNDING) {
                 throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Ushbu holatdagi loyihani rad/bekor qilib bo'lmaydi");
@@ -246,9 +339,37 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProjectDto> getProjects(ProjectStatus status, AssetType assetType, String q, Pageable pageable) {
+    public Page<ProjectDto> getProjects(ProjectStatus status, AssetType assetType, AnimalType animalType, String q, Pageable pageable) {
         String normalizedQ = (q == null || q.isBlank()) ? null : q.trim();
-        return projectRepository.search(status, assetType, normalizedQ, pageable).map(this::mapToDto);
+        return projectRepository.search(status, assetType, animalType, normalizedQ, pageable).map(this::mapToDto);
+    }
+
+    /**
+     * Public-facing co-investor list for a project: masked names + share %, so
+     * investors can see WHO ELSE is in and at what proportion, without leaking
+     * personal data. Masking happens here in the service - never client-side.
+     */
+    @Transactional(readOnly = true)
+    public List<ProjectInvestorDto> getProjectInvestors(UUID projectId) {
+        projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+        return investmentRepository.findByProjectIdAndStatus(projectId, InvestmentStatus.CONFIRMED).stream()
+                .map(inv -> new ProjectInvestorDto(
+                        maskName(inv.getInvestor().getFullName()),
+                        inv.getAmount(),
+                        inv.getSharePct(),
+                        inv.getCreatedAt()))
+                .toList();
+    }
+
+    // "Jasurbek Muminov" -> "Jasurbek M." ; single-word names get first letter + "."
+    private String maskName(String fullName) {
+        if (fullName == null || fullName.isBlank()) return "Investor";
+        String[] parts = fullName.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].charAt(0) + ".";
+        }
+        return parts[0] + " " + parts[1].charAt(0) + ".";
     }
 
     @Transactional(readOnly = true)
@@ -257,36 +378,44 @@ public class ProjectService {
     }
 
     public ProjectDto mapToDto(Project project) {
-        return new ProjectDto(
-                project.getId(),
-                project.getFarmer().getId(),
-                project.getFarmer().getFullName(),
-                project.getFarmer().getRating(),
-                project.getFarmer().getTotalProjects(),
-                project.getFarmer().getKycStatus() == KycStatus.VERIFIED,
-                project.getAssetType(),
-                project.getTitle(),
-                project.getDescription(),
-                project.getRegion(),
-                project.getLocationDetails(),
-                project.getTargetAmount(),
-                project.getRaisedAmount(),
-                project.getMinInvestment(),
-                project.getMaxInvestment(),
-                project.getExpectedReturnPct(),
-                project.getCommissionPct(),
-                project.getInvestorSharePct(),
-                project.getFarmerSharePct(),
-                project.getDurationDays(),
-                project.getStartDate(),
-                project.getEndDate(),
-                project.getRiskLevel(),
-                project.getStatus(),
-                project.getRejectionReason(),
-                project.getMediaUrls(),
-                project.getTotalInvestors(),
-                project.getReportFrequencyDays(),
-                project.getCreatedAt()
-        );
+        return ProjectDto.builder()
+                .id(project.getId())
+                .farmerId(project.getFarmer().getId())
+                .farmerName(project.getFarmer().getFullName())
+                .farmerRating(project.getFarmer().getRating())
+                .farmerTotalProjects(project.getFarmer().getTotalProjects())
+                .farmerVerified(project.getFarmer().getKycStatus() == KycStatus.VERIFIED)
+                .assetType(project.getAssetType())
+                .animalType(project.getAnimalType())
+                .headcount(project.getHeadcount())
+                .pricePerHead(project.getPricePerHead())
+                .fundingMode(project.getFundingMode())
+                .farmerContributionValue(project.getFarmerContributionValue())
+                .farmerContributionNotes(project.getFarmerContributionNotes())
+                .farmerContributionVerifiedAt(project.getFarmerContributionVerifiedAt())
+                .expensePolicy(project.getExpensePolicy())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .region(project.getRegion())
+                .locationDetails(project.getLocationDetails())
+                .targetAmount(project.getTargetAmount())
+                .raisedAmount(project.getRaisedAmount())
+                .minInvestment(project.getMinInvestment())
+                .maxInvestment(project.getMaxInvestment())
+                .expectedReturnPct(project.getExpectedReturnPct())
+                .commissionPct(project.getCommissionPct())
+                .investorSharePct(project.getInvestorSharePct())
+                .farmerSharePct(project.getFarmerSharePct())
+                .durationDays(project.getDurationDays())
+                .startDate(project.getStartDate())
+                .endDate(project.getEndDate())
+                .riskLevel(project.getRiskLevel())
+                .status(project.getStatus())
+                .rejectionReason(project.getRejectionReason())
+                .mediaUrls(project.getMediaUrls())
+                .totalInvestors(project.getTotalInvestors())
+                .reportFrequencyDays(project.getReportFrequencyDays())
+                .createdAt(project.getCreatedAt())
+                .build();
     }
 }

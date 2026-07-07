@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import uz.agroinvest.common.enums.AnimalType;
 import uz.agroinvest.common.enums.AssetType;
+import uz.agroinvest.common.enums.ExpensePolicy;
+import uz.agroinvest.common.enums.FundingMode;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.enums.RiskLevel;
 import uz.agroinvest.common.util.JsonListConverter;
@@ -36,6 +39,44 @@ public class Project {
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_type", nullable = false)
     private AssetType assetType;
+
+    // Structured animal detail for LIVESTOCK/POULTRY projects (V10). Nullable for
+    // other asset types and for legacy rows.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "animal_type")
+    private AnimalType animalType;
+
+    @Column(name = "headcount")
+    private Integer headcount;
+
+    @Column(name = "price_per_head")
+    private BigDecimal pricePerHead;
+
+    // How the project's assets are financed: investor money, the farmer's own
+    // animals (valued below, verified at approval), or both.
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "funding_mode", nullable = false)
+    private FundingMode fundingMode = FundingMode.INVESTOR_FUNDED;
+
+    // UZS valuation of the farmer's own contributed animals/assets. Counts as
+    // capital in the payout waterfall (returned before profit split).
+    @Builder.Default
+    @Column(name = "farmer_contribution_value", nullable = false)
+    private BigDecimal farmerContributionValue = BigDecimal.ZERO;
+
+    @Column(name = "farmer_contribution_notes", columnDefinition = "TEXT")
+    private String farmerContributionNotes;
+
+    // Set by the admin at approval time - approving a project attests the
+    // declared contribution valuation.
+    @Column(name = "farmer_contribution_verified_at")
+    private LocalDateTime farmerContributionVerifiedAt;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "expense_policy", nullable = false)
+    private ExpensePolicy expensePolicy = ExpensePolicy.INVESTOR_BUDGET;
 
     @Column(name = "title", nullable = false)
     private String title;

@@ -77,16 +77,50 @@ public class AgreementService {
             document.add(new Paragraph("Investor ulushi (Loyiha umumiy daromadida): " + investment.getSharePct() + "%").setFontSize(10));
             document.add(new Paragraph("\n"));
 
-            document.add(new Paragraph("4. YAKUNIY QOIDALAR").setBold().setFontSize(12));
+            // Per-project negotiated terms ("kelishuv asosida"): the profit split,
+            // the farmer's own-asset contribution, and who bears running expenses -
+            // spelled out so the PDF matches what the investor accepted on-screen.
+            document.add(new Paragraph("4. KELISHILGAN SHARTLAR").setBold().setFontSize(12));
+            document.add(new Paragraph("Sof foyda taqsimoti: Investorlar jamoasi " + stripPct(investment.getProject().getInvestorSharePct())
+                    + "% / Fermer " + stripPct(investment.getProject().getFarmerSharePct()) + "%").setFontSize(10));
+            if (investment.getProject().getFarmerContributionValue() != null
+                    && investment.getProject().getFarmerContributionValue().signum() > 0) {
+                document.add(new Paragraph("Fermerning o'z hissasi (hayvon/aktiv qiymati): "
+                        + investment.getProject().getFarmerContributionValue() + " UZS"
+                        + (investment.getProject().getFarmerContributionVerifiedAt() != null ? " (admin tomonidan tasdiqlangan)" : "")).setFontSize(10));
+            }
+            if (investment.getProject().getExpensePolicy() != null) {
+                document.add(new Paragraph("Joriy harajatlar siyosati: " + expensePolicyLabel(investment.getProject().getExpensePolicy())).setFontSize(10));
+            }
+            document.add(new Paragraph("\n"));
+
+            document.add(new Paragraph("5. YAKUNIY QOIDALAR").setBold().setFontSize(12));
             document.add(new Paragraph(
                     "Mablag'lar loyiha to'liq moliyalashtirilgunga qadar platforma hamyonida muzlatiladi. Loyiha muvaffaqiyatsiz tugasa yoki muddatida " +
                     "yig'ilmasa, barcha mablag'lar investor balansiga komissiyasiz qaytariladi. Shartnoma elektron ko'rinishda tasdiqlangan va yuridik kuchga ega."
             ).setFontSize(10));
+            document.add(new Paragraph("\n"));
+            document.add(new Paragraph(
+                    "OGOHLANTIRISH: Ko'rsatilgan daromad kutilayotgan (taxminiy) ko'rsatkich bo'lib, KAFOLATLANMAGAN. " +
+                    "Qishloq xo'jaligi faoliyati tabiiy va bozor risklariga ega - sarmoyaning bir qismi yoki to'liq yo'qotilishi mumkin."
+            ).setBold().setFontSize(9));
 
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("PDF shartnomasini yaratishda xatolik yuz berdi", e);
         }
+    }
+
+    private static String stripPct(java.math.BigDecimal pct) {
+        return pct == null ? "-" : pct.stripTrailingZeros().toPlainString();
+    }
+
+    private static String expensePolicyLabel(uz.agroinvest.common.enums.ExpensePolicy policy) {
+        return switch (policy) {
+            case INVESTOR_BUDGET -> "Loyiha byudjetidan (investor mablag'i hisobidan, shaffof hisobda)";
+            case FARMER_REIMBURSED -> "Fermer to'laydi, sotuvdan keyin foyda taqsimotidan OLDIN qaytariladi";
+            case MIXED -> "Aralash - har bir harajat alohida belgilanadi";
+        };
     }
 }

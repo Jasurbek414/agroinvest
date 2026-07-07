@@ -9,6 +9,7 @@ import uz.agroinvest.common.enums.ReportType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -27,6 +28,7 @@ public class ReportDto {
     private BigDecimal geoLng;
     private Float geoAccuracy;
     private String notes;
+    private Map<String, Object> metrics;
     private boolean isVerified;
     private String adminComment;
     private LocalDateTime createdAt;

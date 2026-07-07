@@ -35,6 +35,16 @@ public class PlatformSettingsService {
         return getDecimal("min_investment_amount", BigDecimal.valueOf(100000));
     }
 
+    // Bounds within which a farmer may PROPOSE the per-project investor share
+    // ("kelishuv asosida" negotiated split); farmer share is always 100 - investor.
+    public BigDecimal getMinInvestorSharePct() {
+        return getDecimal("min_investor_share_pct", BigDecimal.valueOf(50));
+    }
+
+    public BigDecimal getMaxInvestorSharePct() {
+        return getDecimal("max_investor_share_pct", BigDecimal.valueOf(90));
+    }
+
     public long getMaxInvestmentCancelHours() {
         return getLong("max_investment_cancel_hours", 24);
     }

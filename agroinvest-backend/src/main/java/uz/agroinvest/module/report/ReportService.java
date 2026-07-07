@@ -22,7 +22,10 @@ import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.security.UserPrincipal;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -66,6 +69,8 @@ public class ReportService {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Loyihaga hozircha hisobot yuklab bo'lmaydi");
         }
 
+        Map<String, Object> metrics = sanitizeMetrics(request.getReportType(), request.getMetrics());
+
         Report report = Report.builder()
                 .project(project)
                 .submittedBy(submitter)
@@ -75,6 +80,7 @@ public class ReportService {
                 .geoLng(request.getGeoLng())
                 .geoAccuracy(request.getGeoAccuracy())
                 .notes(request.getNotes())
+                .metrics(metrics)
                 .isVerified(false)
                 .build();
 
@@ -87,6 +93,43 @@ public class ReportService {
         }
 
         return mapToDto(savedReport);
+    }
+
+    // Whitelisted DAILY-log metric keys and their expected shapes. A free-form
+    // JSONB column must not become a dumping ground for arbitrary client JSON.
+    private static final Set<String> NUMERIC_METRIC_KEYS = Set.of("headcount", "deaths", "feedKg", "avgWeightKg");
+    private static final String HEALTH_NOTE_KEY = "healthNote";
+
+    private Map<String, Object> sanitizeMetrics(ReportType reportType, Map<String, Object> raw) {
+        if (reportType != ReportType.DAILY) {
+            return null; // metrics only carried on daily logs
+        }
+        if (raw == null || raw.isEmpty()) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Kunlik hisobot uchun ko'rsatkichlarni kiriting (bosh soni, o'lim, yem...)");
+        }
+        Map<String, Object> clean = new LinkedHashMap<>();
+        for (String key : NUMERIC_METRIC_KEYS) {
+            Object value = raw.get(key);
+            if (value == null) continue;
+            if (!(value instanceof Number number) || number.doubleValue() < 0) {
+                throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                        "Ko'rsatkich noto'g'ri: " + key + " manfiy bo'lmagan son bo'lishi kerak");
+            }
+            clean.put(key, number);
+        }
+        Object healthNote = raw.get(HEALTH_NOTE_KEY);
+        if (healthNote instanceof String note && !note.isBlank()) {
+            if (note.length() > 500) {
+                throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Salomatlik izohi juda uzun");
+            }
+            clean.put(HEALTH_NOTE_KEY, note);
+        }
+        if (!clean.containsKey("headcount")) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Kunlik hisobotda joriy bosh soni (headcount) majburiy");
+        }
+        return clean;
     }
 
     private void notifyStaffOfEmergencyReport(Project project, User submitter) {
@@ -141,6 +184,7 @@ public class ReportService {
                 report.getGeoLng(),
                 report.getGeoAccuracy(),
                 report.getNotes(),
+                report.getMetrics(),
                 report.isVerified(),
                 report.getAdminComment(),
                 report.getCreatedAt()

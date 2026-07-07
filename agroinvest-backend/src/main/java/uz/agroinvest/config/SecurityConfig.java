@@ -54,10 +54,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/payments/checkout-url").authenticated()
                         // Public Endpoints
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/farmer/**").permitAll()
+                        // VERIFIED vet inspections are a public trust signal on projects;
+                        // the service layer filters out PENDING/REJECTED for anonymous users.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vet-inspections/project/**").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/projects",
                                 "/api/v1/projects/{id}",
+                                "/api/v1/settings/public",
                                 "/api/v1/payments/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

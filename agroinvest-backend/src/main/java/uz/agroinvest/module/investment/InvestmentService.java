@@ -65,6 +65,16 @@ public class InvestmentService {
             }
         }
 
+        // KYC gate (legal requirement, TZ section 8): money may only be committed
+        // by an identity-verified investor - mirrors the farmer-side check in
+        // ProjectService.createProject that was already enforced.
+        User investorUser = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Foydalanuvchi topilmadi"));
+        if (investorUser.getKycStatus() != KycStatus.VERIFIED) {
+            throw new ApiException(ErrorCode.KYC_REQUIRED, HttpStatus.BAD_REQUEST,
+                    "Sarmoya kiritish uchun avval shaxsingizni tasdiqlang (KYC)");
+        }
+
         // Lock the project row: two simultaneous investments into the same project
         // must not both read the same "remaining to fund" snapshot and overshoot the target.
         Project project = projectRepository.findByIdForUpdate(request.getProjectId())
@@ -115,8 +125,7 @@ public class InvestmentService {
                 .divide(project.getTargetAmount(), 10, RoundingMode.HALF_UP)
                 .multiply(project.getInvestorSharePct());
 
-        User investor = userRepository.findById(principal.getId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+        User investor = investorUser; // fetched above for the KYC gate
 
         // Create Investment
         Investment investment = Investment.builder()

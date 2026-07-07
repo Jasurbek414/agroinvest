@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import uz.agroinvest.common.enums.AnimalType;
 import uz.agroinvest.common.enums.AssetType;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.module.project.entity.Project;
@@ -54,8 +55,10 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     @Query("select p from Project p where "
             + "(cast(:status as string) is null or p.status = :status) and "
             + "(cast(:assetType as string) is null or p.assetType = :assetType) and "
+            + "(cast(:animalType as string) is null or p.animalType = :animalType) and "
             + "(cast(:q as string) is null or lower(p.title) like lower(concat('%', cast(:q as string), '%')) or lower(p.region) like lower(concat('%', cast(:q as string), '%')))")
-    Page<Project> search(@Param("status") ProjectStatus status, @Param("assetType") AssetType assetType, @Param("q") String q, Pageable pageable);
+    Page<Project> search(@Param("status") ProjectStatus status, @Param("assetType") AssetType assetType,
+                         @Param("animalType") AnimalType animalType, @Param("q") String q, Pageable pageable);
 
     // Feeds AssetTypeBarChart on the admin dashboard - one row per asset type with its count.
     @Query("select p.assetType as assetType, count(p) as count from Project p group by p.assetType")

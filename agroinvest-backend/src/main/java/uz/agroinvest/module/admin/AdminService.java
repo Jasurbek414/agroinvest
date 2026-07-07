@@ -2,11 +2,15 @@ package uz.agroinvest.module.admin;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.agroinvest.common.enums.ExpenseStatus;
 import uz.agroinvest.common.enums.KycStatus;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.enums.UserRole;
+import uz.agroinvest.common.enums.VetInspectionStatus;
+import uz.agroinvest.module.expense.ExpenseRepository;
 import uz.agroinvest.module.project.ProjectRepository;
 import uz.agroinvest.module.user.UserRepository;
+import uz.agroinvest.module.vet.VetInspectionRepository;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -18,10 +22,19 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final ExpenseRepository expenseRepository;
+    private final VetInspectionRepository vetInspectionRepository;
 
-    public AdminService(UserRepository userRepository, ProjectRepository projectRepository) {
+    public AdminService(
+            UserRepository userRepository,
+            ProjectRepository projectRepository,
+            ExpenseRepository expenseRepository,
+            VetInspectionRepository vetInspectionRepository
+    ) {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
+        this.expenseRepository = expenseRepository;
+        this.vetInspectionRepository = vetInspectionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -42,6 +55,9 @@ public class AdminService {
         stats.put("pendingVetting", pendingVetting);
         stats.put("pendingProjects", pendingProjects);
         stats.put("totalRaised", totalRaised);
+        // Review queues for the new expense / vet-inspection tabs
+        stats.put("pendingExpenses", expenseRepository.countByStatus(ExpenseStatus.PENDING));
+        stats.put("pendingVetInspections", vetInspectionRepository.countByStatus(VetInspectionStatus.PENDING));
 
         return stats;
     }

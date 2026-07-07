@@ -7,6 +7,7 @@ import uz.agroinvest.common.enums.ReportType;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -24,4 +25,8 @@ public class CreateReportRequest {
     private Float geoAccuracy;
 
     private String notes;
+
+    // DAILY log metrics: headcount, deaths, feedKg, avgWeightKg (numbers) +
+    // healthNote (string). Whitelisted/validated in ReportService.
+    private Map<String, Object> metrics;
 }

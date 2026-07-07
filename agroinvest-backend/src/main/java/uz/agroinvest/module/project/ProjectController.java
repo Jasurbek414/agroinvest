@@ -8,16 +8,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import uz.agroinvest.common.enums.AnimalType;
 import uz.agroinvest.common.enums.AssetType;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.response.ApiResponse;
 import uz.agroinvest.common.response.PageResponse;
 import uz.agroinvest.module.project.dto.CreateProjectRequest;
 import uz.agroinvest.module.project.dto.ProjectDto;
+import uz.agroinvest.module.project.dto.ProjectInvestorDto;
 import uz.agroinvest.module.project.dto.UpdateProjectRequest;
 import uz.agroinvest.security.UserPrincipal;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -36,10 +39,11 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<PageResponse<ProjectDto>>> getProjects(
             @RequestParam(required = false) ProjectStatus status,
             @RequestParam(required = false) AssetType assetType,
+            @RequestParam(required = false) AnimalType animalType,
             @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        Page<ProjectDto> page = projectService.getProjects(status, assetType, q, pageable);
+        Page<ProjectDto> page = projectService.getProjects(status, assetType, animalType, q, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
@@ -47,6 +51,13 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<ProjectDto>> getProjectById(@PathVariable UUID id) {
         ProjectDto dto = projectService.getProjectById(id);
         return ResponseEntity.ok(ApiResponse.success(dto));
+    }
+
+    // Co-investor transparency: masked names + share % (mask applied server-side)
+    @GetMapping("/{id}/investors")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<ProjectInvestorDto>>> getProjectInvestors(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.getProjectInvestors(id)));
     }
 
     @PostMapping

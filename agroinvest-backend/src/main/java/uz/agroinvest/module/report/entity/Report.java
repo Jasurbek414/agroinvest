@@ -5,12 +5,14 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import uz.agroinvest.common.enums.ReportType;
 import uz.agroinvest.common.util.JsonListConverter;
+import uz.agroinvest.common.util.JsonMapConverter;
 import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.user.entity.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -53,6 +55,12 @@ public class Report {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    // Structured metrics for DAILY livestock logs (V13): headcount, deaths,
+    // feedKg, avgWeightKg... Nullable for other report types.
+    @Convert(converter = JsonMapConverter.class)
+    @Column(name = "metrics", columnDefinition = "jsonb")
+    private Map<String, Object> metrics;
 
     @Column(name = "is_verified")
     private boolean isVerified = false;

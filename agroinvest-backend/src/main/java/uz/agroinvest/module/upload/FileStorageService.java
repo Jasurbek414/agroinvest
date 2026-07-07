@@ -28,13 +28,16 @@ public class FileStorageService {
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
     private static final long MAX_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    // PDF added for vet-inspection conclusions and expense receipts, which are
+    // routinely issued as documents rather than photos.
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "application/pdf");
     private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.of(
             "image/jpeg", ".jpg",
             "image/png", ".png",
-            "image/webp", ".webp"
+            "image/webp", ".webp",
+            "application/pdf", ".pdf"
     );
-    private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general");
+    private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general", "vet", "expense");
 
     private final S3Client s3Client;
     private final String bucket;
@@ -59,7 +62,7 @@ public class FileStorageService {
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat JPEG, PNG yoki WEBP rasm fayllari qabul qilinadi");
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat JPEG, PNG, WEBP rasm yoki PDF fayllari qabul qilinadi");
         }
 
         String safeCategory = ALLOWED_CATEGORIES.contains(category == null ? "" : category.toLowerCase())
