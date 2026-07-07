@@ -1,10 +1,13 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/wallet_provider.dart';
+import '../widgets/wallet_card.dart';
+import '../widgets/wallet_stats_card.dart';
+import '../widgets/transaction_chart.dart';
+import '../widgets/transaction_item_tile.dart';
 import 'payment_webview_page.dart';
 
 class WalletPage extends StatefulWidget {
@@ -22,6 +25,7 @@ class _WalletPageState extends State<WalletPage> {
 
   final _withdrawFormKey = GlobalKey<FormState>();
   final _depositFormKey = GlobalKey<FormState>();
+  bool _isSendingOtp = false;
 
   @override
   void initState() {
@@ -95,7 +99,7 @@ class _WalletPageState extends State<WalletPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildDigitalCard(formatAmount(balanceVal)),
+                        WalletCard(balanceText: formatAmount(balanceVal)),
                         const SizedBox(height: 24),
 
                         Row(
@@ -135,17 +139,17 @@ class _WalletPageState extends State<WalletPage> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildSecondaryBalanceCard('Muzlatilgan sarmoya', formatAmount(frozenVal), AppColors.accent),
+                              child: WalletStatsCard(title: 'Muzlatilgan sarmoya', value: formatAmount(frozenVal), color: AppColors.accent),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _buildSecondaryBalanceCard('Yechib olingan', formatAmount(withdrawnVal), AppColors.textMuted),
+                              child: WalletStatsCard(title: 'Yechib olingan', value: formatAmount(withdrawnVal), color: AppColors.textMuted),
                             ),
                           ],
                         ),
                         const SizedBox(height: 28),
                         if (transactions.isNotEmpty) ...[
-                          _buildTransactionTrendChart(transactions, formatAmount),
+                          TransactionChart(transactions: transactions, formatAmount: formatAmount),
                           const SizedBox(height: 28),
                         ],
 
@@ -185,46 +189,9 @@ class _WalletPageState extends State<WalletPage> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: transactions.length,
                             itemBuilder: (context, index) {
-                              final t = transactions[index];
-                              final amt = double.tryParse(t['amount'].toString()) ?? 0.0;
-                              final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT';
-
-                              return Card(
-                                color: Colors.white,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(color: AppColors.border, width: 1.5),
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                  leading: CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: isCredit ? AppColors.primaryLight : AppColors.danger.withOpacity(0.08),
-                                    child: Icon(
-                                      isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                      color: isCredit ? AppColors.primary : AppColors.danger,
-                                      size: 16,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    _getTransactionLabel(t['type']?.toString()),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textDark),
-                                  ),
-                                  subtitle: Text(
-                                    t['paymentProvider']?.toString() ?? 'SYSTEM',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
-                                  ),
-                                  trailing: Text(
-                                    '${isCredit ? "+" : "-"} ${formatAmount(amt)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                      color: isCredit ? AppColors.primary : AppColors.danger,
-                                    ),
-                                  ),
-                                ),
+                              return TransactionItemTile(
+                                transaction: transactions[index],
+                                formatAmount: formatAmount,
                               );
                             },
                           ),
@@ -235,170 +202,7 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // Bar chart of the most recent transactions (credit=green, debit=red) -
-  // previously the wallet page had zero visualization of cash flow, just a
-  // flat list.
-  Widget _buildTransactionTrendChart(List<dynamic> transactions, String Function(double) formatAmount) {
-    final recent = transactions.take(8).toList().reversed.toList();
-    final maxAmount = recent
-        .map((t) => (double.tryParse(t['amount'].toString()) ?? 0.0).abs())
-        .fold<double>(0, (a, b) => a > b ? a : b);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 18, 16, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 6, bottom: 12),
-            child: Text("So'nggi harakatlar", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          ),
-          SizedBox(
-            height: 120,
-            child: BarChart(
-              BarChartData(
-                maxY: maxAmount == 0 ? 1 : maxAmount * 1.2,
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                titlesData: const FlTitlesData(
-                  show: false,
-                ),
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final t = recent[group.x.toInt()];
-                      final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT';
-                      final amt = double.tryParse(t['amount'].toString()) ?? 0.0;
-                      return BarTooltipItem(
-                        '${isCredit ? "+" : "-"}${formatAmount(amt)}',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                      );
-                    },
-                  ),
-                ),
-                barGroups: List.generate(recent.length, (i) {
-                  final t = recent[i];
-                  final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT';
-                  final amt = (double.tryParse(t['amount'].toString()) ?? 0.0).abs();
-                  return BarChartGroupData(
-                    x: i,
-                    barRods: [
-                      BarChartRodData(
-                        toY: amt,
-                        color: isCredit ? AppColors.primary : AppColors.danger,
-                        width: 16,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getTransactionLabel(String? raw) {
-    if (raw == null) return 'Tranzaksiya';
-    switch (raw.toUpperCase()) {
-      case 'DEPOSIT': return "Hisobni to'ldirish";
-      case 'WITHDRAWAL': return "Mablag' yechish";
-      case 'PAYOUT': return "Daromad to'lovi";
-      case 'COMMISSION': return 'Tizim komissiyasi';
-      case 'REFUND': return 'Bekor qilingan sarmoya';
-      case 'FARMER_PAYOUT': return 'Fermerga to\'lov';
-      default: return raw;
-    }
-  }
-
-  Widget _buildDigitalCard(String balanceText) {
-    return Container(
-      height: 190,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryDark.withOpacity(0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'AgroInvest Card',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-              ),
-              Icon(Icons.nfc_rounded, color: Colors.white.withOpacity(0.8), size: 24),
-            ],
-          ),
-          const Spacer(),
-          const Text(
-            'Erkin hisob balansi',
-            style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            balanceText,
-            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-          ),
-          const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '••••  ••••  ••••  8080',
-                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.5),
-              ),
-              const Icon(Icons.spa_rounded, color: Colors.white30, size: 24),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSecondaryBalanceCard(String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showDepositSheet() {
     showModalBottomSheet(
@@ -679,7 +483,12 @@ class _WalletPageState extends State<WalletPage> {
   // is submitted, reusing the same /otp route + AuthProvider.sendOtpCode/verifyOtpCode
   // flow already used at registration - only the purpose differs ("WITHDRAWAL").
   void _submitWithdrawal() async {
+    if (_isSendingOtp) return;
     if (!_withdrawFormKey.currentState!.validate()) return;
+    
+    setState(() {
+      _isSendingOtp = true;
+    });
     Navigator.pop(context);
 
     final amt = double.parse(_withdrawAmountController.text);
@@ -688,22 +497,50 @@ class _WalletPageState extends State<WalletPage> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final phoneNumber = authProvider.user?['phoneNumber']?.toString();
-    if (phoneNumber == null) return;
+    if (phoneNumber == null) {
+      if (mounted) {
+        setState(() {
+          _isSendingOtp = false;
+        });
+      }
+      return;
+    }
 
     await authProvider.sendOtpCode(phoneNumber, 'WITHDRAWAL');
     if (!mounted) return;
-    if (authProvider.error != null) {
+
+    // OTP_SEND_TOO_SOON = a still-valid code is already in the user's inbox
+    // (e.g. a withdrawal attempt moments ago) - proceed to the entry screen
+    // with an info note instead of dead-ending on a snackbar.
+    final tooSoon = authProvider.errorCode == 'OTP_SEND_TOO_SOON';
+    String? infoMessage;
+    if (tooSoon) {
+      infoMessage = authProvider.error;
+      authProvider.clearError();
+    } else if (authProvider.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.error!), backgroundColor: AppColors.danger),
       );
+      setState(() {
+        _isSendingOtp = false;
+      });
       return;
     }
 
     final verified = await context.push<bool>(
       '/otp',
-      extra: {'phoneNumber': phoneNumber, 'purpose': 'WITHDRAWAL'},
+      extra: {
+        'phoneNumber': phoneNumber,
+        'purpose': 'WITHDRAWAL',
+        if (infoMessage != null) 'info': infoMessage,
+      },
     );
-    if (!mounted || verified != true) return;
+    if (!mounted || verified != true) {
+      setState(() {
+        _isSendingOtp = false;
+      });
+      return;
+    }
 
     final walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final success = await walletProvider.requestWithdrawal(amount: amt, bankName: bank, cardNumber: card);
@@ -721,5 +558,9 @@ class _WalletPageState extends State<WalletPage> {
         SnackBar(content: Text(walletProvider.error ?? 'Xatolik yuz berdi'), backgroundColor: AppColors.danger),
       );
     }
+
+    setState(() {
+      _isSendingOtp = false;
+    });
   }
 }

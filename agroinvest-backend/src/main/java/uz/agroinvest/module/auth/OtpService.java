@@ -51,7 +51,13 @@ public class OtpService {
     public String generateAndSaveOtp(String phoneNumber, String purpose) {
         String cooldownKey = getCooldownKey(phoneNumber, purpose);
         if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
-            throw new ApiException(ErrorCode.OTP_SEND_TOO_SOON, HttpStatus.TOO_MANY_REQUESTS);
+            // Tell the client exactly how long to wait - the mobile app shows this as a
+            // countdown and (since a valid code is already live) still lets the user
+            // proceed to the code-entry screen instead of dead-ending them here.
+            Long ttl = redisTemplate.getExpire(cooldownKey, TimeUnit.SECONDS);
+            long waitSeconds = (ttl != null && ttl > 0) ? ttl : resendCooldownSeconds;
+            throw new ApiException(ErrorCode.OTP_SEND_TOO_SOON, HttpStatus.TOO_MANY_REQUESTS,
+                    "Kod allaqachon yuborilgan. Qayta yuborish uchun " + waitSeconds + " soniya kuting");
         }
 
         // Blunts SMS-bombing: caps how many codes can be requested for one phone/purpose per hour.
@@ -76,9 +82,11 @@ public class OtpService {
         // only initialized if absent - resending a code must NOT give an attacker a fresh
         // set of guesses against whatever code is currently live.
         redisTemplate.opsForValue().setIfAbsent(attemptsKey, 0, otpExpiryMinutes, TimeUnit.MINUTES);
-        redisTemplate.opsForValue().set(cooldownKey, "1", resendCooldownSeconds, TimeUnit.SECONDS);
 
         smsService.sendSms(phoneNumber, "AgroInvest tasdiqlash kodi: " + code + ". Kodni hech kimga bermang.");
+        // Cooldown starts only once the send has been handed off - a synchronous failure
+        // above must not leave the user blocked from retrying with no SMS in hand.
+        redisTemplate.opsForValue().set(cooldownKey, "1", resendCooldownSeconds, TimeUnit.SECONDS);
         logger.info("OTP generated for {} ({})", phoneNumber, purpose);
 
         return code;

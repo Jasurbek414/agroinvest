@@ -82,8 +82,13 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         GoRoute(
           path: '/otp',
           builder: (context, state) {
-            final extra = state.extra as Map<String, String>? ?? const {};
-            return OtpPage(phoneNumber: extra['phoneNumber'] ?? '', purpose: extra['purpose'] ?? '');
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return OtpPage(
+              phoneNumber: extra['phoneNumber']?.toString() ?? '',
+              purpose: extra['purpose']?.toString() ?? '',
+              infoMessage: extra['info']?.toString(),
+              initialCooldownSeconds: extra['cooldownSeconds'] is int ? extra['cooldownSeconds'] as int : null,
+            );
           },
         ),
         GoRoute(path: '/session-expired', builder: (context, state) => const SessionExpiredPage()),

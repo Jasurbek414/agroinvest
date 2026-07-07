@@ -21,6 +21,17 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPhoneVerified = false;
   String _selectedRole = 'INVESTOR';
   bool _obscurePassword = true;
+  bool _isSendingOtp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A stale error from some other flow (login, wallet OTP, expired session)
+    // must not greet the user on a fresh registration attempt.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +116,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
+                    key: const ValueKey('phone_field'),
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
@@ -141,7 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 28),
 
                   ElevatedButton(
-                    onPressed: authProvider.loading ? null : _sendOtp,
+                    onPressed: (authProvider.loading || _isSendingOtp) ? null : _sendOtp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -170,6 +182,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
+                    key: const ValueKey('name_field'),
                     controller: _nameController,
                     style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
                     decoration: InputDecoration(
@@ -210,6 +223,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
+                    key: const ValueKey('email_field'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
@@ -237,6 +251,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
+                    key: const ValueKey('password_field'),
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
@@ -412,28 +427,64 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _sendOtp() async {
+    if (_isSendingOtp) return;
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSendingOtp = true;
+      });
+
       final provider = Provider.of<AuthProvider>(context, listen: false);
       await provider.sendOtpCode(_phoneController.text, 'REGISTER');
 
-      if (provider.error == null && mounted) {
+      if (!mounted) return;
+
+      // OTP_SEND_TOO_SOON means a still-valid code was already sent moments ago
+      // (previous attempt, app restart...). Blocking here would dead-end the user
+      // even though the code is sitting in their SMS inbox - so proceed to the
+      // entry screen and surface the cooldown as an info note instead.
+      final tooSoon = provider.errorCode == 'OTP_SEND_TOO_SOON';
+      if (provider.error == null || tooSoon) {
+        final infoMessage = tooSoon ? provider.error : null;
+        final cooldownSeconds = tooSoon ? _parseWaitSeconds(provider.error) : null;
+        if (tooSoon) provider.clearError();
+
         final verified = await context.push<bool>(
           '/otp',
-          extra: {'phoneNumber': _phoneController.text, 'purpose': 'REGISTER'},
+          extra: {
+            'phoneNumber': _phoneController.text,
+            'purpose': 'REGISTER',
+            if (infoMessage != null) 'info': infoMessage,
+            if (cooldownSeconds != null) 'cooldownSeconds': cooldownSeconds,
+          },
         );
 
-        if (verified == true) {
+        if (verified == true && mounted) {
           setState(() {
             _isPhoneVerified = true;
           });
         }
       }
+
+      if (mounted) {
+        setState(() {
+          _isSendingOtp = false;
+        });
+      }
     }
+  }
+
+  /// Extracts the remaining seconds from the backend's "... N soniya kuting"
+  /// cooldown message, so the OTP page's resend countdown matches the server.
+  int? _parseWaitSeconds(String? message) {
+    if (message == null) return null;
+    final match = RegExp(r'(\d+)\s*soniya').firstMatch(message);
+    return match == null ? null : int.tryParse(match.group(1)!);
   }
 
   void _submitRegister() async {
     if (_formKey.currentState!.validate()) {
-      final success = await Provider.of<AuthProvider>(context, listen: false).registerUser(
+      final provider = Provider.of<AuthProvider>(context, listen: false);
+      final success = await provider.registerUser(
         fullName: _nameController.text,
         phoneNumber: _phoneController.text,
         email: _emailController.text.isEmpty ? null : _emailController.text,
@@ -441,8 +492,17 @@ class _RegisterPageState extends State<RegisterPage> {
         role: _selectedRole,
       );
 
-      if (success && mounted) {
+      if (!mounted) return;
+
+      if (success) {
         context.go('/projects');
+      } else if (provider.errorCode == 'PHONE_NOT_VERIFIED') {
+        // The 10-minute verification ticket expired (or was consumed) - the only
+        // recovery is a fresh OTP round-trip, so bounce back to step 1 instead of
+        // leaving the user stuck on a form that can never succeed.
+        setState(() {
+          _isPhoneVerified = false;
+        });
       }
     }
   }

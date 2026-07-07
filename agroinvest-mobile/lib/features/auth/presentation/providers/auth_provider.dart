@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/network/api_error.dart';
 import '../../data/auth_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -10,6 +11,11 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? _user;
   bool _loading = false;
   String? _error;
+
+  /// Machine-readable code of the last error (backend `error.code`), letting
+  /// pages branch on WHAT failed - e.g. OTP_SEND_TOO_SOON means "a valid code
+  /// is already live, go to the entry screen anyway".
+  String? _errorCode;
 
   /// Wired up once from app.dart to reset every other feature provider (wallet,
   /// projects, investments, disputes, notifications) whenever a session ends -
@@ -20,6 +26,12 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   bool get loading => _loading;
   String? get error => _error;
+  String? get errorCode => _errorCode;
+
+  void _setError(Object e) {
+    _error = e.toString();
+    _errorCode = e is ApiRequestException ? e.code : null;
+  }
 
   AuthProvider() {
     _loadUserFromStorage();
@@ -46,11 +58,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> sendOtpCode(String phoneNumber, String purpose) async {
     _loading = true;
     _error = null;
+    _errorCode = null;
     notifyListeners();
     try {
       await _repository.sendOtp(phoneNumber, purpose);
     } catch (e) {
-      _error = e.toString();
+      _setError(e);
     } finally {
       _loading = false;
       notifyListeners();
@@ -58,18 +71,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> verifyOtpCode(String phoneNumber, String purpose, String code) async {
-    _loading = true;
     _error = null;
-    notifyListeners();
+    _errorCode = null;
     try {
       await _repository.verifyOtp(phoneNumber, purpose, code);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _setError(e);
       return false;
-    } finally {
-      _loading = false;
-      notifyListeners();
     }
   }
 
@@ -82,6 +91,7 @@ class AuthProvider extends ChangeNotifier {
   }) async {
     _loading = true;
     _error = null;
+    _errorCode = null;
     notifyListeners();
     try {
       final data = await _repository.register(
@@ -94,7 +104,7 @@ class AuthProvider extends ChangeNotifier {
       await _saveSession(data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _setError(e);
       return false;
     } finally {
       _loading = false;
@@ -105,13 +115,14 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> loginUser(String phoneNumber, String password) async {
     _loading = true;
     _error = null;
+    _errorCode = null;
     notifyListeners();
     try {
       final data = await _repository.login(phoneNumber, password);
       await _saveSession(data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _setError(e);
       return false;
     } finally {
       _loading = false;
@@ -138,6 +149,7 @@ class AuthProvider extends ChangeNotifier {
     await SecureStorage.saveRefreshToken(refreshToken);
     await SecureStorage.saveUserData(jsonEncode(_user));
     _error = null; // clear any previous session-expired errors
+    _errorCode = null;
   }
 
   /// Clears a lingering "session expired" error once the user has acted on it
@@ -145,12 +157,14 @@ class AuthProvider extends ChangeNotifier {
   /// would keep treating the app as still in the expired-session state.
   void clearError() {
     _error = null;
+    _errorCode = null;
     notifyListeners();
   }
 
   Future<void> logout() async {
     _user = null;
     _error = null;
+    _errorCode = null;
     await SecureStorage.clearAll();
     notifyListeners();
     onSessionEnded?.call();

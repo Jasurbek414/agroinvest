@@ -12,7 +12,7 @@ class AuthRepository {
         'purpose': purpose,
       });
     } on DioException catch (e) {
-      throw parseDioError(e);
+      throw parseDioException(e);
     }
   }
 
@@ -24,7 +24,7 @@ class AuthRepository {
         'code': code,
       });
     } on DioException catch (e) {
-      throw parseDioError(e);
+      throw parseDioException(e);
     }
   }
 
@@ -45,7 +45,7 @@ class AuthRepository {
       });
       return response.data['data'];
     } on DioException catch (e) {
-      throw parseDioError(e);
+      throw parseDioException(e);
     }
   }
 
@@ -57,7 +57,7 @@ class AuthRepository {
       });
       return response.data['data'];
     } on DioException catch (e) {
-      throw parseDioError(e);
+      throw parseDioException(e);
     }
   }
 }

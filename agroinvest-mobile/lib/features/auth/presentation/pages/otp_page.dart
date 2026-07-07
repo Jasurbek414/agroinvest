@@ -10,10 +10,21 @@ class OtpPage extends StatefulWidget {
   final String phoneNumber;
   final String purpose;
 
+  /// Optional informational note shown above the pin fields (e.g. "a code was
+  /// already sent, wait N seconds to resend") - distinct from error state.
+  final String? infoMessage;
+
+  /// Initial resend-cooldown seconds. Defaults to the standard 60s, but the
+  /// register flow passes the server's actual remaining cooldown when the user
+  /// re-enters this screen mid-cooldown.
+  final int? initialCooldownSeconds;
+
   const OtpPage({
     super.key,
     required this.phoneNumber,
     required this.purpose,
+    this.infoMessage,
+    this.initialCooldownSeconds,
   });
 
   @override
@@ -26,11 +37,18 @@ class _OtpPageState extends State<OtpPage> {
   final _otpController = TextEditingController();
   Timer? _resendTimer;
   int _secondsLeft = _resendCooldownSeconds;
+  bool _isVerifying = false;
+  String? _infoMessage;
 
   @override
   void initState() {
     super.initState();
-    _startResendCooldown();
+    _infoMessage = widget.infoMessage;
+    _startResendCooldown(widget.initialCooldownSeconds ?? _resendCooldownSeconds);
+    // Don't inherit a stale error from whatever flow ran before this screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
+    });
   }
 
   @override
@@ -42,9 +60,10 @@ class _OtpPageState extends State<OtpPage> {
 
   // Without this, a user whose SMS never arrives has no way back to a resend
   // button short of leaving the page entirely and restarting registration.
-  void _startResendCooldown() {
-    setState(() => _secondsLeft = _resendCooldownSeconds);
+  void _startResendCooldown(int seconds) {
+    setState(() => _secondsLeft = seconds);
     _resendTimer?.cancel();
+    if (seconds <= 0) return;
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       if (_secondsLeft <= 1) {
@@ -59,9 +78,25 @@ class _OtpPageState extends State<OtpPage> {
   void _resend() async {
     final provider = Provider.of<AuthProvider>(context, listen: false);
     await provider.sendOtpCode(widget.phoneNumber, widget.purpose);
-    if (mounted && provider.error == null) {
-      _startResendCooldown();
+    if (!mounted) return;
+
+    if (provider.error == null) {
+      setState(() => _infoMessage = null);
+      _startResendCooldown(_resendCooldownSeconds);
+    } else if (provider.errorCode == 'OTP_SEND_TOO_SOON') {
+      // Local timer drifted from the server's cooldown - resync the countdown
+      // to what the backend reported instead of showing a scary error.
+      final remaining = _parseWaitSeconds(provider.error) ?? _resendCooldownSeconds;
+      setState(() => _infoMessage = provider.error);
+      provider.clearError();
+      _startResendCooldown(remaining);
     }
+  }
+
+  int? _parseWaitSeconds(String? message) {
+    if (message == null) return null;
+    final match = RegExp(r'(\d+)\s*soniya').firstMatch(message);
+    return match == null ? null : int.tryParse(match.group(1)!);
   }
 
   @override
@@ -83,7 +118,7 @@ class _OtpPageState extends State<OtpPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Kodni kiriting',
                 style: TextStyle(
                   fontSize: 24,
@@ -97,6 +132,31 @@ class _OtpPageState extends State<OtpPage> {
                 style: const TextStyle(color: AppColors.textMuted),
               ),
               const SizedBox(height: 32),
+
+              // Info note (amber) - e.g. "code already sent, wait to resend"
+              if (_infoMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, color: AppColors.accent, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _infoMessage!,
+                          style: const TextStyle(color: AppColors.textDark, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Error display
               if (authProvider.error != null) ...[
@@ -142,7 +202,7 @@ class _OtpPageState extends State<OtpPage> {
               const SizedBox(height: 24),
 
               ElevatedButton(
-                onPressed: authProvider.loading ? null : () => _verify(_otpController.text),
+                onPressed: _isVerifying ? null : () => _verify(_otpController.text),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -151,8 +211,12 @@ class _OtpPageState extends State<OtpPage> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: authProvider.loading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                child: _isVerifying
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      )
                     : const Text(
                         'Tasdiqlash',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -166,7 +230,7 @@ class _OtpPageState extends State<OtpPage> {
                         style: const TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
                       )
                     : TextButton(
-                        onPressed: authProvider.loading ? null : _resend,
+                        onPressed: (authProvider.loading || _isVerifying) ? null : _resend,
                         child: const Text(
                           'Kodni qayta yuborish',
                           style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
@@ -181,15 +245,27 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void _verify(String code) async {
-    if (code.length == 6) {
+    if (code.length == 6 && !_isVerifying) {
+      setState(() {
+        _isVerifying = true;
+      });
+
       final success = await Provider.of<AuthProvider>(context, listen: false).verifyOtpCode(
         widget.phoneNumber,
         widget.purpose,
         code,
       );
 
-      if (success && mounted) {
-        context.pop(true); // Pop back returning true (verified)
+      if (!mounted) return;
+
+      if (success) {
+        if (context.canPop()) {
+          context.pop(true); // Pop back returning true (verified)
+        }
+      } else {
+        setState(() {
+          _isVerifying = false;
+        });
       }
     }
   }

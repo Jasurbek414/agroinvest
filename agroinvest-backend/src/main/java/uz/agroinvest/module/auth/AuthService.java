@@ -50,10 +50,6 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Phone ownership must be proven via a real send-otp/verify-otp round-trip first;
-        // this consumes the one-time ticket left by OtpService.verifyOtp.
-        otpService.requireVerified(request.getPhoneNumber(), REGISTER_OTP_PURPOSE);
-
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new ApiException(ErrorCode.PHONE_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
@@ -65,6 +61,13 @@ public class AuthService {
         if (request.getRole() != UserRole.INVESTOR && request.getRole() != UserRole.FARMER) {
             throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.BAD_REQUEST, "Ushbu rolda ro'yxatdan o'tish taqiqlangan");
         }
+
+        // Phone ownership must be proven via a real send-otp/verify-otp round-trip first;
+        // this CONSUMES the one-time ticket left by OtpService.verifyOtp - so it must run
+        // AFTER all validations above. Otherwise a recoverable failure (e.g. email already
+        // taken) burns the ticket, the user's retry hits PHONE_NOT_VERIFIED, and re-sending
+        // the OTP runs into the resend cooldown ("kutib turing" loop).
+        otpService.requireVerified(request.getPhoneNumber(), REGISTER_OTP_PURPOSE);
 
         // Create User
         User user = User.builder()

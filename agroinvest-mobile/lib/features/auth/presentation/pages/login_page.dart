@@ -18,6 +18,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // A stale error from another flow (registration, wallet OTP, expired
+    // session) must not show up on a fresh login attempt.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
