@@ -8,6 +8,7 @@ import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
+import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
@@ -27,6 +28,7 @@ class PayoutServiceTest {
     private InvestmentRepository investmentRepository;
     private WalletRepository walletRepository;
     private TransactionRepository transactionRepository;
+    private UserRepository userRepository;
 
     private PayoutService payoutService;
 
@@ -36,12 +38,14 @@ class PayoutServiceTest {
         investmentRepository = mock(InvestmentRepository.class);
         walletRepository = mock(WalletRepository.class);
         transactionRepository = mock(TransactionRepository.class);
+        userRepository = mock(UserRepository.class);
 
         payoutService = new PayoutService(
                 projectRepository,
                 investmentRepository,
                 walletRepository,
-                transactionRepository
+                transactionRepository,
+                userRepository
         );
     }
 

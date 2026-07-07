@@ -22,6 +22,9 @@ public class ProjectDto {
     private UUID id;
     private UUID farmerId;
     private String farmerName;
+    private BigDecimal farmerRating;
+    private Integer farmerTotalProjects;
+    private boolean farmerVerified;
     private AssetType assetType;
     private String title;
     private String description;

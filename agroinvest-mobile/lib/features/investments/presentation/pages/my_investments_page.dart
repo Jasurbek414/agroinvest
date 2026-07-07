@@ -6,6 +6,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../reviews/data/review_repository.dart';
 import '../providers/investment_provider.dart';
 
 const _portfolioStatusColors = {
@@ -34,6 +35,8 @@ class MyInvestmentsPage extends StatefulWidget {
 }
 
 class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
+  final _reviewRepository = ReviewRepository();
+
   @override
   void initState() {
     super.initState();
@@ -141,6 +144,20 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                                       child: const Text('Sarmoyani bekor qilish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                     ),
                                   ],
+                                  if (status == 'PAID_OUT') ...[
+                                    const Divider(height: 24, color: AppColors.border),
+                                    OutlinedButton.icon(
+                                      onPressed: () => _showReviewSheet(inv['id'], projectTitle),
+                                      icon: const Icon(Icons.star_outline_rounded, size: 16),
+                                      label: const Text("Fermerga sharh qoldirish", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        side: const BorderSide(color: AppColors.primary, width: 1.5),
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -230,6 +247,108 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showReviewSheet(String investmentId, String projectTitle) {
+    int selectedRating = 5;
+    final commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Fermerga sharh qoldirish', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const SizedBox(height: 4),
+                  Text(projectTitle, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (i) {
+                      final starIndex = i + 1;
+                      return IconButton(
+                        onPressed: () => setSheetState(() => selectedRating = starIndex),
+                        icon: Icon(
+                          starIndex <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: Colors.amber,
+                          size: 34,
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: commentController,
+                    maxLines: 3,
+                    style: const TextStyle(color: AppColors.textDark),
+                    decoration: InputDecoration(
+                      labelText: 'Izoh (ixtiyoriy)',
+                      filled: true,
+                      fillColor: AppColors.background,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(sheetContext);
+                      try {
+                        await _reviewRepository.submitReview(
+                          investmentId: investmentId,
+                          rating: selectedRating,
+                          comment: commentController.text.trim().isEmpty ? null : commentController.text.trim(),
+                        );
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Sharhingiz uchun rahmat!'), backgroundColor: AppColors.primary),
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Yuborish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

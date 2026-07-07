@@ -2,12 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { getProjects, changeProjectStatus } from '../../../api/projects.api';
 import { formatAmount } from '../../../utils/format';
 import { ASSET_TYPE_META, getAssetTypeMeta } from '../../../utils/assetType';
+import { BadgeCheck, Star } from 'lucide-react';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import DataTable from '../../ui/DataTable';
 import PromptDialog from '../../ui/PromptDialog';
 import { useToast } from '../../ui/ToastProvider';
 import { useDebounce } from '../../../hooks/useDebounce';
+
+// Rating/"Verified" badge for a project's farmer (TZ F-9.1/9.3) - reused in both
+// the desktop column and the mobile card so the two stay visually consistent.
+const FarmerBadge = ({ project }) => (
+  <div className="flex items-center gap-1.5 min-w-0">
+    <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 truncate">{project.farmerName}</span>
+    {project.farmerVerified && (
+      <BadgeCheck size={13} className="text-primary-600 dark:text-primary-400 shrink-0" aria-label="Tasdiqlangan fermer" />
+    )}
+    {project.farmerRating > 0 && (
+      <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 shrink-0">
+        <Star size={11} fill="currentColor" />
+        {Number(project.farmerRating).toFixed(1)}
+      </span>
+    )}
+  </div>
+);
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Barchasi' },
@@ -119,6 +137,7 @@ const ProjectsTab = ({ onActionDone }) => {
               );
             },
           },
+          { key: 'farmer', header: 'Fermer', render: (p) => <FarmerBadge project={p} /> },
           { key: 'region', header: 'Viloyat', render: (p) => <span className="text-xs font-bold text-gray-400">{p.region}</span> },
           { key: 'targetAmount', header: 'Maqsad summa', render: (p) => <span className="font-bold">{formatAmount(p.targetAmount)}</span> },
           { key: 'status', header: 'Holat', render: (p) => <Badge status={p.status} /> },
@@ -147,6 +166,7 @@ const ProjectsTab = ({ onActionDone }) => {
                 </div>
                 <Badge status={p.status} />
               </div>
+              <FarmerBadge project={p} />
               <p className="text-xs text-gray-500 dark:text-slate-400">{p.region} · {formatAmount(p.targetAmount)} · +{p.expectedReturnPct}%</p>
               {p.status === 'PENDING' && (
                 <div className="flex gap-2 pt-1">

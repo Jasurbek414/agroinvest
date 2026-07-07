@@ -2,6 +2,7 @@ package uz.agroinvest.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -52,6 +53,7 @@ public class SecurityConfig {
                         // decides precedence and this one must NOT be public like the webhooks.
                         .requestMatchers("/api/v1/payments/checkout-url").authenticated()
                         // Public Endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/farmer/**").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/projects",

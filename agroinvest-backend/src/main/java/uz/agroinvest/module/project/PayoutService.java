@@ -11,6 +11,8 @@ import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
+import uz.agroinvest.module.user.UserRepository;
+import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
 
@@ -27,17 +29,20 @@ public class PayoutService {
     private final InvestmentRepository investmentRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
 
     public PayoutService(
             ProjectRepository projectRepository,
             InvestmentRepository investmentRepository,
             WalletRepository walletRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            UserRepository userRepository
     ) {
         this.projectRepository = projectRepository;
         this.investmentRepository = investmentRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -152,5 +157,11 @@ public class PayoutService {
         project.setFinalAmount(salePrice);
         project.setCompletedAt(LocalDateTime.now());
         projectRepository.save(project);
+
+        // TZ F-2.8: farmer's project-history counter, surfaced on their public
+        // profile/project cards alongside the review-based rating (see ReviewService).
+        User farmer = project.getFarmer();
+        farmer.setTotalProjects(farmer.getTotalProjects() == null ? 1 : farmer.getTotalProjects() + 1);
+        userRepository.save(farmer);
     }
 }

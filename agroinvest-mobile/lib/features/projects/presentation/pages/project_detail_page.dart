@@ -138,6 +138,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                   p['farmerName'] ?? 'Noma\'lum fermer',
                                   style: const TextStyle(color: AppColors.textDark, fontSize: 13, fontWeight: FontWeight.bold),
                                 ),
+                                if (p['farmerVerified'] == true) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.verified_rounded, size: 15, color: AppColors.primary),
+                                ],
                                 const SizedBox(width: 14),
                                 const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textMuted),
                                 const SizedBox(width: 6),
@@ -147,6 +151,24 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                 ),
                               ],
                             ),
+                            if ((double.tryParse(p['farmerRating']?.toString() ?? '0') ?? 0) > 0) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    (double.tryParse(p['farmerRating'].toString()) ?? 0).toStringAsFixed(1),
+                                    style: const TextStyle(color: AppColors.textDark, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '· ${p['farmerTotalProjects'] ?? 0} ta yakunlangan loyiha',
+                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
