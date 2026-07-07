@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Tailwind v4 is CSS-first: tokens declared here (not in tailwind.config.js, which
+   this build never loads) are what actually generate utilities like bg-primary-600. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary-50: #f0fdf4;
+  --color-primary-100: #dcfce7;
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #16a34a;
+  --color-primary-700: #15803d;
+  --color-primary-800: #166534;
+  --color-primary-900: #14532d;
+  --color-primary-950: #052e16;
+}
+
+/* Class-based dark mode: toggled by adding/removing `dark` on <html> (see
+   store/theme.store.js), rather than only following the OS-level preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased transition-colors duration-200;
+    @apply dark:bg-slate-900 dark:text-slate-100;
+  }
+}

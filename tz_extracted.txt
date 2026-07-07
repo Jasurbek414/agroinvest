@@ -1,0 +1,858 @@
+
+
+=== SAHIFA 1 ===
+TEXNIK QO'LLANMA · v1.0
+A G R O - I N V E S T I T S I Y A  P L A T F O R M A S I
+AgroInvest
+Investor va fermerni birlashtiruvchi raqamli
+platforma: to'liq texnik spetsifikatsiya,
+arxitektura va amalga oshirish yo'l xaritasi
+Tayyorlangan: 2026-yil iyul  ·  Hujjat turi: Texnik va biznes qo'llanma  ·  Maqsadli auditoriya: Founder, dasturchilar jamoasi,
+investorlar
+
+
+=== SAHIFA 2 ===
+Mundarija
+1.
+ Loyihaning mohiyati va biznes modeli
+3
+2.
+ Foydalanuvchi rollari va foydalanuvchi yo'llari (User Flows)
+5
+3.
+ Funksional talablar (to'liq ro'yxat)
+7
+4.
+ Tizim arxitekturasi va texnologik stack
+10
+5.
+ Ma'lumotlar bazasi sxemasi
+13
+6.
+ API arxitekturasi
+16
+7.
+ To'lov va moliyaviy oqim mexanizmi
+18
+8.
+ Ishonch, nazorat va xavfsizlik tizimi
+20
+9.
+ Huquqiy va me'yoriy jihatlar (O'zbekiston)
+23
+10.  MVP bosqichlari va rivojlanish yo'l xaritasi
+25
+11.  Byudjet taqsimoti ($5,000)
+28
+12.  Risklar tahlili va ularni kamaytirish
+30
+13.  Muvaffaqiyat metrikalari (KPI)
+32
+14.  Xulosa va keyingi qadamlar
+33
+Eslatma: sahifa raqamlari taxminiy bo'lib, final PDF'dagi haqiqiy tarkib asosida biroz farqlanishi mumkin.
+
+
+=== SAHIFA 3 ===
+1. Loyihaning mohiyati va biznes modeli
+1.1 Muammo
+O'zbekistonda qishloq xo'jaligi bilan shug'ullanuvchi minglab fermer va dehqonlar mavjud bo'lib, ularning katta qismi ishlab
+chiqarishni kengaytirish uchun zarur sarmoyaga ega emas. Bank kreditlari yuqori foiz stavkalari, garov talabi va byurokratik
+to'siqlar tufayli ko'plab kichik fermerlar uchun amalda erishib bo'lmaydigan holatda qoladi. Shu bilan bir vaqtda, shaharlarda
+yashovchi minglab odamlar qishloq xo'jaligiga investitsiya qilishni xohlaydi, ammo ularda na yer, na vaqt, na tajriba bor — ularga
+faqat oddiy, ishonchli va shaffof vosita yetishmaydi.
+1.2 Yechim
+AgroInvest — investorlar va fermerlarni to'g'ridan-to'g'ri bog'laydigan raqamli platforma. Investor muayyan qishloq xo'jaligi
+aktiviga (hayvon, ekin, issiqxona uchastkasi) moliyaviy ulush sifatida pul tikadi. Fermer aktivni parvarish qiladi va yetishtiradi.
+Aktiv sotilgach (go'sht, hosil yoki tayyor mahsulot ko'rinishida), tushgan daromad oldindan belgilangan foiz nisbatida investor va
+fermer o'rtasida taqsimlanadi, platforma esa xizmat haqi (komissiya) sifatida o'z ulushini oladi.
+Asosiy tamoyil: Platforma hech qachon o'zi qishloq xo'jaligi faoliyati bilan shug'ullanmaydi. U faqat texnologik vositachi — ishonchni
+ta'minlovchi, hisob-kitobni avtomatlashtiruvchi va tomonlarni bog'lovchi qatlam sifatida ishlaydi. Bu yuridik javobgarlikni aniq
+taqsimlash va biznes modelini soddalashtirish uchun muhim.
+1.3 Qiymat zanjiri (Value Chain)
+Bosqich
+Ishtirokchi
+Harakat
+1. Taklif yaratish
+Fermer
+Platformada loyiha e'lon qiladi: aktiv turi, kerakli summa, muddat, kutilayotgan daromad
+2. Tekshiruv
+Platforma (Admin)
+Fermer va loyihani vetting jarayonidan o'tkazadi, hujjatlarni tasdiqlaydi
+3. Sarmoya yig'ish
+Investor(lar)
+Bir yoki bir nechta investor kerakli summani to'liq yig'guncha ulush xarid qiladi
+4. Parvarish
+Fermer
+Aktivni belgilangan muddat davomida yetishtiradi, davriy hisobot beradi
+5. Monitoring
+Platforma
+Foto/video hisobotlarni, muhim voqealarni (kasallik, halokat) kuzatadi
+6. Sotish
+Fermer / Platforma
+Tayyor mahsulot bozorga yoki oldindan kelishilgan xaridorga sotiladi
+7. Hisob-kitob
+Platforma
+Tushgan summadan komissiya ushlab qolinadi, qolgani investor va fermerga taqsimlanadi
+1.4 Daromad modeli (Monetizatsiya)
+Muvaffaqiyat komissiyasi — asosiy model: yakuniy daromaddan 8–15% (masalan, aktiv turi va xavf darajasiga qarab
+farqlanadi)
+Fermerdan boshlang'ich xizmat haqi — loyihani platformaga joylashtirish va vetting uchun kichik, bir martalik to'lov
+(ixtiyoriy, boshlang'ich bosqichda olib tashlash mumkin)
+Sug'urta xizmat haqi ustama — agar platforma sug'urta kompaniyasi bilan hamkorlikda ishlasa, oraliq komissiya
+Premium investor xizmatlari — kelajakda: tahliliy hisobotlar, ustuvor loyihalarga kirish, portfelni avtomatik diversifikatsiya
+qilish
+1.5 Nima uchun bu bozor o'sib boradi
+Dunyoda shunga o'xshash modellar (Janubiy Afrikadagi Livestock Wealth, Indoneziyadagi Crowde va TaniFund) allaqachon
+barqaror ishlayotgani bu yondashuvning amaliy jihatdan ishlashini tasdiqlaydi. O'zbekistonda esa raqamli to'lov infratuzilmasi
+(Payme, Click), IT Park orqali startaplarni qo'llab-quvvatlash dasturlari va davlatning agrar sohani raqamlashtirishga qaratilgan
+siyosati — bularning barchasi AgroInvest kabi loyiha uchun qulay muhit yaratadi.
+AgroInvest — Texnik Qo'llanma · Bo'lim 1
+
+
+=== SAHIFA 4 ===
+2. Foydalanuvchi rollari va foydalanuvchi yo'llari
+2.1 Asosiy rollar
+Rol
+Tavsif
+Asosiy maqsad
+Investor
+Pul tikuvchi shaxs yoki tashkilot
+Daromad olish, portfelni kuzatish
+Fermer
+Aktivni parvarish qiluvchi ishlab chiqaruvchi
+Sarmoya olish, mahsulot yetishtirish, daromad
+Admin / Moderator
+Platforma xodimi
+Fermerlarni tekshirish, nizolarni hal qilish, monitoring
+Verifikator (Vet/Agronom)
+Sohaviy mutaxassis, shartnoma asosida
+Aktiv holatini dala sharoitida tasdiqlash
+Sug'urta hamkori (kelajakda)
+Tashqi tashkilot
+Halokat holatlarida qoplama ta'minlash
+2.2 Investor foydalanuvchi yo'li (User Flow)
+1. Ro'yxatdan o'tish va shaxsni tasdiqlash (raqamli ID yoki pasport skaneri orqali)
+2. Faol loyihalar ro'yxatini ko'rish — filtrlash: aktiv turi, muddat, kutilgan daromad, xavf darajasi
+3. Loyiha profilini ochish — fermer reytingi, tarixiy natijalar, foto/hujjatlar bilan tanishish
+4. Ulush miqdorini tanlash va to'lovni amalga oshirish (Payme/Click integratsiyasi)
+5. Shartnomani elektron imzolash (raqamli shartnoma)
+6. Loyiha muddati davomida davriy hisobotlarni (foto, video, veterinar/agronom xulosalari) shaxsiy kabinetda kuzatish
+7. Mahsulot sotilgach — avtomatik xabarnoma va hisob-kitob tafsilotlarini olish
+8. Daromadni hamyoniga yechib olish yoki yangi loyihaga qayta investitsiya qilish
+2.3 Fermer foydalanuvchi yo'li
+1. Ro'yxatdan o'tish va hujjatlarni yuklash (pasport, yer/faoliyat huquqini tasdiqlovchi hujjat, agar mavjud bo'lsa — tajriba
+sertifikatlari)
+2. Admin tomonidan dastlabki tekshiruv (vetting) — bu bosqich majburiy va hech qanday holatda o'tkazib yuborilmaydi
+3. Yangi loyiha arizasi yaratish: aktiv turi, miqdori, kerakli summa, taxminiy muddat, kutilayotgan daromad foizi, tavakkalchilik
+omillari
+4. Loyiha admin tomonidan tasdiqlangach — ochiq investitsiya bosqichiga o'tadi
+5. Kerakli summa yig'ilgach, mablag' fermer hisobiga (bosqichma-bosqich yoki to'liq — biznes qoidasiga qarab) o'tkaziladi
+6. Belgilangan davriylikda (masalan, har 2 haftada) foto/video hisobot yuklash majburiy
+7. Favqulodda holat (kasallik, halokat) yuz berganda darhol platformaga xabar berish
+8. Mahsulot tayyor bo'lgach, sotish jarayonini amalga oshirish (platforma yordamida yoki mustaqil, kelishuvga qarab) va
+tushumni platformaga kiritish
+9. Avtomatik hisob-kitobdan so'ng o'z ulushini olish
+2.4 Admin/Moderator foydalanuvchi yo'li
+Yangi fermer arizalarini ko'rib chiqish va tasdiqlash/rad etish
+Yuklangan hisobotlarni tekshirish, shubhali holatlarni belgilash
+Nizolarni (investor-fermer o'rtasida) ko'rib chiqish va hal qilish jarayonini boshqarish
+Moliyaviy oqimlarni kuzatish — komissiya hisoblanishi, to'lovlar holati
+Platforma statistikasi va KPI paneli bilan ishlash
+Muhim dizayn qarori: Boshlang'ich bosqichda (MVP) barcha vetting va monitoring jarayonlari qo'lda (manual) amalga oshirilishi
+kerak. Avtomatlashtirish faqat model to'g'ri ishlayotganiga ishonch hosil qilingandan keyin qo'shiladi. Erta avtomatlashtirish — eng
+ko'p uchraydigan startup xatolaridan biri.
+AgroInvest — Texnik Qo'llanma · Bo'lim 2
+
+
+=== SAHIFA 5 ===
+3. Funksional talablar (to'liq ro'yxat)
+3.1 Foydalanuvchi boshqaruvi
+Ro'yxatdan o'tish (telefon raqami + SMS-tasdiqlash, keyinroq — email)
+Roli asosida profil yaratish: Investor / Fermer
+KYC (Know Your Customer) — pasport ma'lumotlarini kiritish va tekshirish
+Ikki faktorli autentifikatsiya (2FA) — moliyaviy tranzaksiyalar uchun majburiy
+Profilni tahrirlash, parolni tiklash, hisobni bloklash/faollashtirish
+3.2 Loyihalar (Aktivlar) moduli
+Fermer tomonidan yangi loyiha yaratish formasi (aktiv turi, rasmlar, tavsif, moliyaviy parametrlar)
+Loyiha holatlari: 
+Kutilmoqda
+Tasdiqlangan
+Investitsiya yig'ilmoqda
+Faol (parvarish jarayonida)
+Yakunlangan
+Bekor qilingan
+Har bir loyiha uchun noyob identifikator va ochiq profil sahifasi
+Filtrlash va qidiruv: aktiv turi, hudud, muddat, kutilgan daromad, minimal investitsiya
+Loyiha tarixi — o'xshash oldingi loyihalar natijalari (agar mavjud bo'lsa) ko'rsatilishi
+3.3 Investitsiya va ulush moduli
+Ulush xarid qilish (to'liq yoki qisman — bir loyihaga bir nechta investor)
+Real vaqtda yig'ilgan summa progress-bar ko'rinishida ko'rsatilishi
+Investitsiya limiti tekshiruvi (minimal/maksimal summa)
+Elektron shartnoma generatsiyasi va raqamli imzo
+Investitsiyani bekor qilish oynasi (masalan, to'lovdan keyingi 24 soat ichida, agar loyiha hali to'liq yig'ilmagan bo'lsa)
+3.4 Monitoring va hisobot moduli
+Fermer tomonidan davriy foto/video yuklash (majburiy jadval bilan — masalan, har 14 kunda)
+Har bir hisobotga vaqt tamg'asi (timestamp) va geolokatsiya avtomatik biriktirilishi
+Verifikator (vet/agronom) tomonidan dala tashrifi natijalarini kiritish formasi
+Favqulodda hodisa (kasallik, halokat, tabiiy ofat) haqida signal berish tugmasi — darhol adminга bildirishnoma yuboradi
+Investorlar uchun loyiha "jonli lentasi" (timeline) — barcha hisobotlar xronologik tartibda
+3.5 Moliyaviy modul
+To'lov integratsiyasi: Payme, Click (O'zbekiston uchun asosiy)
+Har bir foydalanuvchi uchun ichki "hamyon" (wallet) — balansni kuzatish
+Avtomatik komissiya hisoblash mexanizmi
+Daromadni taqsimlash algoritmi (investor foizi / fermer foizi / platforma komissiyasi)
+Pul yechish so'rovlari va admin tomonidan tasdiqlash jarayoni (boshlang'ich bosqichda)
+Moliyaviy tarix va hisobotlar (soliq maqsadlari uchun eksport qilinadigan formatda)
+3.6 Bildirishnomalar
+SMS/Telegram-bot orqali muhim voqealar haqida xabar (yangi hisobot, to'lov, muddat tugashi)
+Push-bildirishnomalar (mobil ilova mavjud bo'lgan taqdirda)
+Email xulosalar (haftalik/oylik portfel hisobotlari)
+3.7 Admin panel
+Fermer va loyihalarni tasdiqlash/rad etish interfeysi
+Foydalanuvchilar bazasini boshqarish (bloklash, tekshirish)
+Moliyaviy tranzaksiyalar monitoringi
+Nizolarni boshqarish tizimi (ticket-based)
+Statistik dashboard: umumiy investitsiya hajmi, faol loyihalar, o'rtacha daromad, konversiya ko'rsatkichlari
+
+
+=== SAHIFA 6 ===
+3.8 Baholash va obro' (Reputation) tizimi
+Fermer reytingi — muvaffaqiyatli yakunlangan loyihalar soni, o'rtacha daromadlilik, hisobot intizomi asosida
+Investorlar tomonidan fermerga sharh va baho qoldirish imkoniyati
+"Tasdiqlangan fermer" (Verified) belgisi — muntazam va shaffof fermerlarni ajratib ko'rsatish
+MVP uchun ustuvorlik: 3.1, 3.2, 3.3 va 3.4-bo'limlar — birinchi navbatda amalga oshirilishi shart. 3.5 (moliyaviy modul) boshida
+soddalashtirilgan holda (qo'lda tasdiqlash bilan) ishlaydi. 3.6, 3.7, 3.8 — keyingi bosqichlarda qo'shiladi.
+AgroInvest — Texnik Qo'llanma · Bo'lim 3
+
+
+=== SAHIFA 7 ===
+4. Tizim arxitekturasi va texnologik stack
+4.1 Yuqori darajadagi arxitektura
+MVP bosqichida murakkab mikroservis arxitekturasidan qochish tavsiya etiladi — bu vaqt va resursni behuda sarflaydi. Buning
+o'rniga modulli monolit (modular monolith) yondashuvi tanlanadi: bitta backend ilova ichida aniq ajratilgan modullar (Auth,
+Projects, Payments, Reports), bu esa kelajakda kerak bo'lganda mikroservislarga ajratishni osonlashtiradi.
+[Mobil ilova / Veb-ilova]
+        │
+        ▼
+[API Gateway / Backend (REST API)]
+        │
+   ┌────┼─────────┬───────────┬─────────────┐
+   ▼    ▼         ▼           ▼             ▼
+[Auth] [Projects] [Payments] [Reports]   [Notifications]
+   │    │         │           │             │
+   └────┴─────────┴───────────┴─────────────┘
+                  │
+                  ▼
+        [PostgreSQL ma'lumotlar bazasi]
+                  │
+                  ▼
+      [Fayl saqlash: S3-mos xizmat (rasm/video)]
+4.2 Tavsiya etilgan texnologik stack
+Qatlam
+Texnologiya
+Asoslash
+Backend
+Node.js (NestJS) yoki Python (FastAPI/Django)
+Tez ishlab chiqish, katta hamjamiyat, ko'p tayyor kutubxonalar
+Ma'lumotlar bazasi
+PostgreSQL
+Moliyaviy tranzaksiyalar uchun ACID kafolatlari muhim
+Fayl saqlash
+S3-mos obyekt xotira (masalan, Cloudflare R2)
+Foto/video hisobotlar uchun arzon va kengaytiriladigan yechim
+Frontend (veb)
+React yoki Next.js
+Tez interfeys, SEO uchun Next.js qulay
+Mobil
+React Native yoki Flutter (kelajakda)
+Bitta kod bazasi ikkala platforma uchun
+To'lov integratsiyasi
+Payme API, Click API
+O'zbekistondagi eng keng tarqalgan to'lov tizimlari
+Bildirishnoma
+Telegram Bot API, SMS-gateway (Eskiz.uz va h.k.)
+Mahalliy bozorda eng ishonchli va arzon yetkazish kanallari
+Xosting
+VPS (mahalliy provayder) yoki bulut (AWS/GCP)
+Boshida arzon VPS yetarli; o'sish bilan bulutga o'tish
+Monitoring
+Sentry (xatolar), Grafana+Prometheus (kelajakda)
+Muammolarni erta aniqlash
+4.3 Nima uchun bu tanlov MVP uchun to'g'ri
+Barcha komponentlar keng tarqalgan, dokumentatsiyasi boy va O'zbekistonlik dasturchilar orasida tanish
+Blokcheyn yoki murakkab DeFi yechimlaridan ataylab qochilgan — bu MVP bosqichida ortiqcha murakkablik va vaqt
+yo'qotishga olib keladi, keyinroq shaffoflikni oshirish uchun qo'shilishi mumkin
+PostgreSQL tanlovi moliyaviy hisob-kitoblar uchun ma'lumotlar izchilligini kafolatlaydi — bu bank darajasidagi ilovalar uchun
+standart
+4.4 Xavfsizlik arxitekturasi asoslari
+Barcha API so'rovlari HTTPS orqali, TLS 1.2+ talab qilinadi
+Parollar bcrypt/argon2 orqali xeshlanadi, hech qachon oddiy matnda saqlanmaydi
+Moliyaviy amallar uchun alohida audit-log (kim, qachon, nima qildi — o'zgartirib bo'lmaydigan yozuv)
+Rol asosidagi kirish nazorati (RBAC) — har bir foydalanuvchi faqat o'z roli ruxsat etgan amallarni bajaradi
+Foydalanuvchi hujjatlari (pasport skanerlari) shifrlangan holda saqlanadi
+AgroInvest — Texnik Qo'llanma · Bo'lim 4
+
+
+=== SAHIFA 8 ===
+5. Ma'lumotlar bazasi sxemasi
+5.1 Asosiy jadvallar
+users
+Ustun
+Tur
+Tavsif
+id
+UUID (PK)
+Noyob identifikator
+role
+ENUM
+investor / farmer / admin / verifier
+full_name
+VARCHAR
+To'liq ism
+phone_number
+VARCHAR (unique)
+Autentifikatsiya uchun asosiy
+passport_data
+JSONB (shifrlangan)
+KYC ma'lumotlari
+kyc_status
+ENUM
+pending / verified / rejected
+rating
+DECIMAL
+Fermer uchun reyting (0–5)
+created_at
+TIMESTAMP
+Ro'yxatdan o'tgan sana
+projects (loyihalar / aktivlar)
+Ustun
+Tur
+Tavsif
+id
+UUID (PK)
+Noyob identifikator
+farmer_id
+UUID (FK → users)
+Loyiha egasi
+asset_type
+ENUM
+livestock / crop / greenhouse va h.k.
+title
+VARCHAR
+Loyiha nomi
+description
+TEXT
+Batafsil tavsif
+target_amount
+DECIMAL
+Kerakli umumiy summa
+raised_amount
+DECIMAL
+Hozircha yig'ilgan summa
+expected_return_pct
+DECIMAL
+Kutilayotgan daromad foizi
+duration_days
+INTEGER
+Loyiha davomiyligi
+risk_level
+ENUM
+low / medium / high
+status
+ENUM
+pending / approved / funding / active / completed / cancelled
+created_at
+TIMESTAMP
+Yaratilgan sana
+investments (ulushlar)
+Ustun
+Tur
+Tavsif
+id
+UUID (PK)
+Noyob identifikator
+project_id
+UUID (FK → projects)
+Bog'liq loyiha
+investor_id
+UUID (FK → users)
+Investor
+amount
+DECIMAL
+Investitsiya summasi
+share_pct
+DECIMAL
+Umumiy loyihadagi ulush foizi
+contract_url
+VARCHAR
+Elektron shartnoma havolasi
+status
+ENUM
+reserved / confirmed / paid_out / refunded
+created_at
+TIMESTAMP
+Sana
+reports (monitoring hisobotlari)
+Ustun
+Tur
+Tavsif
+id
+UUID (PK)
+Noyob identifikator
+
+
+=== SAHIFA 9 ===
+project_id
+UUID (FK → projects)
+Bog'liq loyiha
+submitted_by
+UUID (FK → users)
+Fermer yoki verifikator
+media_urls
+JSONB
+Foto/video havolalari
+geo_location
+POINT
+Geolokatsiya (agar mavjud)
+report_type
+ENUM
+routine / emergency / verification
+notes
+TEXT
+Qo'shimcha izoh
+created_at
+TIMESTAMP
+Sana
+transactions (moliyaviy tranzaksiyalar)
+Ustun
+Tur
+Tavsif
+id
+UUID (PK)
+Noyob identifikator
+user_id
+UUID (FK → users)
+Amal bajaruvchi foydalanuvchi
+project_id
+UUID (FK → projects, nullable)
+Bog'liq loyiha (agar mavjud)
+type
+ENUM
+deposit / payout / commission / withdrawal / refund
+amount
+DECIMAL
+Summa
+payment_provider
+ENUM
+payme / click / manual
+status
+ENUM
+pending / completed / failed
+created_at
+TIMESTAMP
+Sana
+5.2 Munosabatlar diagrammasi (qisqacha)
+users (1) ──────── (N) projects        [farmer_id]
+users (1) ──────── (N) investments     [investor_id]
+projects (1) ────── (N) investments    [project_id]
+projects (1) ────── (N) reports        [project_id]
+users (1) ──────── (N) transactions    [user_id]
+projects (1) ────── (N) transactions   [project_id, nullable]
+Muhim: transactions  jadvali hech qachon o'chirilmasligi (immutable) va tahrirlanmasligi kerak — faqat yangi yozuvlar qo'shiladi
+(masalan, "refund" alohida yozuv sifatida). Bu moliyaviy audit va ishonchlilik uchun asosiy talab.
+AgroInvest — Texnik Qo'llanma · Bo'lim 5
+
+
+=== SAHIFA 10 ===
+6. API arxitekturasi
+6.1 Umumiy qoidalar
+REST API, JSON formatida javob qaytaradi
+Autentifikatsiya: JWT (access token + refresh token)
+Barcha endpointlar versiyalanadi: /api/v1/...
+Xatoliklar bir xil formatda qaytariladi: { "error": { "code": "...", "message": "..." } }
+6.2 Asosiy endpointlar
+Autentifikatsiya
+Metod
+Endpoint
+Tavsif
+POST
+/api/v1/auth/register
+Ro'yxatdan o'tish (telefon + rol)
+POST
+/api/v1/auth/verify-otp
+SMS-kod orqali tasdiqlash
+POST
+/api/v1/auth/login
+Kirish, token olish
+POST
+/api/v1/auth/refresh
+Tokenni yangilash
+Loyihalar
+Metod
+Endpoint
+Tavsif
+GET
+/api/v1/projects
+Faol loyihalar ro'yxati (filtr/paginatsiya bilan)
+GET
+/api/v1/projects/:id
+Bitta loyiha to'liq ma'lumoti
+POST
+/api/v1/projects
+Yangi loyiha yaratish (faqat fermer roli)
+PATCH
+/api/v1/projects/:id/status
+Loyiha holatini o'zgartirish (faqat admin)
+Investitsiyalar
+Metod
+Endpoint
+Tavsif
+POST
+/api/v1/investments
+Yangi investitsiya yaratish (to'lovga yo'naltirish)
+GET
+/api/v1/investments/my
+Foydalanuvchining barcha investitsiyalari
+POST
+/api/v1/investments/:id/cancel
+Investitsiyani bekor qilish (agar ruxsat etilgan bo'lsa)
+Hisobotlar
+Metod
+Endpoint
+Tavsif
+POST
+/api/v1/projects/:id/reports
+Yangi hisobot yuklash (foto/video)
+GET
+/api/v1/projects/:id/reports
+Loyihaning barcha hisobotlari
+POST
+/api/v1/projects/:id/emergency
+Favqulodda holat haqida signal
+To'lovlar / Webhooklar
+Metod
+Endpoint
+Tavsif
+POST
+/api/v1/payments/payme/webhook
+Payme'dan kelgan to'lov holati bildirishnomasi
+POST
+/api/v1/payments/click/webhook
+Click'dan kelgan to'lov holati bildirishnomasi
+POST
+/api/v1/payouts
+Daromadni taqsimlash va yechish so'rovi
+6.3 Namuna: loyiha yaratish so'rovi
+POST /api/v1/projects
+Authorization: Bearer <token>
+Content-Type: application/json
+
+
+=== SAHIFA 11 ===
+{
+  "asset_type": "livestock",
+  "title": "50 ta boquv qo'zisi — Qashqadaryo",
+  "description": "3 oylik boquv davri, Qurbon hayit mavsumiga mo'ljallangan",
+  "target_amount": 15000000,
+  "expected_return_pct": 22,
+  "duration_days": 90,
+  "risk_level": "medium"
+}
+// Javob (201 Created)
+{
+  "id": "b3f1...",
+  "status": "pending",
+  "created_at": "2026-07-05T10:00:00Z"
+}
+Amaliy maslahat: API'ni loyihalash paytida "idempotency key" mexanizmidan foydalaning — ayniqsa to'lov so'rovlarida. Bu tarmoq
+uzilishi tufayli bir xil to'lovning ikki marta amalga oshirilishining oldini oladi.
+AgroInvest — Texnik Qo'llanma · Bo'lim 6
+
+
+=== SAHIFA 12 ===
+7. To'lov va moliyaviy oqim mexanizmi
+7.1 Pul oqimi bosqichlari
+1. Kirish: Investor Payme/Click orqali platforma hisobiga (yoki maxsus escrow hisobiga) pul o'tkazadi
+2. Ushlab turish (Escrow): Mablag' loyiha to'liq yig'ilgunga qadar "muzlatilgan" holatda turadi
+3. Chiqarish fermerga: Loyiha to'liq yig'ilgach, mablag' fermerga to'liq yoki bosqichma-bosqich (masalan, 50% boshida, 50%
+yarim yo'lda) o'tkaziladi
+4. Sotish tushumi: Mahsulot sotilgach, tushgan summa platforma hisobiga qaytadi
+5. Taqsimlash: Tushumdan avval komissiya ushlab qolinadi, so'ng qolgan summa investor va fermer o'rtasida kelishilgan foizda
+bo'linadi
+6. Yechib olish: Investor va fermer o'z ulushini bankka yoki to'lov tizimiga yechib oladi
+7.2 Daromadni taqsimlash formulasi (namuna)
+umumiy_tushum = mahsulot_sotilgan_narxi
+platforma_komissiyasi = umumiy_tushum * komissiya_foizi  (masalan, 10%)
+sof_daromad = umumiy_tushum - boshlang'ich_investitsiya - platforma_komissiyasi
+investor_ulushi = sof_daromad * investor_foizi   (masalan, 70%)
+fermer_ulushi   = sof_daromad * fermer_foizi      (masalan, 30%)
+investorga_qaytariladigan_summa = boshlang'ich_investitsiya + investor_ulushi
+Misol: Investor 10,000,000 so'm tikadi. 90 kundan so'ng mahsulot 13,000,000 so'mga sotiladi. Platforma 10% komissiya (1,300,000
+so'm) oladi. Qolgan sof daromad (13,000,000 − 10,000,000 − 1,300,000 = 1,700,000 so'm) investor va fermer o'rtasida 70/30
+nisbatda bo'linadi: investor 1,190,000 so'm foyda + boshlang'ich 10,000,000 so'mini qaytarib oladi (jami 11,190,000 so'm), fermer esa
+510,000 so'm oladi.
+7.3 Escrow yondashuvi bo'yicha eslatma
+To'liq yuridik escrow xizmati (bank tomonidan boshqariladigan alohida hisob) O'zbekistonda murakkab va qimmat bo'lishi
+mumkin. MVP bosqichida buning o'rniga "platforma hisobvarag'i + qattiq ichki hisob-kitob qoidalari" yondashuvidan
+foydalanish mumkin — ammo bu holatda shaffoflik va foydalanuvchi ishonchini ta'minlash uchun har bir tranzaksiya jamoat
+oldida (yoki hech bo'lmaganda auditga tayyor holda) qayd etilishi shart.
+Diqqat: Foydalanuvchi pulini boshqarish — bu jiddiy moliyaviy javobgarlik. Ushbu bo'limni amalga oshirishdan oldin buxgalter va
+yurist bilan albatta maslahatlashing.
+AgroInvest — Texnik Qo'llanma · Bo'lim 7
+
+
+=== SAHIFA 13 ===
+8. Ishonch, nazorat va xavfsizlik tizimi
+8.1 Nima uchun bu bo'lim eng muhim
+Bu biznesning muvaffaqiyati texnologiyadan ko'ra ko'proq ishonchga bog'liq. Investor o'z ko'zi bilan ko'rmagan hayvon yoki
+ekinga pul tikadi — shuning uchun har bir dizayn qarori "buni qanday isbotlaymiz?" degan savolga javob berishi kerak.
+8.2 Fermerni tekshirish (Vetting) jarayoni
+1. Shaxsni tasdiqlovchi hujjatlar (pasport, STIR agar mavjud bo'lsa)
+2. Yer/mulk huquqini tasdiqlovchi hujjat yoki ijaraga olish shartnomasi
+3. Oldingi tajriba haqida ma'lumot (fotosuratlar, guvohnomalar, agar mavjud bo'lsa)
+4. Dastlabki bosqichda — shaxsan tashrif (admin yoki hamkor tashkilot vakili tomonidan) — bu qimmatga tushsa-da, birinchi
+10-20 fermer uchun ishonchni shakllantiradi
+5. Faqat tasdiqlangan fermerlar loyiha joylashtira oladi
+8.3 Doimiy monitoring mexanizmlari
+Mexanizm
+Qanday ishlaydi
+Bosqich
+Davriy foto/video hisobot
+Fermer ilovada belgilangan jadval bo'yicha yuklaydi, vaqt tamg'asi avtomatik qo'shiladi
+MVP dan boshlab
+Geolokatsiya tekshiruvi
+Foto yuklanganda GPS koordinatalari solishtiriladi (fermer joylashuvi bilan)
+MVP dan boshlab
+Tasodifiy dala tashrifi
+Verifikator vaqti-vaqti bilan kutilmagan tashrif buyuradi
+2-bosqich
+Video-qo'ng'iroq tekshiruvi
+Investor so'rovi bo'yicha jonli video orqali holatni ko'rsatish
+2-bosqich
+IoT sensorlar (harorat, GPS-teg)
+Qimmatroq loyihalarda hayvonga/uchastkaga signal qo'yiladi
+3-bosqich (kelajak)
+8.4 Halokat va yo'qotish holatlari uchun siyosat
+Har bir loyiha tavsifida aniq "nima bo'lsa nima bo'ladi" siyosati ko'rsatilishi shart (masalan: hayvon o'lsa, veterinar xulosasi va
+foto-dalil taqdim etilgach, investorga qisman qoplama qaysi manbadan to'lanadi)
+Boshlang'ich bosqichda — kichik zaxira fond (platforma komissiyasining bir qismi) orqali qisman qoplama taklif qilish
+mumkin
+O'sish bosqichida — professional sug'urta kompaniyasi bilan hamkorlik (chorva sug'urtasi O'zbekistonda mavjud xizmat turi)
+Har qanday holatda investorlarga xavf darajasi oldindan **aniq va yashirmasdan** ko'rsatilishi kerak — "kafolatlangan
+daromad" kabi va'dalar berilmasligi lozim
+8.5 Texnik xavfsizlik choralari
+Barcha shaxsiy va moliyaviy ma'lumotlar shifrlangan holda saqlanadi (at-rest va in-transit)
+Muntazam zaxira nusxalash (backup) — kamida kunlik
+Tashqi audit yoki penetration test — platforma jiddiy summalarni jalb qila boshlagach majburiy
+Fishing va ijtimoiy muhandislik hujumlaridan himoya — foydalanuvchilarni ogohlantirish, shubhali kirishlarni aniqlash
+AgroInvest — Texnik Qo'llanma · Bo'lim 8
+
+
+=== SAHIFA 14 ===
+9. Huquqiy va me'yoriy jihatlar (O'zbekiston)
+Muhim ogohlantirish: Ushbu bo'lim umumiy yo'nalish beradi, ammo yuridik maslahat o'rnini bosmaydi. Loyihani ishga tushirishdan
+oldin O'zbekistonda moliyaviy/investitsiya faoliyati bo'yicha ixtisoslashgan yurist bilan albatta maslahatlashish shart.
+9.1 Nima uchun bu masala jiddiy
+AgroInvest modeli — bu oddiy marketpleys emas, balki uchinchi shaxslardan pul yig'ish va uni investitsiya sifatida taqsimlash
+faoliyati. Bunday faoliyat ko'plab mamlakatlarda (jumladan O'zbekistonda) moliyaviy nazorat organlari tomonidan tartibga
+solinadi, chunki bu kraudfanding yoki kollektiv investitsiya sxemasiga o'xshaydi.
+9.2 Tekshirilishi lozim bo'lgan asosiy savollar
+Platforma pulni o'zi qabul qilib, keyin taqsimlaydimi (bu holda moliyaviy vositachi litsenziyasi kerak bo'lishi mumkin), yoki
+investor va fermer o'rtasida to'g'ridan-to'g'ri shartnoma tuzilib, platforma faqat texnik vositachi rolini o'ynaydimi?
+Investorlarga taklif qilinayotgan "daromad ulushi" huquqiy jihatdan qanday tasniflanadi — bu qarz shartnomasimi, hamkorlik
+shartnomasimi yoki boshqa turdagi bitimmi?
+Fermer va investor o'rtasidagi nizolar qaysi sud yurisdiksiyasida va qanday hal qilinadi?
+Soliq jihatlari: platforma komissiyasi, fermer daromadi va investor daromadi qanday soliqqa tortiladi?
+Chet ellik investorlar ishtirok etishi mumkinmi va bu qanday qo'shimcha talablarni keltirib chiqaradi?
+9.3 Tavsiya etilgan yondashuv (huquqiy xavfni kamaytirish uchun)
+1. Bosqichma-bosqich boshlash: Dastlab kichik miqyosda, tanish doiradagi investorlar bilan (do'stlar, tanishlar) pilot sifatida
+boshlash — bu tezroq validatsiya beradi va huquqiy xavfni cheklaydi
+2. To'g'ridan-to'g'ri shartnoma modeli: Platforma pulni o'z hisobida ushlab turmasdan, investor-fermer o'rtasida ikki
+tomonlama shartnoma tuzilishini ta'minlaydigan huquqiy tuzilma bilan boshlash
+3. IT Park orqali ro'yxatdan o'tish: IT Park rezidenti sifatida ro'yxatdan o'tish soliq imtiyozlari va huquqiy maslahat
+imkoniyatlarini beradi
+4. Standart shartnoma shablonlari: Yurist yordamida investor-fermer-platforma o'rtasidagi barcha huquq va majburiyatlarni
+aniq belgilovchi shartnoma shablonini tayyorlash
+Yuqori muhim: Agar loyiha "kafolatlangan daromad" yoki "fiksed foiz" kabi tushunchalarni ishlatsa, bu ba'zi yurisdiksiyalarda uni
+bank faoliyati yoki qimmatli qog'ozlar bilan tenglashtirishi mumkin. Har doim "kutilayotgan" yoki "tarixiy" daromad haqida gapiring,
+hech qachon kafolat bermang.
+AgroInvest — Texnik Qo'llanma · Bo'lim 9
+
+
+=== SAHIFA 15 ===
+10. MVP bosqichlari va rivojlanish yo'l xaritasi
+10.1 0-bosqich: Validatsiya (1-2 hafta, kod yozmasdan)
+3-5 ta real fermer bilan shaxsan gaplashish — ular haqiqatan shunday modelga qiziqadimi?
+10-15 ta potentsial investor (tanish doiradan) bilan suhbat — ular necha pul va qanday shartlarda tikishga tayyor?
+Telegram-guruh yoki Google Forms orqali "sun'iy" birinchi loyihani e'lon qilish va real qiziqishni o'lchash
+10.2 1-bosqich: Qo'lda boshqariladigan pilot (3-4 hafta)
+Kod yozmasdan: Telegram-bot + Google Sheets/Forms orqali 1-2 ta real loyihani ishga tushirish
+Barcha to'lovlar qo'lda (Payme/Click orqali to'g'ridan-to'g'ri) amalga oshiriladi
+Barcha hisobotlar Telegram-guruhda qo'lda yuboriladi
+Maqsad: model umuman ishlayotganini va odamlar pul tikishga chindan tayyorligini isbotlash
+10.3 2-bosqich: Texnik MVP (6-8 hafta)
+Hafta
+Vazifa
+1-2
+Backend asosi: Auth, Users, Projects modullari
+3-4
+Investitsiya moduli, Payme/Click integratsiyasi (sandbox rejimida test)
+5
+Hisobot yuklash moduli (foto/video, geolokatsiya)
+6
+Admin panel (asosiy funksiyalar)
+7
+Frontend: investor va fermer interfeyslari
+8
+Test, xatolarni tuzatish, birinchi real loyihani platformaga ko'chirish
+10.4 3-bosqich: Bozorga chiqish va o'sish (9-16 hafta)
+5-10 ta yangi fermer va 20-30 ta investorni jalb qilish
+Bildirishnoma tizimini qo'shish (SMS/Telegram)
+Reputatsiya/reyting tizimini ishga tushirish
+Birinchi natijalar asosida marketing materiallari (haqiqiy case-study) tayyorlash
+IT Park yoki akseleratorlarga (UzCombinator kabi) ariza topshirish — qo'shimcha sarmoya va mentorlik uchun
+10.5 4-bosqich: Kengaytirish (4+ oy)
+Mobil ilova (React Native/Flutter)
+Sug'urta hamkorligi
+Avtomatik moliyaviy hisob-kitob va yechib olish
+Yangi aktiv turlari (parrandachilik, asalarichilik, issiqxona va h.k.)
+Boshqa hududlarga (Farg'ona, Samarqand va h.k.) kengayish
+Eng muhim maslahat: 0- va 1-bosqichlarni o'tkazib yubormang. Ko'plab startaplar to'g'ridan-to'g'ri to'liq platforma qurishga
+shoshiladi va odamlar bu modelga umuman qiziqmasligini keyin bilib qoladi. Kod yozishdan oldin real pul va real odamlar bilan
+modelni sinab ko'ring.
+AgroInvest — Texnik Qo'llanma · Bo'lim 10
+
+
+=== SAHIFA 16 ===
+11. Byudjet taqsimoti ($5,000 asosida)
+11.1 Taxminiy taqsimot
+Yo'nalish
+Summa ($)
+Izoh
+Huquqiy maslahat va shartnoma tayyorlash
+600 – 900
+Yurist bilan ishlash — eng muhim va qisqartirib bo'lmaydigan xarajat
+Server/xosting/domen (12 oy)
+200 – 350
+VPS + domen + SSL sertifikat
+To'lov tizimi integratsiyasi
+0 – 300
+Payme/Click ulanish xarajatlari, ba'zan bepul, komissiya asosida
+Dizayn (UI/UX)
+300 – 600
+Frilanser dizayner yoki tayyor shablonlarni moslashtirish
+Birinchi pilot loyiha uchun "zaxira fond"
+1000 – 1500
+Halokat holatlarida qisman qoplama uchun kichik zaxira (ishonchni oshirish)
+Marketing (birinchi mijozlarni jalb qilish)
+400 – 700
+Ijtimoiy tarmoq reklamasi, kontent, birinchi fermerlar bilan uchrashuv
+xarajatlari
+Uchinchi tomon xizmatlari (SMS-gateway, fayl
+xotira)
+100 – 200
+Eskiz.uz, Cloudflare R2 va h.k.
+Kutilmagan xarajatlar (zaxira)
+500 – 800
+Har doim 15-20% zaxira qoldirish tavsiya etiladi
+Jami
+~3,100 –
+5,350
+Byudjet doirasida moslashuvchan taqsimlanadi
+11.2 Muhim izoh: dasturlash xarajati
+Sizning IT/dasturlash ko'nikmangiz borligi sababli, texnik qismni (backend, frontend, admin panel) o'zingiz qurishingiz mumkin
+— bu jadvalda alohida "dasturlash xarajati" ko'rsatilmagan, chunki bu sizning shaxsiy vaqt sarmoyangiz bo'ladi. Agar qo'shimcha
+qo'l kerak bo'lsa (masalan, dizayner yoki frilanser dasturchi), bu $1,000-2,000 qo'shimcha xarajatni talab qilishi mumkin — bu
+holda zaxira fondni biroz kamaytirish kerak bo'ladi.
+Ustuvorlik tartibi: Agar byudjet yetishmasa, quyidagi tartibda qisqartiring: 1) marketing xarajatini kamaytiring, 2) dizaynni o'zingiz
+sodda qiling, 3) lekin huquqiy maslahat va zaxira fondni hech qachon to'liq olib tashlamang — bular investorlar ishonchi va sizning
+huquqiy xavfsizligingiz uchun asosiy.
+AgroInvest — Texnik Qo'llanma · Bo'lim 11
+
+
+=== SAHIFA 17 ===
+12. Risklar tahlili va ularni kamaytirish
+Xavf
+Ta'siri
+Kamaytirish strategiyasi
+Fermer yolg'on ma'lumot berishi (aktiv mavjud emas yoki
+holati boshqacha)
+Yuqori
+Qattiq vetting, shaxsiy tashrif, geolokatsiya tekshiruvi, reyting tizimi
+Hayvon/ekin halokati (kasallik, ofat)
+Yuqori
+Sug'urta, zaxira fond, xavf darajasini oldindan aniq ko'rsatish
+Investor loyihadan keyin pulini talab qilishi (nizolar)
+O'rta
+Aniq shartnoma, oldindan belgilangan bekor qilish qoidalari
+Huquqiy/tartibga solish muammolari
+Yuqori
+Yurist bilan ishlash, to'g'ridan-to'g'ri shartnoma modeli, bosqichma-
+bosqich kengayish
+Yetarli investor topa olmaslik (loyiha yig'ilmay qolishi)
+O'rta
+Kichik va tanish miqyosdan boshlash, jozibali va real natijalarni ko'rsatish
+Texnik nosozlik (to'lov xatosi, ma'lumot yo'qolishi)
+O'rta
+Muntazam backup, monitoring, sinov muhitida puxta test qilish
+Fermer soni yoki sifat nazorati bilan kengayish qiyinligi
+(scaling)
+O'rta
+Har bir yangi hududda mahalliy verifikator/hamkor tarmog'ini bosqichma-
+bosqich qurish
+Raqobatchilarning paydo bo'lishi
+Past-
+O'rta
+Birinchi bo'lib bozorga chiqish, kuchli fermer-investor hamjamiyati va
+ishonchni shakllantirish
+Eng katta yagona xavf: Ishonch yo'qolishi. Agar birinchi bir necha loyihada muammo yuzaga kelsa va shaffof hal qilinmasa, butun
+platforma obro'si zarar ko'radi. Shu sababli har bir muammoli holatni oshkora va tez hal qilish strategiyasi boshidanoq tayyor bo'lishi
+kerak.
+AgroInvest — Texnik Qo'llanma · Bo'lim 12
+
+
+=== SAHIFA 18 ===
+13. Muvaffaqiyat metrikalari (KPI)
+13.1 Pilot bosqichi uchun asosiy ko'rsatkichlar
+Metrika
+Maqsad (birinchi 3 oy)
+Ro'yxatdan o'tgan fermerlar soni
+10-15
+Tasdiqlangan (vetting o'tgan) fermerlar
+5-8
+Ro'yxatdan o'tgan investorlar soni
+50-100
+Yakunlangan (to'liq tsikl) loyihalar soni
+3-5
+O'rtacha investitsiya summasi
+500,000 – 2,000,000 so'm
+Investorlarning qayta investitsiya qilish darajasi
+30%+
+Hisobot intizomi (o'z vaqtida yuklangan hisobotlar %)
+90%+
+Halokat/yo'qotish darajasi
+<5%
+13.2 Uzoq muddatli o'sish ko'rsatkichlari
+Oylik faol investorlar soni (MAU)
+Platformadagi umumiy investitsiya aylanmasi (Gross Merchandise Value)
+Fermer tomonidan qayta loyiha ochish darajasi (retention)
+Platforma komissiyasidan tushgan daromad
+Mijozni jalb qilish narxi (CAC) va uning umr bo'yi qiymati (LTV) nisbati
+
+
+=== SAHIFA 19 ===
+14. Xulosa va keyingi qadamlar
+AgroInvest g'oyasi — dunyoda isbotlangan modelni O'zbekiston bozori ehtiyojlariga moslashtirish. Loyihaning muvaffaqiyati
+texnologiyaga emas, balki uchta ustunga bog'liq: ishonch (fermerlar va aktivlarni qat'iy tekshirish), shaffoflik (har bir
+tranzaksiya va hisobot ochiq bo'lishi) va huquqiy tozalik (moliyaviy vositachilik qoidalariga rioya qilish).
+Keyingi 30 kunlik amaliy qadamlar:
+1. Yurist bilan uchrashib, huquqiy tuzilmani (to'g'ridan-to'g'ri shartnoma modeli) belgilash
+2. 3-5 ta real fermer bilan gaplashib, ularning ehtiyoji va shartlarini aniqlash
+3. Standart investor-fermer shartnoma shablonini tayyorlash
+4. Telegram-bot + qo'lda boshqariladigan birinchi pilot loyihani ishga tushirish
+5. Birinchi natijalar asosida texnik MVP qurishni boshlash
+Yakuniy fikr: Bu hujjatda keltirilgan barcha bo'limlar — arxitektura, ma'lumotlar bazasi, API — sizga to'liq texnik asos beradi. Ammo
+eng muhim birinchi qadam kod yozish emas, balki 3-5 ta real fermer va 10-15 ta real investor bilan gaplashish. Agar ular
+haqiqatan qiziqsa va birinchi kichik pilot muvaffaqiyatli o'tsa, qolgan hammasi — texnika masalasi, xolos.
+AgroInvest — Texnik Qo'llanma · Bo'lim 13-14 · Hujjat yakuni

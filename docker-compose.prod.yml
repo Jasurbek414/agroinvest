@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: agroinvest_prod_db
+    environment:
+      POSTGRES_DB: agroinvest
+      POSTGRES_USER: agro_user
+      POSTGRES_PASSWORD: agro_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agro_user -d agroinvest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agroinvest_prod_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata_prod:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./agroinvest-backend
+      dockerfile: Dockerfile
+    container_name: agroinvest_prod_backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: agroinvest
+      DB_USERNAME: agro_user
+      DB_PASSWORD: agro_secure_password_2026
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be exactly 32 chars}
+      S3_ENDPOINT: ${S3_ENDPOINT:?S3_ENDPOINT must be set}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY must be set}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY must be set}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:?S3_BUCKET_NAME must be set}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:?S3_PUBLIC_URL must be set}
+      PAYME_MERCHANT_ID: ${PAYME_MERCHANT_ID:?PAYME_MERCHANT_ID must be set}
+      PAYME_SECRET_KEY: ${PAYME_SECRET_KEY:?PAYME_SECRET_KEY must be set}
+      CLICK_MERCHANT_ID: ${CLICK_MERCHANT_ID:?CLICK_MERCHANT_ID must be set}
+      CLICK_SERVICE_ID: ${CLICK_SERVICE_ID:?CLICK_SERVICE_ID must be set}
+      CLICK_SECRET_KEY: ${CLICK_SECRET_KEY:?CLICK_SECRET_KEY must be set}
+      SMS_EMAIL: ${SMS_EMAIL:-}
+      SMS_PASSWORD: ${SMS_PASSWORD:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS must be set, e.g. https://agroinvest.uz}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    restart: always
+
+  frontend:
+    build:
+      context: ./agroinvest-web
+      dockerfile: Dockerfile
+    container_name: agroinvest_prod_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+
+volumes:
+  pgdata_prod:
+  redisdata_prod:

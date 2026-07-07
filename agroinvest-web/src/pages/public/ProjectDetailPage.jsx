@@ -1,0 +1,208 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { getProjectById } from '../../api/projects.api';
+import { useAuthStore } from '../../store/auth.store';
+import { useToast } from '../../components/ui/ToastProvider';
+import InvestmentModal from '../../components/projects/InvestmentModal';
+import ProjectReportsList from '../../components/projects/ProjectReportsList';
+import Badge from '../../components/ui/Badge';
+import { formatAmount } from '../../utils/format';
+
+const ProjectDetailPage = () => {
+  const { id } = useParams();
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const { user } = useAuthStore();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchProject();
+  }, [id]);
+
+  const fetchProject = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getProjectById(id);
+      setProject(response.data);
+    } catch (err) {
+      setError("Loyihani yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInvestClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (user.role !== 'INVESTOR') {
+      showToast("Faqat investorlar loyihalarga sarmoya kiritishi mumkin", 'error');
+      return;
+    }
+    setShowModal(true);
+  };
+
+  const handleSuccess = () => {
+    setShowModal(false);
+    fetchProject(); // Reload details (e.g. raised amount)
+    showToast('Tabriklaymiz! Sarmoyangiz muvaffaqiyatli qabul qilindi!');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500 font-semibold animate-pulse">Yuklanmoqda...</p>
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <div className="text-center py-8 px-6 bg-white rounded-2xl border max-w-sm">
+          <p className="text-red-600 font-bold mb-4">{error || "Loyiha topilmadi"}</p>
+          <Link to="/projects" className="text-green-600 font-bold hover:underline">Loyihalarga qaytish</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    title,
+    description,
+    assetType,
+    riskLevel,
+    targetAmount,
+    raisedAmount,
+    expectedReturnPct,
+    durationDays,
+    status,
+    region,
+    locationDetails,
+    farmerName,
+    mediaUrls,
+  } = project;
+
+  const percent = Math.min(100, Math.round((raisedAmount / targetAmount) * 100));
+
+  return (
+    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Banner image or placeholder */}
+        <div className="h-64 bg-gradient-to-r from-green-600 to-green-800 flex items-center justify-center p-8 text-center text-white">
+          <div>
+            <span className="text-xs uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">{assetType}</span>
+            <h1 className="text-2xl md:text-4xl font-extrabold mt-3">{title}</h1>
+            <p className="mt-2 text-green-100 text-sm">Fermer: {farmerName} | Joylashuv: {region}</p>
+          </div>
+        </div>
+
+        <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Main info */}
+          <div className="md:col-span-2 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">Loyiha haqida</h2>
+              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{description}</p>
+            </div>
+
+            {mediaUrls && mediaUrls.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-3">Foto / Video dalillar</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {mediaUrls.map((url, i) => (
+                    <img key={i} src={url} alt={`${title} loyihasi rasmi ${i + 1}`} className="rounded-xl border h-36 w-full object-cover" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-4 text-sm text-gray-500">
+              <div>
+                <p className="font-semibold text-gray-400">Hudud</p>
+                <p className="text-gray-800 font-bold mt-0.5">{region || "Ko'rsatilmagan"}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-400">Batafsil manzil</p>
+                <p className="text-gray-800 font-bold mt-0.5">{locationDetails || "Ko'rsatilmagan"}</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Fermer hisobotlari</h2>
+              <ProjectReportsList projectId={id} />
+            </div>
+          </div>
+
+          {/* Fundraising Box */}
+          <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col justify-between h-fit space-y-6">
+            <div>
+              <span className="text-xs font-bold text-gray-400 uppercase">Moliyaviy ko'rsatkichlar</span>
+              <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
+                <div className="bg-white p-3 rounded-xl border border-gray-100 text-center">
+                  <p className="text-[10px] text-gray-400 uppercase font-semibold">Daromadlilik</p>
+                  <p className="text-xl font-black text-green-600">+{expectedReturnPct}%</p>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-gray-100 text-center">
+                  <p className="text-[10px] text-gray-400 uppercase font-semibold">Muddat</p>
+                  <p className="text-xl font-bold text-gray-800">{durationDays} kun</p>
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="space-y-2 mb-6">
+                <div className="flex justify-between text-xs font-semibold text-gray-500">
+                  <span>Yig'ildi: {percent}%</span>
+                  <span className="text-gray-900 font-bold">{formatAmount(raisedAmount)}</span>
+                </div>
+                <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                  <div className="bg-green-600 h-full rounded-full" style={{ width: `${percent}%` }} />
+                </div>
+                <p className="text-right text-[10px] text-gray-400">Maqsad: {formatAmount(targetAmount)}</p>
+              </div>
+
+              <div className="space-y-3 text-xs text-gray-500 border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <span>Risk darajasi</span>
+                  <Badge status={riskLevel} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Loyiha holati</span>
+                  <Badge status={status} />
+                </div>
+              </div>
+            </div>
+
+            {(status === 'FUNDING' || status === 'APPROVED') && (
+              <button
+                onClick={handleInvestClick}
+                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition"
+              >
+                Sarmoya kiritish
+              </button>
+            )}
+
+            <p className="text-[11px] text-gray-400 leading-relaxed border-t border-gray-100 pt-4">
+              Kafolatlangan daromad yo'q. Barcha investitsiyalar xavf bilan bog'liq va loyiha muvaffaqiyatsiz bo'lsa, mablag'ingizni qisman yoki to'liq yo'qotishingiz mumkin.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <InvestmentModal
+          project={project}
+          onClose={() => setShowModal(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
+    </div>
+  );
+};
+
+export default ProjectDetailPage;

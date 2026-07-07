@@ -1,0 +1,71 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: agroinvest_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agroinvest_db
+      POSTGRES_USER: agroinvest_user
+      POSTGRES_PASSWORD: strong_password_here
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agroinvest_user -d agroinvest_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agroinvest_redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_password_here
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./agroinvest-backend
+      dockerfile: Dockerfile
+    container_name: agroinvest_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=agroinvest_db
+      - DB_USERNAME=agroinvest_user
+      - DB_PASSWORD=strong_password_here
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis_password_here
+      - JWT_SECRET=minimum_32_characters_secret_key_here!!
+      - ENCRYPTION_KEY=32_char_aes_key_for_passport_dat
+    restart: always
+
+  frontend:
+    build:
+      context: ./agroinvest-web
+      dockerfile: Dockerfile
+    container_name: agroinvest_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+

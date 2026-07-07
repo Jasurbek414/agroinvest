@@ -1,0 +1,40 @@
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary files
+.claude/
+.gemini/
+*.log
+tmp/
+temp/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Java (Backend) Build Outputs
+agroinvest-backend/target/
+agroinvest-backend/*.iml
+agroinvest-backend/.classpath
+agroinvest-backend/.project
+agroinvest-backend/.settings/
+
+# Node (Web Frontend) Build Outputs
+agroinvest-web/node_modules/
+agroinvest-web/dist/
+agroinvest-web/.next/
+agroinvest-web/out/
+
+# Flutter (Mobile) Build Outputs
+agroinvest-mobile/build/
+agroinvest-mobile/.dart_tool/
+agroinvest-mobile/.pub-cache/
+agroinvest-mobile/ios/Flutter/Generated.xcconfig
+agroinvest-mobile/ios/Flutter/flutter_export_environment.sh
