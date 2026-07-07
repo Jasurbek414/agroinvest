@@ -3,10 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'core/constants/app_colors.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/otp_page.dart';
+import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/projects/presentation/providers/projects_provider.dart';
 import 'features/projects/presentation/pages/projects_list_page.dart';
 import 'features/projects/presentation/pages/project_detail_page.dart';
@@ -23,7 +26,14 @@ import 'features/notifications/presentation/providers/notification_provider.dart
 import 'features/kyc/presentation/pages/kyc_page.dart';
 import 'features/kyc/presentation/providers/kyc_provider.dart';
 import 'features/reports/presentation/pages/submit_report_page.dart';
+import 'features/reports/presentation/pages/daily_log_page.dart';
+import 'features/reports/presentation/pages/report_timeline_page.dart';
+import 'features/expenses/presentation/pages/project_expenses_page.dart';
+import 'features/expenses/presentation/pages/add_expense_page.dart';
+import 'features/vet/presentation/pages/project_vet_page.dart';
+import 'features/vet/presentation/pages/add_vet_inspection_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/profile/presentation/pages/edit_profile_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -38,11 +48,24 @@ const List<String> _protectedPaths = [
   '/disputes',
   '/projects/create',
   '/projects/my',
+  '/profile/edit',
+];
+
+// Sub-routes of a project (/projects/:id/<suffix>) that require login -
+// unlike the project detail page itself, which guests may browse.
+const List<String> _protectedProjectSuffixes = [
+  '/report',
+  '/daily-log',
+  '/reports',
+  '/expenses',
+  '/expenses/add',
+  '/vet/add',
 ];
 
 bool _isProtected(String location) {
   if (_protectedPaths.contains(location)) return true;
-  return location.startsWith('/projects/') && location.endsWith('/report');
+  if (!location.startsWith('/projects/')) return false;
+  return _protectedProjectSuffixes.any((suffix) => location.endsWith(suffix));
 }
 
 const _authFlowPaths = {'/login', '/register', '/otp', '/session-expired'};
@@ -61,7 +84,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
   GoRouter _buildRouter() {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/projects',
+      initialLocation: '/home',
       refreshListenable: _authProvider,
       redirect: (context, state) {
         final loggedIn = _authProvider.user != null;
@@ -98,9 +121,61 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         GoRoute(path: '/disputes', builder: (context, state) => const DisputesPage()),
         GoRoute(path: '/projects/create', builder: (context, state) => const CreateProjectPage()),
         GoRoute(path: '/projects/my', builder: (context, state) => const MyProjectsPage()),
+        GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfilePage()),
         GoRoute(
           path: '/projects/:id/report',
           builder: (context, state) => SubmitReportPage(projectId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/projects/:id/daily-log',
+          builder: (context, state) => DailyLogPage(projectId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/projects/:id/reports',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return ReportTimelinePage(
+              projectId: state.pathParameters['id']!,
+              projectTitle: extra['title']?.toString(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:id/expenses',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return ProjectExpensesPage(
+              projectId: state.pathParameters['id']!,
+              projectTitle: extra['title']?.toString(),
+              expensePolicy: extra['expensePolicy']?.toString(),
+              farmerId: extra['farmerId']?.toString(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:id/expenses/add',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return AddExpensePage(
+              projectId: state.pathParameters['id']!,
+              expensePolicy: extra['expensePolicy']?.toString(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:id/vet',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return ProjectVetPage(
+              projectId: state.pathParameters['id']!,
+              projectTitle: extra['title']?.toString(),
+              farmerId: extra['farmerId']?.toString(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:id/vet/add',
+          builder: (context, state) => AddVetInspectionPage(projectId: state.pathParameters['id']!),
         ),
         GoRoute(
           path: '/projects/:id',
@@ -109,6 +184,9 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) => AppShellScaffold(navigationShell: navigationShell),
           branches: [
+            StatefulShellBranch(routes: [
+              GoRoute(path: '/home', builder: (context, state) => const DashboardPage()),
+            ]),
             StatefulShellBranch(routes: [
               GoRoute(path: '/projects', builder: (context, state) => const ProjectsListPage()),
             ]),
@@ -129,6 +207,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => ProjectsProvider()),
         ChangeNotifierProvider(create: (_) => InvestmentProvider()),
         ChangeNotifierProvider(create: (_) => WalletProvider()),
@@ -139,15 +218,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
       child: MaterialApp.router(
         title: 'AgroInvest',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          primaryColor: AppColors.primary,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            surface: AppColors.background,
-          ),
-          fontFamily: 'Roboto',
-        ),
+        theme: AppTheme.light(),
         routerConfig: _router,
       ),
     );
@@ -206,10 +277,10 @@ class SessionExpiredPage extends StatelessWidget {
   }
 }
 
-/// The persistent app frame (offline banner + bottom nav) around the three
+/// The persistent app frame (offline banner + bottom nav) around the four
 /// StatefulShellRoute branches - replaces the old hand-rolled IndexedStack
 /// AppShell, but keeps its exact behavior (per-tab guest gating, session-reset
-/// wiring, connectivity banner).
+/// wiring, connectivity banner), plus the new Dashboard home tab.
 class AppShellScaffold extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -240,6 +311,7 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
   void _wireSessionResetCallback() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     auth.onSessionEnded = () {
+      Provider.of<DashboardProvider>(context, listen: false).reset();
       Provider.of<ProjectsProvider>(context, listen: false).reset();
       Provider.of<InvestmentProvider>(context, listen: false).reset();
       Provider.of<WalletProvider>(context, listen: false).reset();
@@ -302,7 +374,7 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
         elevation: 8,
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 1 && user == null) {
+          if (index == 2 && user == null) {
             // Redirect to login for Wallet tab
             context.push('/login');
             return;
@@ -311,11 +383,18 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
             index,
             initialLocation: index == widget.navigationShell.currentIndex,
           );
-          if (index == 2 && user != null) {
+          if (index == 0 && user != null) {
+            Provider.of<DashboardProvider>(context, listen: false).fetchDashboard();
+          }
+          if (index == 3 && user != null) {
             Provider.of<NotificationProvider>(context, listen: false).fetchUnreadCount();
           }
         },
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Bosh sahifa',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_rounded),
             label: 'Loyihalar',

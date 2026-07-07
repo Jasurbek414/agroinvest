@@ -116,6 +116,11 @@ class ProfilePage extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(
+                onPressed: () => context.push('/profile/edit'),
+                icon: const Icon(Icons.edit_outlined, color: AppColors.textMuted),
+                tooltip: 'Tahrirlash',
+              ),
             ],
           ),
         ),

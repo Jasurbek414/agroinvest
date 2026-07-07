@@ -152,6 +152,15 @@ class AuthProvider extends ChangeNotifier {
     _errorCode = null;
   }
 
+  /// Updates the cached session user's name after a profile edit, so the
+  /// profile page and dashboard greeting reflect it without a re-login.
+  Future<void> refreshUserName(String fullName) async {
+    if (_user == null) return;
+    _user = {..._user!, 'fullName': fullName};
+    await SecureStorage.saveUserData(jsonEncode(_user));
+    notifyListeners();
+  }
+
   /// Clears a lingering "session expired" error once the user has acted on it
   /// (e.g. landed back on the login page) - without this, GoRouter's redirect
   /// would keep treating the app as still in the expired-session state.

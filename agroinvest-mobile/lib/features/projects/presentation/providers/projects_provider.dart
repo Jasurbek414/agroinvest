@@ -22,12 +22,12 @@ class ProjectsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchProjects({String? status, String? assetType}) async {
+  Future<void> fetchProjects({String? status, String? assetType, String? animalType}) async {
     _loading = true;
     _error = null;
     notifyListeners();
     try {
-      _projects = await _repository.getProjects(status: status, assetType: assetType);
+      _projects = await _repository.getProjects(status: status, assetType: assetType, animalType: animalType);
     } catch (e) {
       _error = e.toString();
     } finally {

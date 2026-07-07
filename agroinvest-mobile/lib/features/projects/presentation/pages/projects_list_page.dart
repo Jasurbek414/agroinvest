@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/constants/animal_type_meta.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/asset_type_meta.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -20,6 +21,9 @@ class ProjectsListPage extends StatefulWidget {
 class _ProjectsListPageState extends State<ProjectsListPage> {
   String _selectedStatus = 'FUNDING';
   String? _selectedAssetType; // null = all types
+  String? _selectedAnimalType; // null = all animals; only shown for LIVESTOCK/POULTRY
+
+  bool get _showAnimalFilter => _selectedAssetType == 'LIVESTOCK' || _selectedAssetType == 'POULTRY';
 
   @override
   void initState() {
@@ -28,8 +32,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   void _fetch() {
-    Provider.of<ProjectsProvider>(context, listen: false)
-        .fetchProjects(status: _selectedStatus, assetType: _selectedAssetType);
+    Provider.of<ProjectsProvider>(context, listen: false).fetchProjects(
+      status: _selectedStatus,
+      assetType: _selectedAssetType,
+      animalType: _showAnimalFilter ? _selectedAnimalType : null,
+    );
   }
 
   @override
@@ -47,6 +54,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
             _buildWelcomeHeader(user),
             _buildStatusFilterRow(),
             _buildAssetTypeFilterRow(),
+            if (_showAnimalFilter) _buildAnimalTypeFilterRow(),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async => _fetch(),
@@ -215,7 +223,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       padding: const EdgeInsets.only(right: 8.0),
       child: InkWell(
         onTap: () {
-          setState(() => _selectedAssetType = value);
+          setState(() {
+            _selectedAssetType = value;
+            _selectedAnimalType = null; // reset sub-filter when the category changes
+          });
           _fetch();
         },
         borderRadius: BorderRadius.circular(20),
@@ -240,6 +251,55 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Sub-filter shown only when LIVESTOCK/POULTRY is selected - lets an investor
+  // narrow "Chorvachilik" down to specifically tovuq/qo'y/qoramol etc.
+  Widget _buildAnimalTypeFilterRow() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: SizedBox(
+        height: 30,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            _buildAnimalTypeChip(null, 'Barcha hayvonlar'),
+            ...kAnimalTypeMeta.entries.map((e) => _buildAnimalTypeChip(e.key, e.value.label, emoji: e.value.emoji)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimalTypeChip(String? value, String label, {String? emoji}) {
+    final isSelected = _selectedAnimalType == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: InkWell(
+        onTap: () {
+          setState(() => _selectedAnimalType = value);
+          _fetch();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryLight : AppColors.background,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: 1),
+          ),
+          child: Text(
+            emoji != null ? '$emoji $label' : label,
+            style: TextStyle(
+              color: isSelected ? AppColors.primaryDark : AppColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

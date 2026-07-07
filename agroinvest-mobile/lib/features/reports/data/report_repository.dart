@@ -13,6 +13,7 @@ class ReportRepository {
     double? geoLng,
     double? geoAccuracy,
     required String notes,
+    Map<String, dynamic>? metrics,
   }) async {
     try {
       await _dio.post('/reports/project/$projectId', data: {
@@ -22,9 +23,25 @@ class ReportRepository {
         'geoLng': geoLng,
         'geoAccuracy': geoAccuracy,
         'notes': notes,
+        if (metrics != null) 'metrics': metrics,
       });
     } on DioException catch (e) {
-      throw parseDioError(e);
+      throw parseDioException(e);
+    }
+  }
+
+  /// Report history of a project (paged endpoint; page content extracted).
+  /// Visible to the farmer AND investors - the trust timeline.
+  Future<List<dynamic>> fetchProjectReports(String projectId, {int page = 0, int size = 30}) async {
+    try {
+      final response = await _dio.get('/reports/project/$projectId', queryParameters: {
+        'page': page,
+        'size': size,
+        'sort': 'createdAt,desc',
+      });
+      return response.data['data']['content'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw parseDioException(e);
     }
   }
 }
