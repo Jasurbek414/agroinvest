@@ -1,20 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import ProjectsPage from './pages/public/ProjectsPage';
-import ProjectDetailPage from './pages/public/ProjectDetailPage';
-import MyInvestments from './pages/investor/MyInvestments';
-import WalletPage from './pages/investor/WalletPage';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
-import FarmerDashboard from './pages/farmer/FarmerDashboard';
-import KycPage from './pages/profile/KycPage';
-import DisputesPage from './pages/disputes/DisputesPage';
 import { useAuthStore } from './store/auth.store';
 import { useThemeStore } from './store/theme.store';
 import { ToastProvider } from './components/ui/ToastProvider';
 import AppShell from './components/layout/AppShell';
+
+// Lazy-loaded so each role's dashboard (admin/superadmin/farmer/investor) ships
+// as its own chunk instead of one ~800KB bundle every visitor downloads up
+// front regardless of which role (or none, for a guest) they are.
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const ProjectsPage = lazy(() => import('./pages/public/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/public/ProjectDetailPage'));
+const MyInvestments = lazy(() => import('./pages/investor/MyInvestments'));
+const WalletPage = lazy(() => import('./pages/investor/WalletPage'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
+const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
+const KycPage = lazy(() => import('./pages/profile/KycPage'));
+const DisputesPage = lazy(() => import('./pages/disputes/DisputesPage'));
+
+const RouteFallback = () => (
+  <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const Layout = AppShell;
 
@@ -53,6 +63,7 @@ function App() {
 
   return (
     <Router>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Public auth pages */}
         <Route path="/login" element={<LoginPage />} />
@@ -127,6 +138,7 @@ function App() {
         <Route path="/unauthorized" element={<Layout><div className="p-12 text-center text-red-600 font-bold">Ruxsat etilmagan sahifa!</div></Layout>} />
         <Route path="*" element={getDashboardRedirect()} />
       </Routes>
+      </Suspense>
     </Router>
   );
 }
