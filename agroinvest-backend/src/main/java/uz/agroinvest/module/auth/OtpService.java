@@ -2,6 +2,7 @@ package uz.agroinvest.module.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,9 +27,25 @@ public class OtpService {
     private final int maxSendsPerHour = 5;
     private final long verifiedTicketMinutes = 10;
 
+    // Same "safe until configured" pattern as SmsService/FcmPushService: with no real
+    // Eskiz.uz credentials, SMS never actually reaches the user's phone, so - only in
+    // that mock mode - every OTP is this fixed code instead of a random one, letting
+    // registration/login/withdrawal etc. be tested without reading server logs.
+    private static final String MOCK_OTP_CODE = "123456";
+
+    @Value("${sms.email:}")
+    private String smsEmail;
+
+    @Value("${sms.password:}")
+    private String smsPassword;
+
     public OtpService(RedisTemplate<String, Object> redisTemplate, SmsService smsService) {
         this.redisTemplate = redisTemplate;
         this.smsService = smsService;
+    }
+
+    private boolean isSmsProviderConfigured() {
+        return smsEmail != null && !smsEmail.isBlank() && smsPassword != null && !smsPassword.isBlank();
     }
 
     public String generateAndSaveOtp(String phoneNumber, String purpose) {
@@ -50,7 +67,9 @@ public class OtpService {
         String redisKey = getRedisKey(phoneNumber, purpose);
         String attemptsKey = getAttemptsKey(phoneNumber, purpose);
 
-        String code = String.format("%06d", secureRandom.nextInt(1_000_000));
+        String code = isSmsProviderConfigured()
+                ? String.format("%06d", secureRandom.nextInt(1_000_000))
+                : MOCK_OTP_CODE;
 
         redisTemplate.opsForValue().set(redisKey, code, otpExpiryMinutes, TimeUnit.MINUTES);
         // Attempts counter is keyed to the phone+purpose, not to this specific code, and is
