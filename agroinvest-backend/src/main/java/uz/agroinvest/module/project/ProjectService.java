@@ -15,6 +15,7 @@ import uz.agroinvest.common.enums.PaymentProvider;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.enums.TransactionStatus;
 import uz.agroinvest.common.enums.TransactionType;
+import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.common.exception.ApiException;
 import uz.agroinvest.common.exception.ErrorCode;
 import uz.agroinvest.module.investment.InvestmentRepository;
@@ -38,10 +39,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class ProjectService {
+
+    private static final Set<UserRole> STAFF_ROLES = Set.of(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.MODERATOR);
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
@@ -127,7 +131,7 @@ public class ProjectService {
                 .farmerSharePct(farmerSharePct)
                 .durationDays(request.getDurationDays())
                 .riskLevel(request.getRiskLevel())
-                .status(ProjectStatus.PENDING)
+                .status(Boolean.TRUE.equals(request.getSaveAsDraft()) ? ProjectStatus.DRAFT : ProjectStatus.PENDING)
                 .mediaUrls(request.getMediaUrls())
                 .totalInvestors(0)
                 .reportFrequencyDays(reportFrequencyDays)
@@ -185,8 +189,8 @@ public class ProjectService {
             throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Ushbu loyihani tahrirlash huquqi sizda yo'q");
         }
 
-        if (project.getStatus() != ProjectStatus.PENDING) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat kutilayotgan (PENDING) loyihalarni tahrirlash mumkin");
+        if (project.getStatus() != ProjectStatus.PENDING && project.getStatus() != ProjectStatus.DRAFT) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat kutilayotgan (PENDING) yoki qoralama (DRAFT) loyihalarni tahrirlash mumkin");
         }
 
         if (request.getAssetType() != null) project.setAssetType(request.getAssetType());
@@ -233,11 +237,69 @@ public class ProjectService {
             throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
         }
 
-        if (project.getStatus() != ProjectStatus.PENDING) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat kutilayotgan (PENDING) loyihalarni bekor qilish mumkin");
+        if (project.getStatus() != ProjectStatus.PENDING && project.getStatus() != ProjectStatus.DRAFT) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat kutilayotgan (PENDING) yoki qoralama (DRAFT) loyihalarni bekor qilish mumkin");
         }
 
         projectRepository.delete(project);
+    }
+
+    /**
+     * Farmer's "e'lon qilish" (publish) action: moves a DRAFT project into the
+     * normal PENDING review queue. changeStatus() below can't be reused for this -
+     * it's staff-only (hasAnyRole ADMIN/SUPERADMIN/MODERATOR).
+     */
+    @Transactional
+    public ProjectDto submitProject(UUID projectId, UserPrincipal principal) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+
+        if (!project.getFarmer().getId().equals(principal.getId())) {
+            throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
+        }
+
+        if (project.getStatus() != ProjectStatus.DRAFT) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat qoralama (DRAFT) loyihalarni ko'rib chiqishga yuborish mumkin");
+        }
+
+        project.setStatus(ProjectStatus.PENDING);
+        Project saved = projectRepository.save(project);
+
+        auditLogService.log(project.getFarmer(), "SUBMIT_PROJECT", "Project", saved.getId().toString(),
+                "{\"status\": \"DRAFT\"}", "{\"status\": \"PENDING\"}");
+
+        return mapToDto(saved);
+    }
+
+    /**
+     * Freeze/unfreeze sits outside the status state machine entirely (see
+     * PLATFORM_ROADMAP.md decision #3) - it can be applied from any status and
+     * clearing it never needs to "restore" a prior status, because status itself
+     * is never touched.
+     */
+    @Transactional
+    public ProjectDto setFrozen(UUID projectId, boolean frozen, String reason, UserPrincipal principal) {
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+
+        if (project.isFrozen() == frozen) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    frozen ? "Loyiha allaqachon muzlatilgan" : "Loyiha muzlatilmagan");
+        }
+
+        User admin = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+
+        project.setFrozen(frozen);
+        project.setFrozenReason(frozen ? reason : null);
+        project.setFrozenAt(frozen ? LocalDateTime.now() : null);
+        project.setFrozenBy(frozen ? admin : null);
+        Project saved = projectRepository.save(project);
+
+        auditLogService.log(admin, frozen ? "FREEZE_PROJECT" : "UNFREEZE_PROJECT", "Project", saved.getId().toString(),
+                null, "{\"reason\": \"" + (reason != null ? reason : "") + "\"}");
+
+        return mapToDto(saved);
     }
 
     @Transactional
@@ -289,6 +351,11 @@ public class ProjectService {
             project.setStatus(ProjectStatus.ACTIVE);
             project.setStartDate(LocalDate.now());
             project.setEndDate(LocalDate.now().plusDays(project.getDurationDays()));
+        } else if (status == ProjectStatus.MONITORING) {
+            if (project.getStatus() != ProjectStatus.ACTIVE) {
+                throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat faol (ACTIVE) loyihalarni kuzatuvga (MONITORING) o'tkazish mumkin");
+            }
+            project.setStatus(ProjectStatus.MONITORING);
         } else if (status == ProjectStatus.COMPLETED) {
             // Completion must always go through PayoutService.distributePayout (see
             // POST /{id}/payout) so commission/investor/farmer shares are actually
@@ -297,6 +364,14 @@ public class ProjectService {
             // and no payout ever recorded.
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
                     "Loyihani yakunlash faqat /api/v1/projects/{id}/payout endpointi orqali amalga oshiriladi");
+        } else {
+            // DRAFT/PENDING (and any future value) are not admin-settable targets here:
+            // DRAFT/PENDING only ever happen via createProject/submitProject. Without
+            // this guard an unrecognized target silently no-ops the transition but the
+            // audit call below would still fire, falsely recording a change that never
+            // happened.
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Loyiha holatini " + status + " ga o'zgartirib bo'lmaydi");
         }
 
         Project savedProject = projectRepository.save(project);
@@ -343,9 +418,21 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectDto getProjectById(UUID projectId) {
+    public ProjectDto getProjectById(UUID projectId, UserPrincipal principal) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+
+        // This endpoint is public (permitAll) so a DRAFT - the farmer's not-yet-
+        // submitted working copy - must be invisible to everyone except its owner
+        // and staff, even if the UUID leaks. 404 (not 403) so existence isn't revealed.
+        if (project.getStatus() == ProjectStatus.DRAFT) {
+            boolean isOwner = principal != null && project.getFarmer().getId().equals(principal.getId());
+            boolean isStaff = principal != null && STAFF_ROLES.contains(principal.getRole());
+            if (!isOwner && !isStaff) {
+                throw new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi");
+            }
+        }
+
         return mapToDto(project);
     }
 
@@ -426,6 +513,8 @@ public class ProjectService {
                 .mediaUrls(project.getMediaUrls())
                 .totalInvestors(project.getTotalInvestors())
                 .reportFrequencyDays(project.getReportFrequencyDays())
+                .frozen(project.isFrozen())
+                .frozenReason(project.getFrozenReason())
                 .createdAt(project.getCreatedAt())
                 .build();
     }

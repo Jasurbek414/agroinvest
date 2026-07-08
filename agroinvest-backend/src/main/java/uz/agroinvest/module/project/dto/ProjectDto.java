@@ -60,5 +60,7 @@ public class ProjectDto {
     private List<String> mediaUrls;
     private Integer totalInvestors;
     private Integer reportFrequencyDays;
+    private boolean frozen;
+    private String frozenReason;
     private LocalDateTime createdAt;
 }

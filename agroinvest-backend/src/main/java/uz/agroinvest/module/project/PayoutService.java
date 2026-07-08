@@ -98,8 +98,12 @@ public class PayoutService {
         Project project = projectRepository.findByIdForUpdate(projectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
 
-        if (project.getStatus() != ProjectStatus.ACTIVE) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat faol (ACTIVE) loyihalarni yakunlab foydani taqsimlash mumkin");
+        if (project.getStatus() != ProjectStatus.ACTIVE && project.getStatus() != ProjectStatus.MONITORING) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat faol (ACTIVE) yoki kuzatuvdagi (MONITORING) loyihalarni yakunlab foydani taqsimlash mumkin");
+        }
+
+        if (project.isFrozen()) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Loyiha muzlatilgan, foyda taqsimlash mumkin emas");
         }
 
         if (salePrice.compareTo(BigDecimal.ZERO) <= 0) {

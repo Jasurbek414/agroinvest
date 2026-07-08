@@ -48,8 +48,11 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectDto>> getProjectById(@PathVariable UUID id) {
-        ProjectDto dto = projectService.getProjectById(id);
+    public ResponseEntity<ApiResponse<ProjectDto>> getProjectById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProjectDto dto = projectService.getProjectById(id, principal);
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
@@ -100,6 +103,28 @@ public class ProjectController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         ProjectDto dto = projectService.changeStatus(id, status, rejectionReason, principal);
+        return ResponseEntity.ok(ApiResponse.success(dto));
+    }
+
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasRole('FARMER')")
+    public ResponseEntity<ApiResponse<ProjectDto>> submitProject(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProjectDto dto = projectService.submitProject(id, principal);
+        return ResponseEntity.ok(ApiResponse.success(dto));
+    }
+
+    @PatchMapping("/{id}/freeze")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    public ResponseEntity<ApiResponse<ProjectDto>> setFrozen(
+            @PathVariable UUID id,
+            @RequestParam boolean frozen,
+            @RequestParam(required = false) String reason,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProjectDto dto = projectService.setFrozen(id, frozen, reason, principal);
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
 

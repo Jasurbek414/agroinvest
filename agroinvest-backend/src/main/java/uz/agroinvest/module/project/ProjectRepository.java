@@ -51,8 +51,13 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     // (or, before the LIKE-clause casts, "function lower(bytea) does not exist") on
     // any request that omits that filter - only ever caught by running against a
     // real Postgres instance, never by a Mockito-backed unit test.
+    // p.status <> DRAFT is unconditional (not folded into the :status is-null check
+    // below) - this endpoint is shared by public/investor browsing and the admin
+    // ProjectsTab, and a farmer's not-yet-submitted draft must never be reachable
+    // through either, even by an admin explicitly filtering status=DRAFT.
     @EntityGraph(attributePaths = {"farmer"})
     @Query("select p from Project p where "
+            + "p.status <> uz.agroinvest.common.enums.ProjectStatus.DRAFT and "
             + "(cast(:status as string) is null or p.status = :status) and "
             + "(cast(:assetType as string) is null or p.assetType = :assetType) and "
             + "(cast(:animalType as string) is null or p.animalType = :animalType) and "

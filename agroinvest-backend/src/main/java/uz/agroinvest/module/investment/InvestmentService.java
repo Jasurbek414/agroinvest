@@ -89,6 +89,10 @@ public class InvestmentService {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Ushbu loyihaga hozirda sarmoya kiritib bo'lmaydi");
         }
 
+        if (project.isFrozen()) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Loyiha muzlatilgan, hozircha sarmoya kiritib bo'lmaydi");
+        }
+
         BigDecimal remainingToFund = project.getTargetAmount().subtract(project.getRaisedAmount());
         if (request.getAmount().compareTo(remainingToFund) > 0) {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Loyihani to'liq moliyalashtirish uchun " + remainingToFund + " UZS yetarli");

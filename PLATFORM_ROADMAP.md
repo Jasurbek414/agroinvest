@@ -26,11 +26,12 @@ Tasdiqlangan kategoriya tuzilmasi — pastda 0.4 bo'limida.
 - [x] 0.2 Audit log to'ldirish
   - [x] `AuditLogService.log()` — ipAddress/userAgent avtomatik `RequestContextHolder` orqali (X-Forwarded-For → getRemoteAddr fallback) — controller/service signaturelarini o'zgartirmasdan, chunki barcha chaqiruvlar faqat HTTP so'rov threadida ishlaydi (ReportMonitoringScheduler kabi background joblardan hech qachon chaqirilmaydi)
   - [x] `ProjectService.changeStatus` (`PROJECT_STATUS_<status>`), `InvestmentService` (`CREATE_INVESTMENT`/`CANCEL_INVESTMENT`), `PayoutService.distributePayout` (`DISTRIBUTE_PAYOUT` — endi `UserPrincipal` qabul qiladi), `ExpenseService.reviewExpense` (`APPROVE_EXPENSE`/`REJECT_EXPENSE`), `ReportService.verifyReport` (`VERIFY_REPORT`/`REJECT_REPORT`), `VetInspectionService.verifyInspection` (`VERIFY_VET_INSPECTION`/`REJECT_VET_INSPECTION`) — audit chaqiruvlari qo'shildi. Throwaway bazada tekshirildi: `ipAddress`/`userAgent` to'g'ri yoziladi (masalan `0:0:0:0:0:0:0:1` + maxsus User-Agent).
-- [ ] 0.3 ProjectStatus + FROZEN
-  - [ ] `ALTER TYPE proj_status ADD VALUE 'DRAFT','MONITORING'` (faqat DDL)
-  - [ ] `projects.is_frozen/frozen_reason/frozen_at/frozen_by/frozen_from_status`
-  - [ ] `ProjectService.changeStatus` + `PayoutService.distributePayout` — birga yangilash
-  - [ ] `PATCH /projects/{id}/freeze` endpoint + pul-harakati endpointlariga tekshiruv
+- [x] 0.3 ProjectStatus + FROZEN
+  - [x] `ALTER TYPE proj_status ADD VALUE 'DRAFT','MONITORING'` (V16, faqat DDL) + `projects.is_frozen/frozen_reason/frozen_at/frozen_by` (V17 — `frozen_from_status` amalda keraksiz bo'lib chiqdi va olib tashlandi: status muzlatish paytida umuman o'zgarmagani uchun "qaytarish" uchun eslab qolish shart emas)
+  - [x] `ProjectService.changeStatus`: MONITORING (faqat ACTIVE'dan) qo'shildi; **shu yerda topilgan qo'shimcha xato**: 0.2'da qo'shilgan audit-log chaqiruvi if/else-if zanjiridagi HECH BIR shartga mos kelmagan holatda ham (masalan noto'g'ri status=PENDING yuborilsa) ishga tushib, sodir bo'lmagan o'zgarishni yolg'on qayd etardi — tuzatildi: tanilmagan target uchun aniq `BAD_REQUEST`
+  - [x] `PayoutService.distributePayout`: ACTIVE tekshiruvi ACTIVE||MONITORING'ga kengaytirildi + `is_frozen` tekshiruvi qo'shildi
+  - [x] `PATCH /projects/{id}/freeze` (admin/superadmin) + `POST /projects/{id}/submit` (fermerning "e'lon qilish" tugmasi, DRAFT→PENDING) + `InvestmentService.createInvestment`'ga `is_frozen` tekshiruvi. **Rejadan chetlanish**: withdrawal `is_frozen`ni tekshirmaydi — `WithdrawalRequest` hech qanday loyihaga bog'lanmagan (faqat hamyon balansidan), shuning uchun bitta loyihani muzlatish umumiy pul yechishni bloklashi mantiqan noto'g'ri va texnik jihatdan amalga oshirib bo'lmaydi
+  - [x] **Qo'shimcha xavfsizlik tuzatishi** (DRAFT qo'shish jarayonida topilgan): `GET /projects` va `GET /projects/{id}` ikkalasi ham `permitAll()` — DRAFT loyiha (fermerning hali yubormagan qoralamasi) tasodifan UUID orqali yoki filtrsiz ro'yxatda hamma uchun ochiq bo'lib qolar edi. Tuzatildi: `ProjectRepository.search()` DRAFT'ni har doim (status filtridan qat'iy nazar) chiqarib tashlaydi; `getProjectById` faqat egasi/xodimga DRAFT ko'rsatadi, boshqalarga 404 (mavjudligini oshkor qilmaslik uchun)
 - [ ] 0.4 Kategoriya taksonomiyasi (poydevor)
   - [ ] `asset_categories` jadvali + seed (pastdagi tuzilma bo'yicha)
   - [ ] `projects.category_id` nullable FK

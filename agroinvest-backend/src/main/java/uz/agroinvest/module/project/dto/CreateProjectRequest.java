@@ -87,4 +87,9 @@ public class CreateProjectRequest {
     private RiskLevel riskLevel;
 
     private List<String> mediaUrls;
+
+    // true -> saved as DRAFT (not submitted for review yet, farmer can keep
+    // editing/deleting freely); null/false -> submitted immediately as PENDING
+    // (existing behavior, unchanged for clients that don't send this field).
+    private Boolean saveAsDraft;
 }

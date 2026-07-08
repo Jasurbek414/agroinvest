@@ -176,6 +176,23 @@ public class Project {
     @Column(name = "farmer_milestone2_paid_at")
     private LocalDateTime farmerMilestone2PaidAt;
 
+    // Orthogonal freeze flag (mirrors User.isBlocked) - blocks money-moving actions
+    // (invest, distribute payout) without touching status, so unfreezing never has
+    // to "restore" anything.
+    @Builder.Default
+    @Column(name = "is_frozen")
+    private boolean isFrozen = false;
+
+    @Column(name = "frozen_reason")
+    private String frozenReason;
+
+    @Column(name = "frozen_at")
+    private LocalDateTime frozenAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "frozen_by")
+    private User frozenBy;
+
     // Optimistic lock: prevents a payout/status-transition from being run twice
     // concurrently (e.g. a double-clicked "distribute payout" admin action).
     @Version
