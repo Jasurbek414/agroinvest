@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.common.response.ApiResponse;
 import uz.agroinvest.common.response.PageResponse;
-import uz.agroinvest.module.superadmin.entity.AuditLog;
-import uz.agroinvest.module.superadmin.entity.PlatformSettings;
+import uz.agroinvest.module.superadmin.dto.AuditLogDto;
+import uz.agroinvest.module.superadmin.dto.PlatformSettingsDto;
 import uz.agroinvest.module.user.dto.UserDto;
 import uz.agroinvest.security.UserPrincipal;
 
@@ -62,27 +62,27 @@ public class SuperAdminController {
     }
 
     @GetMapping("/audit-logs")
-    public ResponseEntity<ApiResponse<PageResponse<AuditLog>>> getAuditLogs(
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogDto>>> getAuditLogs(
             @RequestParam(required = false) String action,
             Pageable pageable
     ) {
-        Page<AuditLog> page = superAdminService.getAuditLogs(action, pageable);
+        Page<AuditLogDto> page = superAdminService.getAuditLogs(action, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @GetMapping("/settings")
-    public ResponseEntity<ApiResponse<PageResponse<PlatformSettings>>> getSettings(Pageable pageable) {
-        Page<PlatformSettings> page = superAdminService.getSettings(pageable);
+    public ResponseEntity<ApiResponse<PageResponse<PlatformSettingsDto>>> getSettings(Pageable pageable) {
+        Page<PlatformSettingsDto> page = superAdminService.getSettings(pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @PatchMapping("/settings")
-    public ResponseEntity<ApiResponse<PlatformSettings>> updateSetting(
+    public ResponseEntity<ApiResponse<PlatformSettingsDto>> updateSetting(
             @RequestParam String key,
             @RequestParam String value,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        PlatformSettings setting = superAdminService.updateSetting(key, value, principal);
+        PlatformSettingsDto setting = superAdminService.updateSetting(key, value, principal);
         return ResponseEntity.ok(ApiResponse.success(setting));
     }
 

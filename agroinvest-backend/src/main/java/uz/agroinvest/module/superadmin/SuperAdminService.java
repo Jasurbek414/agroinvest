@@ -10,6 +10,8 @@ import uz.agroinvest.common.enums.KycStatus;
 import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.common.exception.ApiException;
 import uz.agroinvest.common.exception.ErrorCode;
+import uz.agroinvest.module.superadmin.dto.AuditLogDto;
+import uz.agroinvest.module.superadmin.dto.PlatformSettingsDto;
 import uz.agroinvest.module.superadmin.entity.AuditLog;
 import uz.agroinvest.module.superadmin.entity.PlatformSettings;
 import uz.agroinvest.module.user.UserRepository;
@@ -138,7 +140,7 @@ public class SuperAdminService {
     private static final String FARMER_SHARE_KEY = "default_farmer_share_pct";
 
     @Transactional
-    public PlatformSettings updateSetting(String key, String value, UserPrincipal principal) {
+    public PlatformSettingsDto updateSetting(String key, String value, UserPrincipal principal) {
         if (INVESTOR_SHARE_KEY.equals(key) || FARMER_SHARE_KEY.equals(key)) {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
                     "Investor va fermer ulushlarini PATCH /api/v1/superadmin/settings/shares orqali birgalikda o'zgartiring");
@@ -170,7 +172,7 @@ public class SuperAdminService {
         auditLogService.log(superadmin, "UPDATE_SETTING", "PlatformSettings", saved.getId().toString(),
                 "{\"value\": \"" + oldVal + "\"}", "{\"value\": \"" + value + "\"}");
 
-        return saved;
+        return mapToDto(saved);
     }
 
     /**
@@ -214,15 +216,42 @@ public class SuperAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AuditLog> getAuditLogs(String action, Pageable pageable) {
-        if (action != null && !action.isBlank()) {
-            return auditLogRepository.findByAction(action, pageable);
-        }
-        return auditLogRepository.findAll(pageable);
+    public Page<AuditLogDto> getAuditLogs(String action, Pageable pageable) {
+        Page<AuditLog> page = (action != null && !action.isBlank())
+                ? auditLogRepository.findByAction(action, pageable)
+                : auditLogRepository.findAll(pageable);
+        return page.map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
-    public Page<PlatformSettings> getSettings(Pageable pageable) {
-        return platformSettingsRepository.findAll(pageable);
+    public Page<PlatformSettingsDto> getSettings(Pageable pageable) {
+        return platformSettingsRepository.findAll(pageable).map(this::mapToDto);
+    }
+
+    private AuditLogDto mapToDto(AuditLog log) {
+        return AuditLogDto.builder()
+                .id(log.getId())
+                .userId(log.getUser() != null ? log.getUser().getId() : null)
+                .userName(log.getUser() != null ? log.getUser().getFullName() : null)
+                .action(log.getAction())
+                .entityType(log.getEntityType())
+                .entityId(log.getEntityId())
+                .oldValue(log.getOldValue())
+                .newValue(log.getNewValue())
+                .ipAddress(log.getIpAddress())
+                .userAgent(log.getUserAgent())
+                .createdAt(log.getCreatedAt())
+                .build();
+    }
+
+    private PlatformSettingsDto mapToDto(PlatformSettings setting) {
+        return PlatformSettingsDto.builder()
+                .id(setting.getId())
+                .settingKey(setting.getSettingKey())
+                .settingValue(setting.getSettingValue())
+                .description(setting.getDescription())
+                .updatedByName(setting.getUpdatedBy() != null ? setting.getUpdatedBy().getFullName() : null)
+                .updatedAt(setting.getUpdatedAt())
+                .build();
     }
 }

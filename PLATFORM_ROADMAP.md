@@ -1,0 +1,113 @@
+# AgroInvest — Platforma yo'l xaritasi
+
+> Bu fayl "konstitutsiya" talablari (2026-07-08) bo'yicha ko'p bosqichli, ko'p sessiyali ish rejasi. Har sessiyada shu fayldan davom etiladi — bajarilgan bandlar `[x]` bilan belgilanadi, izoh qo'shiladi.
+
+## Muhim arxitektura qarorlari
+
+1. **Dinamik rollar** = qattiq 6 baza rol (`UserRole` enum, o'zgarmaydi) ustiga qo'shiladigan `custom_roles`/`custom_role_permissions`/`user_custom_roles`. Eski `hasRole()` endpointlar custom-rol ruxsatlarini ko'rmaydi, toki `hasPermission()`ga ko'chirilmaguncha.
+2. **Audit log** — mavjud aniq-chaqiruv patternini (`AuditLogService.log()`) davom ettiramiz, AOP qo'shmaymiz.
+3. **FROZEN** — `ProjectStatus` enum qiymati emas, `projects.is_frozen` orthogonal bayrog'i (xuddi `users.is_blocked` kabi).
+4. **Kategoriya taksonomiyasi** — additive: yangi `asset_categories` + `projects.category_id` (nullable), eski `asset_type`/`animal_type` va ularga tayanuvchi kod Phase 5gacha tegilmaydi.
+5. **ProjectStatus kengaytirish** — `ALTER TYPE proj_status ADD VALUE` faqat DDL, alohida migratsiyada, o'sha migratsiyada foydalanilmaydi (V8/V13 pattern).
+
+Tasdiqlangan kategoriya tuzilmasi — pastda 0.4 bo'limida.
+
+---
+
+## Phase 0 — Poydevor
+
+- [x] 0.0 Xavfsizlik: prompt-injection topilmasi tekshirildi (repo bo'ylab qidiruv — zararli fayl topilmadi; ehtimol sub-agent haqiqiy system-reminder tegini noto'g'ri talqin qilgan)
+- [x] 0.1 Ruxsatlar tizimi
+  - [x] Flyway: `permissions`, `role_permissions` (baza 6 rol uchun joriy huquqlar bilan seed — V14/V15), `custom_roles`, `custom_role_permissions`, `user_custom_roles`
+  - [x] `hasPermission(String code)` SpEL bean-reference expression (`@authz.has(...)`, `AuthorizationBean`)
+  - [x] Rol→ruxsat Redis kesh (`PermissionService.getRolePermissions`, 6 soat TTL)
+  - [x] SuperAdmin: permission yaratish/rolga bog'lash/custom-rol foydalanuvchiga biriktirish endpointlari (`PermissionController`)
+  - [x] **Reja tashqarisidagi xavfsizlik tuzatishi** (0.1 sinovi paytida topildi): `POST .../custom-roles` javobida to'liq `User` obyekti (bcrypt `passwordHash`, shifrlangan `passportData`) xom holda JSON'ga chiqib ketayotgan edi — bu **oldindan mavjud** kamchilik, `SuperAdminController.getAuditLogs()`/`getSettings()` xam xuddi shu tarzda xom `AuditLog`/`PlatformSettings` entitylarni (`User` bog'lanishi bilan) qaytarardi. Ikkalasi ustida ham `open-in-view: false` sababli `LazyInitializationException` xavfi bor edi (`AuditLog.user` — `nullable=false`, ya'ni har bir qatorda kafolatlangan portlash). Tuzatildi: `User.passwordHash`/`passportData`ga global `@JsonIgnore` (himoya qatlami) + yangi `AuditLogDto`/`PlatformSettingsDto`/`PermissionDto`/`CustomRoleDto` + ikkala repozitoriyaga `@EntityGraph(attributePaths={"user"|"updatedBy"})` `findAll(Pageable)` override. Haqiqiy throwaway bazada qo'lda tekshirildi (login→audit-log yozuv yaratish→ro'yxatni olish — portlashsiz, `passwordHash` chiqmaydi).
+- [ ] 0.2 Audit log to'ldirish
+  - [ ] `AuditLogService.log()` — ipAddress/userAgent parametrlari
+  - [ ] `ProjectService.changeStatus`, `InvestmentService`, `PayoutService.distributePayout`, `ExpenseService.reviewExpense`, `ReportService.verifyReport`, `VetInspectionService.verifyInspection` — audit chaqiruvlari
+- [ ] 0.3 ProjectStatus + FROZEN
+  - [ ] `ALTER TYPE proj_status ADD VALUE 'DRAFT','MONITORING'` (faqat DDL)
+  - [ ] `projects.is_frozen/frozen_reason/frozen_at/frozen_by/frozen_from_status`
+  - [ ] `ProjectService.changeStatus` + `PayoutService.distributePayout` — birga yangilash
+  - [ ] `PATCH /projects/{id}/freeze` endpoint + pul-harakati endpointlariga tekshiruv
+- [ ] 0.4 Kategoriya taksonomiyasi (poydevor)
+  - [ ] `asset_categories` jadvali + seed (pastdagi tuzilma bo'yicha)
+  - [ ] `projects.category_id` nullable FK
+- [ ] 0.5 i18n skeleton
+  - [ ] Mobil: easy_localization/intl_utils + uz.json
+  - [ ] Veb: react-i18next + uz.json
+  - [ ] Til tanlagich (Profil/Sozlamalar)
+
+### Tasdiqlangan kategoriya tuzilmasi (0.4)
+
+```
+Chorvachilik
+  Qoramolchilik        → Sut / Go'sht / Nasldor / Buqa semirtirish
+  Qo'ychilik           → Go'sht / Jun / Nasldor
+  Echkichilik          → Sut / Go'sht / Nasldor
+  Quyonchilik
+  Parrandachilik       → Tovuq / Bedana / Kurka / O'rdak / G'oz / Tuyaqush
+  Otxonachilik
+  Tuyachilik
+Dehqonchilik           → G'alla / Sabzavot / Poliz / Dukkakli / Moyli ekinlar / Dorivor o'simliklar
+Bog'dorchilik          → Urug'li mevalar / Danakli mevalar / Yong'oqli daraxtlar / Sitrus mevalar
+Uzumchilik
+Issiqxona
+O'rmon plantatsiyalari
+Asalarichilik
+Baliqchilik
+Boshqa
+```
+
+---
+
+## Phase 1 — Mavjud modullarni to'liq checklistga moslashtirish
+
+- [ ] Qidiruv/filtr kengaytirish (summa oralig'i, muddat, foiz, xavf, reyting) — `ProjectRepository.search`
+- [ ] CSV eksport — har bir admin ro'yxat endpointi + `DataTable.jsx` "Eksport" tugmasi
+- [ ] Bulk actions — mavjud `DataTable.jsx` `bulkActions` propini har bir admin tab'ga ulash
+- [ ] CSV import — past-xavfli amallardan boshlab (masalan bulk KYC ro'yxati)
+- [ ] Yangi/tegilgan endpointlarni `hasPermission()` bilan belgilash
+- [ ] Draft/autosave — loyiha yaratish + kunlik hisobot formalari
+
+## Phase 2 — SuperAdmin ilg'or vositalari
+
+- [ ] Rol/permission boshqaruv UI
+- [ ] Kategoriya boshqaruv UI
+- [ ] `feature_flags` jadvali (modul yoqish/o'chirish)
+- [ ] Bannerlar/reklama/hamkorlar mini-CMS
+- [ ] Actuator + Micrometer (SuperAdmin-only health/metrics)
+- [ ] Backup siyosati hujjatlashtirish (infra/DevOps, UI feature emas)
+
+## Phase 3 — Tizim talablarini yakunlash
+
+- [ ] To'liq tarjima qamrovi (uz + ru + en)
+- [ ] Mobil dark mode (`AppTheme.dark()` + `darkTheme:`/`themeMode:`)
+- [ ] WebSocket/STOMP real-time (bildirishnoma poll→push)
+
+## Phase 4 — Chat + AI markazi
+
+- [ ] Chat: `Conversation`/`Message`, WebSocket orqali, investor↔fermer/fermer↔admin/investor↔admin
+- [ ] AI (a): DAILY hisobot metrikalaridan o'sish/xarajat trendi (yangi AI kerak emas — birinchi qilinadi)
+- [ ] AI (b): hisobot fotosidan kasallik aniqlash (tashqi vision API)
+- [ ] AI (c): LLM-asosli tavsiya matni
+- [ ] AI (d): AI yordamchi chat
+
+## Phase 5 — Taksonomiya migratsiyasini yakunlash
+
+- [ ] `ProjectRepository`/`DashboardService`ni `category_id`ga ko'chirish
+- [ ] Eski loyihalarni backfill qilish (ko'rib chiqilgan xaritalash)
+- [ ] Eski `asset_type`/`animal_type` ustunlarini eskirgan deb belgilash (o'chirilmaydi)
+
+---
+
+## Tekshirish mezonlari
+
+| Bosqich | Qanday tekshiriladi |
+|---|---|
+| Phase 0 | `mvn test` yashil; migratsiyalar toza + haqiqiy bazada; Swagger orqali `hasPermission()` qo'lda; mavjud `hasRole()` regressiyasi |
+| Phase 1 | Har bir admin tab qo'lda: eksport CSV, bulk faqat tanlangan qatorlarga, filtrlar to'g'ri |
+| Phase 2 | SuperAdmin permission yaratadi→rolga bog'laydi→foydalanuvchi huquqi qayta deploysiz o'zgaradi |
+| Phase 3 | Til almashtirish restart'siz; dark mode tizim+qo'lda; WebSocket polling'siz yetib boradi |
+| Phase 4 | Chat xabari real vaqtda yetib boradi; AI indikatori ko'rinadi |

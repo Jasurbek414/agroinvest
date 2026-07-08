@@ -1,5 +1,6 @@
 package uz.agroinvest.module.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,12 +38,19 @@ public class User {
     @Column(name = "email", unique = true)
     private String email;
 
+    // Never serialize to JSON: several endpoints return this entity (or another
+    // entity holding a User reference, e.g. AuditLog.user, CustomRole.createdBy)
+    // directly rather than through a Dto. A bcrypt hash and AES-encrypted PII
+    // blob must not ride along whenever that happens - this is the safety net,
+    // not a substitute for mapping to Dtos.
+    @JsonIgnore
     @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @JsonIgnore
     @Column(name = "passport_data", columnDefinition = "TEXT")
     private String passportData; // Encrypted AES-256 JSON
 
