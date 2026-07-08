@@ -45,7 +45,7 @@ class TransactionChart extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final t = recent[group.x.toInt()];
-                      final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT';
+                      final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT' || t['type'] == 'FARMER_PAYOUT';
                       final amt = double.tryParse(t['amount'].toString()) ?? 0.0;
                       return BarTooltipItem(
                         '${isCredit ? "+" : "-"}${formatAmount(amt)}',
@@ -56,7 +56,7 @@ class TransactionChart extends StatelessWidget {
                 ),
                 barGroups: List.generate(recent.length, (i) {
                   final t = recent[i];
-                  final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT';
+                  final isCredit = t['type'] == 'DEPOSIT' || t['type'] == 'PAYOUT' || t['type'] == 'FARMER_PAYOUT';
                   final amt = (double.tryParse(t['amount'].toString()) ?? 0.0).abs();
                   return BarChartGroupData(
                     x: i,

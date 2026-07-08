@@ -17,6 +17,7 @@ import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -204,12 +205,16 @@ class PayoutServiceTest {
         when(walletRepository.findByUserIdForUpdate(inv3User.getId())).thenReturn(Optional.of(w3));
 
         // S=13m: C=1.3m, R1=11.7m, K=10m, profit=1.7m, pool=1.19m (70%)
-        // shares: 396,666.67 + 396,666.67 + remainder 396,666.66 = 1,190,000.00
+        // Largest-remainder allocation: exact shares are 396,666.66627 (i1),
+        // 396,666.66627 (i2), 396,666.66746 (i3); flooring all three gives
+        // 396,666.66 x3 = 1,189,999.98, leaving 2 leftover cents. i3 has the
+        // largest fractional remainder (0.00746) and gets one; the other goes to
+        // i1, whose remainder (0.00627) ties i2's but sorts first by list order.
         payoutService.distributePayout(projectId, BigDecimal.valueOf(13_000_000));
 
         assertMoney(3_333_333.33 + 396_666.67, w1.getBalance());
-        assertMoney(3_333_333.33 + 396_666.67, w2.getBalance());
-        assertMoney(3_333_333.34 + 396_666.66, w3.getBalance());
+        assertMoney(3_333_333.33 + 396_666.66, w2.getBalance());
+        assertMoney(3_333_333.34 + 396_666.67, w3.getBalance());
         // farmer profit = 1.7m - 1.19m = 510k
         assertMoney(510_000, farmerWallet.getBalance());
         // pool distributed exactly
@@ -291,6 +296,43 @@ class PayoutServiceTest {
         assertMoney(2_160_000, w1.getBalance());
         assertMoney(5_040_000, w2.getBalance());
         assertMoney(0, farmerWallet.getBalance()); // no capital, no expenses, no profit
+    }
+
+    @Test
+    void loss_manyEqualInvestors_noNegativePayoutFromRounding() {
+        // Regression test: independently HALF_UP-rounding each non-last recipient's
+        // share and letting one designated recipient "absorb the remainder" can
+        // drive that recipient's payout negative once enough of the others round
+        // up. 10 equal-capital investors + a near-zero recovery pool reproduces
+        // it: round2(0.05/10)=round2(0.005)=0.01 for every naive independent
+        // share, so 9 of them alone would sum to 0.09 > the 0.05 pool, leaving
+        // -0.04 for the 10th under the old scheme. allocateProportionally's
+        // largest-remainder method must keep every payout >= 0.
+        UUID projectId = UUID.randomUUID();
+        Project project = project(projectId, 10_000_000, 0, 70, BigDecimal.ZERO); // 0% commission keeps the math exact
+
+        List<Investment> investments = new ArrayList<>();
+        List<Wallet> wallets = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            User investorUser = User.builder().id(UUID.randomUUID()).fullName("Investor " + i).build();
+            Investment inv = investment(project, investorUser, 1_000_000);
+            Wallet w = wallet(investorUser, BigDecimal.ZERO, inv.getAmount());
+            investments.add(inv);
+            wallets.add(w);
+            when(walletRepository.findByUserIdForUpdate(investorUser.getId())).thenReturn(Optional.of(w));
+        }
+        mockProject(project, investments);
+
+        // S=0.05, C=0, R1=0.05 << K=10,000,000 -> deep loss, recovery pool = 0.05.
+        payoutService.distributePayout(projectId, new BigDecimal("0.05"));
+
+        BigDecimal totalPayout = BigDecimal.ZERO;
+        for (Wallet w : wallets) {
+            assertTrue(w.getBalance().compareTo(BigDecimal.ZERO) >= 0,
+                    "payout must never be negative, was " + w.getBalance());
+            totalPayout = totalPayout.add(w.getBalance());
+        }
+        assertMoney(0.05, totalPayout);
     }
 
     @Test

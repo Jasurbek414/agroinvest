@@ -71,14 +71,19 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> verifyOtpCode(String phoneNumber, String purpose, String code) async {
+    _loading = true;
     _error = null;
     _errorCode = null;
+    notifyListeners();
     try {
       await _repository.verifyOtp(phoneNumber, purpose, code);
       return true;
     } catch (e) {
       _setError(e);
       return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
     }
   }
 

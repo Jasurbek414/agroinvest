@@ -446,7 +446,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
     final role = user['role'];
 
-    if (role == 'FARMER') {
+    if (role == 'FARMER' && p['farmerId']?.toString() == user['id']?.toString()) {
       return Container(
         padding: AppSpacing.page,
         decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border, width: 1.5))),

@@ -27,7 +27,9 @@ class TransactionItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final amt = double.tryParse(transaction['amount'].toString()) ?? 0.0;
-    final isCredit = transaction['type'] == 'DEPOSIT' || transaction['type'] == 'PAYOUT';
+    final isCredit = transaction['type'] == 'DEPOSIT' ||
+        transaction['type'] == 'PAYOUT' ||
+        transaction['type'] == 'FARMER_PAYOUT';
 
     return Card(
       color: Colors.white,

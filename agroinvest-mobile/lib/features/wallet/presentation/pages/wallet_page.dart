@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/format.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/wallet_provider.dart';
 import '../widgets/wallet_card.dart';
@@ -47,10 +48,7 @@ class _WalletPageState extends State<WalletPage> {
   @override
   Widget build(BuildContext context) {
     final walletProvider = Provider.of<WalletProvider>(context);
-    final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
-    String formatAmount(double val) {
-      return val.toStringAsFixed(0).replaceAllMapped(formatter, (Match m) => '${m[1]} ') + ' UZS';
-    }
+    String formatAmount(double val) => '${formatMoney(val)} UZS';
 
     final wallet = walletProvider.wallet;
     final transactions = walletProvider.transactions;

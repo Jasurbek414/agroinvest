@@ -72,7 +72,11 @@ const CreateProjectForm = ({ onCreated }) => {
       showToast("Hayvon turini tanlang", 'error');
       return;
     }
-    if (hasContribution && !farmerContributionValue) {
+    if (isAnimalProject && !(parseInt(headcount) > 0)) {
+      showToast("Hayvonlar sonini (bosh) kiriting", 'error');
+      return;
+    }
+    if (hasContribution && !(parseFloat(farmerContributionValue) > 0)) {
       showToast("Fermer hissasi qiymatini kiriting", 'error');
       return;
     }
@@ -171,6 +175,7 @@ const CreateProjectForm = ({ onCreated }) => {
                 onChange={(e) => setHeadcount(e.target.value)}
                 placeholder="50"
                 className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+                required={isAnimalProject}
               />
             </div>
             <div>

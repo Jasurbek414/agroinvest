@@ -20,6 +20,8 @@ import uz.agroinvest.module.wallet.entity.Wallet;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,14 +40,19 @@ import java.util.UUID;
  *   Profit (R1 >= K):  profit = R1 - K
  *     investorPool = round2(profit x investorSharePct / 100)
  *     farmerProfit = profit - investorPool          (exact remainder, not re-rounded)
- *     investor_i   = amount_i + round2(investorPool x amount_i / I); last investor
- *                    absorbs the pool's rounding remainder
+ *     investor_i   = amount_i + allocateProportionally(investorPool, amounts)_i
  *     farmer       = F + E_paid + farmerProfit
  *
  *   Loss (R1 < K): recipients = investors (createdAt order) + farmer last iff F > 0
- *     recovery_k = round2(R1 x capital_k / K); last recipient absorbs remainder
- *     farmer     = recovery + E_paid
+ *     recovery = allocateProportionally(R1, capitals) over that recipient list
+ *     farmer   = recovery + E_paid
  * </pre>
+ *
+ * allocateProportionally uses the largest-remainder method (floor every share,
+ * then hand out the leftover cents to the largest fractional remainders) so
+ * every recipient's share is bounded between its floor and floor+0.01 - unlike
+ * a "last recipient absorbs whatever's left" scheme, no recipient can ever go
+ * negative from other recipients' rounding accumulating against them.
  *
  * Invariant (asserted): C + E_paid + all payouts == S exactly at scale 2.
  * Legacy projects (F=0, E=0, fully funded) reduce to the original formula.
@@ -103,7 +110,8 @@ public class PayoutService {
 
         BigDecimal s = salePrice.setScale(2, RoundingMode.HALF_UP);
 
-        // Deterministic order: the last recipient absorbs rounding remainders.
+        // Deterministic order: ties in allocateProportionally's remainder sort
+        // break by this order, so results are reproducible.
         List<Investment> investments =
                 investmentRepository.findByProjectIdAndStatusOrderByCreatedAtAscIdAsc(projectId, InvestmentStatus.CONFIRMED);
 
@@ -148,37 +156,33 @@ public class PayoutService {
             farmerProfit = profit.subtract(investorPool); // exact remainder
             farmerCapitalReturn = farmerContribution;
 
-            BigDecimal distributedPool = BigDecimal.ZERO;
+            List<BigDecimal> investorWeights = investments.stream().map(Investment::getAmount).toList();
+            List<BigDecimal> profitShares = allocateProportionally(investorPool, investorWeights);
             for (int i = 0; i < investments.size(); i++) {
                 Investment inv = investments.get(i);
-                boolean last = (i == investments.size() - 1);
-                BigDecimal profitShare = last
-                        ? investorPool.subtract(distributedPool)
-                        : round2(investorPool.multiply(inv.getAmount()).divide(investorCapital, 10, RoundingMode.HALF_UP));
-                distributedPool = distributedPool.add(profitShare);
-                payInvestor(project, inv, inv.getAmount().add(profitShare));
+                payInvestor(project, inv, inv.getAmount().add(profitShares.get(i)));
             }
             totalInvestorPayout = investorCapital.add(investorPool);
         } else {
-            // ---- 6. LOSS ---- proportional recovery of whatever remains
+            // ---- 6. LOSS ---- proportional recovery of whatever remains, investors
+            // and (if contributing) the farmer treated as one recipient list so the
+            // largest-remainder allocator never has to special-case who's "last".
             farmerProfit = BigDecimal.ZERO;
             boolean farmerIsRecipient = farmerContribution.compareTo(BigDecimal.ZERO) > 0;
-            int recipientCount = investments.size() + (farmerIsRecipient ? 1 : 0);
 
-            BigDecimal distributed = BigDecimal.ZERO;
+            List<BigDecimal> weights = new ArrayList<>(investments.stream().map(Investment::getAmount).toList());
+            if (farmerIsRecipient) {
+                weights.add(farmerContribution);
+            }
+            List<BigDecimal> recoveries = allocateProportionally(remaining, weights);
+
             totalInvestorPayout = BigDecimal.ZERO;
             for (int i = 0; i < investments.size(); i++) {
-                Investment inv = investments.get(i);
-                boolean last = (i == recipientCount - 1); // only when farmer is NOT a recipient
-                BigDecimal recovery = last
-                        ? remaining.subtract(distributed)
-                        : round2(remaining.multiply(inv.getAmount()).divide(totalCapital, 10, RoundingMode.HALF_UP));
-                distributed = distributed.add(recovery);
+                BigDecimal recovery = recoveries.get(i);
                 totalInvestorPayout = totalInvestorPayout.add(recovery);
-                payInvestor(project, inv, recovery);
+                payInvestor(project, investments.get(i), recovery);
             }
-            // Farmer, appended last, absorbs the remainder of the recovery pool.
-            farmerCapitalReturn = farmerIsRecipient ? remaining.subtract(distributed) : BigDecimal.ZERO;
+            farmerCapitalReturn = farmerIsRecipient ? recoveries.get(investments.size()) : BigDecimal.ZERO;
         }
 
         // 7. Farmer credit: capital return + expense reimbursement + profit share,
@@ -278,5 +282,63 @@ public class PayoutService {
 
     private static BigDecimal round2(BigDecimal value) {
         return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Splits {@code pool} across {@code weights} proportionally using the
+     * largest-remainder method: each share is floored to 2dp first (so every
+     * result is >= 0 and never more than one cent above its exact proportional
+     * share), then the leftover cents (pool minus the sum of floors - always a
+     * small non-negative number of cents, since flooring never over-allocates)
+     * are handed out one at a time to the recipients with the largest fractional
+     * remainder, ties broken by list order for determinism.
+     *
+     * This guarantees sum(result) == pool exactly and every result_i >= 0 -
+     * unlike naively rounding each share independently and letting one
+     * designated recipient "absorb the remainder", which can go negative when
+     * the other recipients' independent roundings accumulate past the pool.
+     */
+    private static List<BigDecimal> allocateProportionally(BigDecimal pool, List<BigDecimal> weights) {
+        int n = weights.size();
+        List<BigDecimal> result = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            result.add(BigDecimal.ZERO);
+        }
+
+        BigDecimal totalWeight = weights.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal targetPool = pool.setScale(2, RoundingMode.HALF_UP);
+        if (n == 0 || totalWeight.compareTo(BigDecimal.ZERO) <= 0 || targetPool.compareTo(BigDecimal.ZERO) <= 0) {
+            return result;
+        }
+
+        BigDecimal[] floors = new BigDecimal[n];
+        BigDecimal[] fractions = new BigDecimal[n];
+        BigDecimal floorSum = BigDecimal.ZERO;
+        for (int i = 0; i < n; i++) {
+            BigDecimal exact = targetPool.multiply(weights.get(i)).divide(totalWeight, 10, RoundingMode.HALF_UP);
+            floors[i] = exact.setScale(2, RoundingMode.DOWN);
+            fractions[i] = exact.subtract(floors[i]);
+            floorSum = floorSum.add(floors[i]);
+        }
+
+        BigDecimal leftoverCentsDecimal = targetPool.subtract(floorSum).movePointRight(2);
+        int leftoverCents = leftoverCentsDecimal.setScale(0, RoundingMode.HALF_UP).intValue();
+
+        List<Integer> order = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            order.add(i);
+        }
+        order.sort(Comparator.<Integer, BigDecimal>comparing(i -> fractions[i]).reversed());
+
+        BigDecimal cent = new BigDecimal("0.01");
+        for (int k = 0; k < leftoverCents && k < n; k++) {
+            int idx = order.get(k);
+            floors[idx] = floors[idx].add(cent);
+        }
+
+        for (int i = 0; i < n; i++) {
+            result.set(i, floors[i]);
+        }
+        return result;
     }
 }

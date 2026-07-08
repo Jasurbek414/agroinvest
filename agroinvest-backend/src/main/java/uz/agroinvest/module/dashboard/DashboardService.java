@@ -15,6 +15,7 @@ import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.ProjectRepository;
 import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.report.ReportRepository;
+import uz.agroinvest.module.report.entity.Report;
 import uz.agroinvest.module.vet.VetInspectionRepository;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
@@ -25,9 +26,11 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Role-aware aggregates for the mobile/web home dashboard. Follows the
@@ -141,15 +144,25 @@ public class DashboardService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Reporting duty: which ACTIVE projects are due (last report older than
-        // the project's own reportFrequencyDays)?
+        // the project's own reportFrequencyDays)? One batched query for "latest
+        // report per project" instead of one findFirstByProjectId... call per
+        // project in the loop below.
+        List<UUID> projectIds = projects.stream().map(Project::getId).toList();
+        Map<UUID, LocalDateTime> lastReportByProject = new HashMap<>();
+        if (!projectIds.isEmpty()) {
+            for (Report r : reportRepository.findByProjectIdInOrderByProjectIdAndCreatedAtDesc(projectIds)) {
+                // Rows arrive grouped by project, newest first within each group -
+                // the first one seen per project id is its latest report.
+                lastReportByProject.putIfAbsent(r.getProject().getId(), r.getCreatedAt());
+            }
+        }
+
         List<Map<String, Object>> activeProjects = new ArrayList<>();
         int reportsDue = 0;
         for (Project p : projects) {
             if (p.getStatus() != ProjectStatus.ACTIVE && p.getStatus() != ProjectStatus.FUNDING) continue;
 
-            LocalDateTime lastReportAt = reportRepository.findFirstByProjectIdOrderByCreatedAtDesc(p.getId())
-                    .map(r -> r.getCreatedAt())
-                    .orElse(null);
+            LocalDateTime lastReportAt = lastReportByProject.get(p.getId());
 
             boolean reportDue = false;
             if (p.getStatus() == ProjectStatus.ACTIVE) {
