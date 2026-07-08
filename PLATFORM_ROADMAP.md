@@ -36,10 +36,12 @@ Tasdiqlangan kategoriya tuzilmasi — pastda 0.4 bo'limida.
   - [x] `asset_categories` jadvali (V18) + seed (V19, pastdagi tuzilma bo'yicha, 42 qator, kod-asosli parent lookup) + `projects.category_id` nullable FK (V20) — `asset_type`/`animal_type` va ularga tayanuvchi qidiruv/dashboard kodi tegilmadi
   - [x] `AssetCategoryService`/`Controller`: `GET /api/v1/categories` (public, `permitAll`) — to'liq daraxtni bitta so'rovda qaytaradi. Hozircha faqat o'qish uchun (boshqaruv UI — Phase 2; `category_id`ni loyiha yaratishda o'rnatish va qidiruvga ulash — Phase 5), lekin real endpoint sifatida ishlaydi (skelet emas)
   - [x] **Real bug, haqiqiy bazada topildi**: V18 dastlab `level`/`sort_order` ustunlarini `SMALLINT` deb e'lon qilgan edi, lekin entity `Integer` maydoni sifatida — Hibernate `ddl-auto: validate` bilan ishga tushishda `int2 != int4` deb qulab tushdi. Faqat haqiqiy Postgres'ga qarshi ishga tushirilganda aniqlandi (Mockito testlar buni hech qachon ushlamaydi). Tuzatildi: ikkalasi ham `INTEGER`
-- [ ] 0.5 i18n skeleton
-  - [ ] Mobil: easy_localization/intl_utils + uz.json
-  - [ ] Veb: react-i18next + uz.json
-  - [ ] Til tanlagich (Profil/Sozlamalar)
+- [x] 0.5 i18n skeleton
+  - [x] Mobil: `easy_localization` (+ transitiv `shared_preferences`) ulandi, `EasyLocalization` `main.dart`da `runApp`ni o'raydi, `MaterialApp.router`ga `localizationsDelegates`/`supportedLocales`/`locale` ulandi (`app.dart`), `assets/translations/uz.json` (pubspec'da ro'yxatga olingan)
+  - [x] Veb: `react-i18next`+`i18next` o'rnatildi, `src/i18n/index.js` + `src/i18n/locales/uz.json`, `main.jsx`da import qilinadi
+  - [x] Til tanlagich: veb — `UserMenu.jsx` dropdown'ida (`theme.store.js`dagi dark-mode toggle pattern bilan bir xil joyda); mobil — `ProfilePage`da "Til" menyu bandi → bottom sheet. Ikkalasida ham hozircha faqat "O'zbek" ko'rinadi, lekin `LANGUAGES`/`_availableLanguages` ro'yxatiga yangi til qo'shish yetarli (qayta ulash shart emas) — bu **mexanizm**, to'liq tarjima qamrovi emas (Phase 3)
+  - [x] Ikkala tomonda ham kamida bitta real ekranga ulandi (skelet emas): veb `UserMenu`dagi "Kirish"/"Chiqish"/tungi-rejim matnlari endi `t(...)` orqali chiqadi
+  - **Izoh**: `agroinvest-mobile/lib/app.dart` va `profile_page.dart`da ushbu sessiyaning oldingi (hali commit qilinmagan) "Market" tab ishi bilan bir xil fayllarga tegilgan edi — ikkalasi git indeksida alohida ajratildi (faqat i18n gunk'lari commit qilindi), "Market" ishi ishchi papkada tegilmagan holda qoldi, alohida ko'rib chiqilishi kerak
 
 ### Tasdiqlangan kategoriya tuzilmasi (0.4)
 

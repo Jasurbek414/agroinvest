@@ -1,0 +1,23 @@
+{
+  "common": {
+    "login": "Kirish",
+    "logout": "Tizimdan chiqish",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "delete": "O'chirish",
+    "edit": "Tahrirlash",
+    "loading": "Yuklanmoqda...",
+    "search": "Qidirish",
+    "filter": "Filtr",
+    "confirm": "Tasdiqlash",
+    "reject": "Rad etish",
+    "language": "Til",
+    "close": "Yopish"
+  },
+  "nav": {
+    "home": "Bosh sahifa",
+    "projects": "Loyihalar",
+    "market": "Market",
+    "profile": "Profil"
+  }
+}

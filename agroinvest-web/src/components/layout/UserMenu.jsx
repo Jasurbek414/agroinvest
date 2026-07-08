@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Moon, Sun } from 'lucide-react';
+import { LogOut, Moon, Sun, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/auth.store';
 import { useThemeStore } from '../../store/theme.store';
+
+// Only 'uz' exists today (PLATFORM_ROADMAP.md Phase 0.5 is mechanism-only;
+// Phase 3 adds ru/en) - listed here so the selector below needs no rewiring
+// when a second language is added, just a new entry in this array.
+const LANGUAGES = [{ code: 'uz', label: "O'zbek" }];
 
 const ROLE_LABEL = {
   INVESTOR: 'Investor',
@@ -16,6 +22,7 @@ const ROLE_LABEL = {
 const UserMenu = () => {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -35,7 +42,7 @@ const UserMenu = () => {
         to="/login"
         className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition"
       >
-        Kirish
+        {t('common.login')}
       </Link>
     );
   }
@@ -73,14 +80,27 @@ const UserMenu = () => {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition"
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            {theme === 'dark' ? "Yorug' rejim" : "Qorong'i rejim"}
+            {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
           </button>
+          <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-slate-200 border-t border-gray-100 dark:border-slate-700">
+            <Languages size={16} className="shrink-0" />
+            <span className="shrink-0">{t('common.language')}:</span>
+            <select
+              value={i18n.language}
+              onChange={(e) => i18n.changeLanguage(e.target.value)}
+              className="ml-auto bg-transparent text-sm font-semibold outline-none cursor-pointer"
+            >
+              {LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
           >
             <LogOut size={16} />
-            Chiqish
+            {t('common.logout')}
           </button>
         </div>
       )}

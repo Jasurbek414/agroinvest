@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
+
+// Only 'uz' exists today (PLATFORM_ROADMAP.md Phase 0.5 is mechanism-only;
+// Phase 3 adds ru/en) - listed here so _showLanguagePicker needs no rewiring
+// when a second language is added, just a new entry in this map.
+const Map<String, String> _availableLanguages = {'uz': "O'zbek"};
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -209,6 +215,14 @@ class ProfilePage extends StatelessWidget {
           },
         ),
 
+        // Til (hozircha faqat o'zbek, lekin infratuzilma tayyor)
+        _buildMenuButton(
+          context: context,
+          icon: Icons.language_rounded,
+          label: 'Til',
+          onTap: () => _showLanguagePicker(context),
+        ),
+
         const Spacer(),
 
         // Log out button
@@ -227,6 +241,36 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final currentCode = context.locale.languageCode;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(18),
+              child: Text('Tilni tanlang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            for (final entry in _availableLanguages.entries)
+              ListTile(
+                title: Text(entry.value),
+                trailing: entry.key == currentCode ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
+                onTap: () {
+                  sheetContext.setLocale(Locale(entry.key));
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 

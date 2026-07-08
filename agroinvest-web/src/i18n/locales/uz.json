@@ -1,0 +1,31 @@
+{
+  "common": {
+    "login": "Kirish",
+    "logout": "Chiqish",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "delete": "O'chirish",
+    "edit": "Tahrirlash",
+    "loading": "Yuklanmoqda...",
+    "search": "Qidirish",
+    "filter": "Filtr",
+    "export": "Eksport",
+    "confirm": "Tasdiqlash",
+    "reject": "Rad etish",
+    "approve": "Tasdiqlash",
+    "back": "Orqaga",
+    "next": "Keyingi",
+    "close": "Yopish",
+    "language": "Til",
+    "darkMode": "Qorong'i rejim",
+    "lightMode": "Yorug' rejim"
+  },
+  "nav": {
+    "dashboard": "Boshqaruv paneli",
+    "projects": "Loyihalar",
+    "investments": "Investitsiyalarim",
+    "wallet": "Hamyon",
+    "profile": "Profil",
+    "settings": "Sozlamalar"
+  }
+}
