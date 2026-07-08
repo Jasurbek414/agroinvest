@@ -24,6 +24,7 @@ import uz.agroinvest.module.project.dto.ProjectDto;
 import uz.agroinvest.module.project.dto.ProjectInvestorDto;
 import uz.agroinvest.module.project.dto.UpdateProjectRequest;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.superadmin.PlatformSettingsService;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
@@ -48,6 +49,7 @@ public class ProjectService {
     private final InvestmentRepository investmentRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final AuditLogService auditLogService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -55,7 +57,8 @@ public class ProjectService {
             PlatformSettingsService platformSettingsService,
             InvestmentRepository investmentRepository,
             WalletRepository walletRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            AuditLogService auditLogService
     ) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -63,6 +66,7 @@ public class ProjectService {
         this.investmentRepository = investmentRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -247,6 +251,8 @@ public class ProjectService {
         User admin = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
 
+        ProjectStatus previousStatus = project.getStatus();
+
         // State Machine validation
         if (status == ProjectStatus.APPROVED) {
             if (project.getStatus() != ProjectStatus.PENDING) {
@@ -294,6 +300,11 @@ public class ProjectService {
         }
 
         Project savedProject = projectRepository.save(project);
+
+        auditLogService.log(admin, "PROJECT_STATUS_" + status.name(), "Project", savedProject.getId().toString(),
+                "{\"status\": \"" + previousStatus + "\"}",
+                "{\"status\": \"" + status + "\", \"rejectionReason\": \"" + (rejectionReason != null ? rejectionReason : "") + "\"}");
+
         return mapToDto(savedProject);
     }
 

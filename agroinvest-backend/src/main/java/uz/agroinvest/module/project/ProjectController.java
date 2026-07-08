@@ -117,9 +117,10 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     public ResponseEntity<ApiResponse<Void>> distributePayout(
             @PathVariable UUID id,
-            @RequestParam BigDecimal salePrice
+            @RequestParam BigDecimal salePrice,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
-        payoutService.distributePayout(id, salePrice);
+        payoutService.distributePayout(id, salePrice, principal);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

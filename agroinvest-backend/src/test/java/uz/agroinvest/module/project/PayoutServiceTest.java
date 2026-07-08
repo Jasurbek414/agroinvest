@@ -9,12 +9,14 @@ import uz.agroinvest.module.expense.ExpenseRepository;
 import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
+import uz.agroinvest.security.UserPrincipal;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -40,11 +42,13 @@ class PayoutServiceTest {
     private TransactionRepository transactionRepository;
     private UserRepository userRepository;
     private ExpenseRepository expenseRepository;
+    private AuditLogService auditLogService;
 
     private PayoutService payoutService;
 
     private User farmer;
     private User admin;
+    private UserPrincipal adminPrincipal;
     private Wallet farmerWallet;
 
     @BeforeEach
@@ -55,6 +59,7 @@ class PayoutServiceTest {
         transactionRepository = mock(TransactionRepository.class);
         userRepository = mock(UserRepository.class);
         expenseRepository = mock(ExpenseRepository.class);
+        auditLogService = mock(AuditLogService.class);
 
         payoutService = new PayoutService(
                 projectRepository,
@@ -62,11 +67,13 @@ class PayoutServiceTest {
                 walletRepository,
                 transactionRepository,
                 userRepository,
-                expenseRepository
+                expenseRepository,
+                auditLogService
         );
 
         farmer = User.builder().id(UUID.randomUUID()).fullName("Farmer Boy").role(UserRole.FARMER).totalProjects(0).build();
         admin = User.builder().id(UUID.randomUUID()).fullName("Admin Staff").role(UserRole.ADMIN).build();
+        adminPrincipal = new UserPrincipal(admin.getId(), "+998900000000", "hash", UserRole.ADMIN, true, false);
         farmerWallet = wallet(farmer, BigDecimal.ZERO, BigDecimal.ZERO);
 
         // No expenses unless a test overrides these
@@ -74,6 +81,7 @@ class PayoutServiceTest {
         when(expenseRepository.sumByProjectAndStatusAndPayer(any(), eq(ExpenseStatus.APPROVED), eq(PayerSource.FARMER)))
                 .thenReturn(BigDecimal.ZERO);
         when(walletRepository.findByUserIdForUpdate(farmer.getId())).thenReturn(Optional.of(farmerWallet));
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
     }
 
     private Project project(UUID id, long target, int commissionPct, int investorSharePct, BigDecimal farmerContribution) {
@@ -132,7 +140,7 @@ class PayoutServiceTest {
 
         // S=15m: C=750k, P0=14.25m, R1=14.25m, K=10m, profit=4.25m
         // pool=2.55m (60%), farmerProfit=1.7m
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000), adminPrincipal);
 
         assertMoney(12_550_000, investorWallet.getBalance());
         assertMoney(0, investorWallet.getFrozen());
@@ -160,7 +168,7 @@ class PayoutServiceTest {
         // S=20m: C=2m, P0=18m, E_paid=1m, R1=17m, K=8m+2m=10m, profit=7m
         // pool=4.9m (70%), farmerProfit=2.1m
         // investor: 8m + 4.9m = 12.9m ; farmer: 2m + 1m + 2.1m = 5.1m
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(20_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(20_000_000), adminPrincipal);
 
         assertMoney(12_900_000, investorWallet.getBalance());
         assertMoney(4_900_000, investorWallet.getTotalEarned());
@@ -210,7 +218,7 @@ class PayoutServiceTest {
         // 396,666.66 x3 = 1,189,999.98, leaving 2 leftover cents. i3 has the
         // largest fractional remainder (0.00746) and gets one; the other goes to
         // i1, whose remainder (0.00627) ties i2's but sorts first by list order.
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(13_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(13_000_000), adminPrincipal);
 
         assertMoney(3_333_333.33 + 396_666.67, w1.getBalance());
         assertMoney(3_333_333.33 + 396_666.66, w2.getBalance());
@@ -236,7 +244,7 @@ class PayoutServiceTest {
 
         // S=9m: C=900k, P0=8.1m, E_paid=500k, R1=7.6m < K=10m -> loss
         // investor recovery = 7.6m x 8/10 = 6.08m ; farmer absorbs 1.52m + 500k expenses
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(9_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(9_000_000), adminPrincipal);
 
         assertMoney(6_080_000, investorWallet.getBalance());
         assertMoney(0, investorWallet.getFrozen());
@@ -260,7 +268,7 @@ class PayoutServiceTest {
                 .thenReturn(BigDecimal.valueOf(2_000_000));
 
         // S=1m: C=100k, P0=900k, E_paid=min(2m,900k)=900k, R1=0 -> investors get 0
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(1_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(1_000_000), adminPrincipal);
 
         assertMoney(0, investorWallet.getBalance());
         assertMoney(0, investorWallet.getFrozen()); // escrow still released
@@ -291,7 +299,7 @@ class PayoutServiceTest {
         when(walletRepository.findByUserIdForUpdate(inv2User.getId())).thenReturn(Optional.of(w2));
 
         // S=8m: C=800k, R1=7.2m < 10m -> loss. i1: 7.2 x 3/10 = 2.16m ; i2 absorbs 5.04m
-        payoutService.distributePayout(projectId, BigDecimal.valueOf(8_000_000));
+        payoutService.distributePayout(projectId, BigDecimal.valueOf(8_000_000), adminPrincipal);
 
         assertMoney(2_160_000, w1.getBalance());
         assertMoney(5_040_000, w2.getBalance());
@@ -324,7 +332,7 @@ class PayoutServiceTest {
         mockProject(project, investments);
 
         // S=0.05, C=0, R1=0.05 << K=10,000,000 -> deep loss, recovery pool = 0.05.
-        payoutService.distributePayout(projectId, new BigDecimal("0.05"));
+        payoutService.distributePayout(projectId, new BigDecimal("0.05"), adminPrincipal);
 
         BigDecimal totalPayout = BigDecimal.ZERO;
         for (Wallet w : wallets) {
@@ -343,7 +351,7 @@ class PayoutServiceTest {
         when(expenseRepository.countByProjectIdAndStatus(projectId, ExpenseStatus.PENDING)).thenReturn(1L);
 
         ApiException ex = assertThrows(ApiException.class,
-                () -> payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000)));
+                () -> payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000), adminPrincipal));
         assertTrue(ex.getMessage().toLowerCase().contains("harajat"));
         assertEquals(ProjectStatus.ACTIVE, project.getStatus());
         verify(transactionRepository, never()).save(any());
@@ -356,7 +364,7 @@ class PayoutServiceTest {
         mockProject(project, List.of());
 
         assertThrows(ApiException.class,
-                () -> payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000)));
+                () -> payoutService.distributePayout(projectId, BigDecimal.valueOf(15_000_000), adminPrincipal));
         verify(transactionRepository, never()).save(any());
     }
 }

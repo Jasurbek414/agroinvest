@@ -17,6 +17,7 @@ import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.report.dto.CreateReportRequest;
 import uz.agroinvest.module.report.dto.ReportDto;
 import uz.agroinvest.module.report.entity.Report;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.security.UserPrincipal;
@@ -35,17 +36,20 @@ public class ReportService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public ReportService(
             ReportRepository reportRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuditLogService auditLogService
     ) {
         this.reportRepository = reportRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -158,6 +162,11 @@ public class ReportService {
         report.setAdminComment(adminComment);
 
         Report savedReport = reportRepository.save(report);
+
+        auditLogService.log(admin, verify ? "VERIFY_REPORT" : "REJECT_REPORT", "Report", savedReport.getId().toString(),
+                "{\"verified\": \"false\"}",
+                "{\"verified\": \"" + verify + "\", \"adminComment\": \"" + (adminComment != null ? adminComment : "") + "\"}");
+
         return mapToDto(savedReport);
     }
 

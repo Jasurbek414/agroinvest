@@ -13,6 +13,7 @@ import uz.agroinvest.module.investment.dto.InvestmentDto;
 import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.ProjectRepository;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.superadmin.PlatformSettingsService;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
@@ -37,6 +38,7 @@ public class InvestmentService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final PlatformSettingsService platformSettingsService;
+    private final AuditLogService auditLogService;
 
     public InvestmentService(
             InvestmentRepository investmentRepository,
@@ -44,7 +46,8 @@ public class InvestmentService {
             UserRepository userRepository,
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
-            PlatformSettingsService platformSettingsService
+            PlatformSettingsService platformSettingsService,
+            AuditLogService auditLogService
     ) {
         this.investmentRepository = investmentRepository;
         this.projectRepository = projectRepository;
@@ -52,6 +55,7 @@ public class InvestmentService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.platformSettingsService = platformSettingsService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -166,6 +170,9 @@ public class InvestmentService {
         }
         projectRepository.save(project);
 
+        auditLogService.log(investor, "CREATE_INVESTMENT", "Investment", savedInvestment.getId().toString(),
+                null, "{\"projectId\": \"" + project.getId() + "\", \"amount\": \"" + request.getAmount() + "\"}");
+
         return mapToDto(savedInvestment);
     }
 
@@ -273,6 +280,9 @@ public class InvestmentService {
                 .build();
 
         transactionRepository.save(transaction);
+
+        auditLogService.log(investment.getInvestor(), "CANCEL_INVESTMENT", "Investment", investment.getId().toString(),
+                "{\"status\": \"CONFIRMED\"}", "{\"status\": \"CANCELLED\", \"amount\": \"" + investment.getAmount() + "\"}");
     }
 
     @Transactional(readOnly = true)

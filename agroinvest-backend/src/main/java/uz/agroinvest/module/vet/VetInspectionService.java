@@ -14,6 +14,7 @@ import uz.agroinvest.common.exception.ErrorCode;
 import uz.agroinvest.module.notification.NotificationService;
 import uz.agroinvest.module.project.ProjectRepository;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.vet.dto.CreateVetInspectionRequest;
@@ -35,17 +36,20 @@ public class VetInspectionService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public VetInspectionService(
             VetInspectionRepository vetInspectionRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuditLogService auditLogService
     ) {
         this.vetInspectionRepository = vetInspectionRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -124,6 +128,10 @@ public class VetInspectionService {
         inspection.setVerifiedAt(LocalDateTime.now());
         inspection.setAdminComment(comment);
         VetInspection saved = vetInspectionRepository.save(inspection);
+
+        auditLogService.log(reviewer, approve ? "VERIFY_VET_INSPECTION" : "REJECT_VET_INSPECTION", "VetInspection", saved.getId().toString(),
+                "{\"status\": \"PENDING\"}",
+                "{\"status\": \"" + saved.getStatus() + "\", \"comment\": \"" + (comment != null ? comment : "") + "\"}");
 
         notificationService.createNotification(
                 inspection.getUploadedBy(),

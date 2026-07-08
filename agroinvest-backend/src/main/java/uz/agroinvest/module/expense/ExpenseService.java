@@ -20,6 +20,7 @@ import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.notification.NotificationService;
 import uz.agroinvest.module.project.ProjectRepository;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.security.UserPrincipal;
@@ -39,19 +40,22 @@ public class ExpenseService {
     private final UserRepository userRepository;
     private final InvestmentRepository investmentRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public ExpenseService(
             ExpenseRepository expenseRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
             InvestmentRepository investmentRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuditLogService auditLogService
     ) {
         this.expenseRepository = expenseRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.investmentRepository = investmentRepository;
         this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -152,6 +156,10 @@ public class ExpenseService {
         expense.setReviewedAt(LocalDateTime.now());
         expense.setReviewComment(comment);
         Expense saved = expenseRepository.save(expense);
+
+        auditLogService.log(reviewer, approve ? "APPROVE_EXPENSE" : "REJECT_EXPENSE", "Expense", saved.getId().toString(),
+                "{\"status\": \"PENDING\"}",
+                "{\"status\": \"" + saved.getStatus() + "\", \"amount\": \"" + saved.getAmount() + "\", \"comment\": \"" + (comment != null ? comment : "") + "\"}");
 
         notificationService.createNotification(
                 expense.getSubmittedBy(),

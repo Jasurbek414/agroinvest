@@ -10,12 +10,14 @@ import uz.agroinvest.module.expense.ExpenseRepository;
 import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.project.entity.Project;
+import uz.agroinvest.module.superadmin.AuditLogService;
 import uz.agroinvest.module.transaction.TransactionRepository;
 import uz.agroinvest.module.transaction.entity.Transaction;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
+import uz.agroinvest.security.UserPrincipal;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -68,6 +70,7 @@ public class PayoutService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final ExpenseRepository expenseRepository;
+    private final AuditLogService auditLogService;
 
     public PayoutService(
             ProjectRepository projectRepository,
@@ -75,7 +78,8 @@ public class PayoutService {
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
             UserRepository userRepository,
-            ExpenseRepository expenseRepository
+            ExpenseRepository expenseRepository,
+            AuditLogService auditLogService
     ) {
         this.projectRepository = projectRepository;
         this.investmentRepository = investmentRepository;
@@ -83,10 +87,11 @@ public class PayoutService {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
-    public void distributePayout(UUID projectId, BigDecimal salePrice) {
+    public void distributePayout(UUID projectId, BigDecimal salePrice, UserPrincipal principal) {
         // Lock the project row for the whole distribution: a second concurrent call
         // (double-click, retried request) blocks here until the first commits, then
         // sees status == COMPLETED and is rejected below instead of paying out twice.
@@ -230,6 +235,12 @@ public class PayoutService {
         User farmer = project.getFarmer();
         farmer.setTotalProjects(farmer.getTotalProjects() == null ? 1 : farmer.getTotalProjects() + 1);
         userRepository.save(farmer);
+
+        User admin = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+        auditLogService.log(admin, "DISTRIBUTE_PAYOUT", "Project", project.getId().toString(),
+                "{\"status\": \"ACTIVE\"}",
+                "{\"status\": \"COMPLETED\", \"salePrice\": \"" + s + "\", \"commission\": \"" + commission + "\"}");
     }
 
     /**
