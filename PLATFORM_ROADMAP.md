@@ -32,9 +32,10 @@ Tasdiqlangan kategoriya tuzilmasi — pastda 0.4 bo'limida.
   - [x] `PayoutService.distributePayout`: ACTIVE tekshiruvi ACTIVE||MONITORING'ga kengaytirildi + `is_frozen` tekshiruvi qo'shildi
   - [x] `PATCH /projects/{id}/freeze` (admin/superadmin) + `POST /projects/{id}/submit` (fermerning "e'lon qilish" tugmasi, DRAFT→PENDING) + `InvestmentService.createInvestment`'ga `is_frozen` tekshiruvi. **Rejadan chetlanish**: withdrawal `is_frozen`ni tekshirmaydi — `WithdrawalRequest` hech qanday loyihaga bog'lanmagan (faqat hamyon balansidan), shuning uchun bitta loyihani muzlatish umumiy pul yechishni bloklashi mantiqan noto'g'ri va texnik jihatdan amalga oshirib bo'lmaydi
   - [x] **Qo'shimcha xavfsizlik tuzatishi** (DRAFT qo'shish jarayonida topilgan): `GET /projects` va `GET /projects/{id}` ikkalasi ham `permitAll()` — DRAFT loyiha (fermerning hali yubormagan qoralamasi) tasodifan UUID orqali yoki filtrsiz ro'yxatda hamma uchun ochiq bo'lib qolar edi. Tuzatildi: `ProjectRepository.search()` DRAFT'ni har doim (status filtridan qat'iy nazar) chiqarib tashlaydi; `getProjectById` faqat egasi/xodimga DRAFT ko'rsatadi, boshqalarga 404 (mavjudligini oshkor qilmaslik uchun)
-- [ ] 0.4 Kategoriya taksonomiyasi (poydevor)
-  - [ ] `asset_categories` jadvali + seed (pastdagi tuzilma bo'yicha)
-  - [ ] `projects.category_id` nullable FK
+- [x] 0.4 Kategoriya taksonomiyasi (poydevor)
+  - [x] `asset_categories` jadvali (V18) + seed (V19, pastdagi tuzilma bo'yicha, 42 qator, kod-asosli parent lookup) + `projects.category_id` nullable FK (V20) — `asset_type`/`animal_type` va ularga tayanuvchi qidiruv/dashboard kodi tegilmadi
+  - [x] `AssetCategoryService`/`Controller`: `GET /api/v1/categories` (public, `permitAll`) — to'liq daraxtni bitta so'rovda qaytaradi. Hozircha faqat o'qish uchun (boshqaruv UI — Phase 2; `category_id`ni loyiha yaratishda o'rnatish va qidiruvga ulash — Phase 5), lekin real endpoint sifatida ishlaydi (skelet emas)
+  - [x] **Real bug, haqiqiy bazada topildi**: V18 dastlab `level`/`sort_order` ustunlarini `SMALLINT` deb e'lon qilgan edi, lekin entity `Integer` maydoni sifatida — Hibernate `ddl-auto: validate` bilan ishga tushishda `int2 != int4` deb qulab tushdi. Faqat haqiqiy Postgres'ga qarshi ishga tushirilganda aniqlandi (Mockito testlar buni hech qachon ushlamaydi). Tuzatildi: ikkalasi ham `INTEGER`
 - [ ] 0.5 i18n skeleton
   - [ ] Mobil: easy_localization/intl_utils + uz.json
   - [ ] Veb: react-i18next + uz.json

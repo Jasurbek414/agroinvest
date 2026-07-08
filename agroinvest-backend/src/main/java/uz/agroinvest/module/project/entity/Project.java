@@ -11,6 +11,7 @@ import uz.agroinvest.common.enums.FundingMode;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.enums.RiskLevel;
 import uz.agroinvest.common.util.JsonListConverter;
+import uz.agroinvest.module.category.entity.AssetCategory;
 import uz.agroinvest.module.user.entity.User;
 
 import java.math.BigDecimal;
@@ -45,6 +46,14 @@ public class Project {
     @Enumerated(EnumType.STRING)
     @Column(name = "animal_type")
     private AnimalType animalType;
+
+    // New 3-level taxonomy (V18-20, PLATFORM_ROADMAP.md decision #4) - additive
+    // and nullable, not yet set or read by any code path. assetType/animalType
+    // above remain the source of truth for search/dashboard until Phase 5
+    // migrates them over and backfills this column.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private AssetCategory category;
 
     @Column(name = "headcount")
     private Integer headcount;
