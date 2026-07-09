@@ -78,6 +78,17 @@ const ProjectsTab = ({ onActionDone }) => {
     }
   };
 
+  const runBulkApprove = async (rows) => {
+    try {
+      await Promise.all(rows.map((p) => changeProjectStatus(p.id, 'FUNDING', null)));
+      showToast(`${rows.length} ta loyiha tasdiqlandi`);
+      fetchData(pageInfo.pageNumber);
+      onActionDone?.();
+    } catch (err) {
+      showToast(err.error?.message || 'Xatolik yuz berdi', 'error');
+    }
+  };
+
   return (
     <div>
       <div className="p-6 border-b border-gray-100 dark:border-slate-700 space-y-3">
@@ -122,6 +133,10 @@ const ProjectsTab = ({ onActionDone }) => {
           </select>
         }
         page={{ ...pageInfo, onPageChange: fetchData }}
+        selectable={status === 'PENDING'}
+        bulkActions={[
+          { label: 'Tanlanganlarni tasdiqlash', onClick: runBulkApprove },
+        ]}
         columns={[
           {
             key: 'title',

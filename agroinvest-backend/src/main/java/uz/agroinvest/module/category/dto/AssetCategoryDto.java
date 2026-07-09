@@ -16,9 +16,12 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AssetCategoryDto {
     private UUID id;
+    private UUID parentId;
     private String code;
     private String nameUz;
     private Integer level;
     private String icon;
+    private Integer sortOrder;
+    private boolean isActive;
     private List<AssetCategoryDto> children;
 }

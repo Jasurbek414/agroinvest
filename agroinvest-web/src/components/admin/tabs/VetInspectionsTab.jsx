@@ -1,37 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { FileText } from 'lucide-react';
 import { getPendingVetInspections, verifyVetInspection } from '../../../api/vet.api';
 import { formatDate } from '../../../utils/format';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import DataTable from '../../ui/DataTable';
+import DocumentChips from '../../ui/DocumentChips';
 import PromptDialog from '../../ui/PromptDialog';
 import { useToast } from '../../ui/ToastProvider';
-
-const DocumentChips = ({ urls = [] }) => {
-  if (!urls.length) return <span className="text-xs text-gray-400 dark:text-slate-500">Hujjat yo'q</span>;
-  return (
-    <div className="flex gap-2 flex-wrap">
-      {urls.map((url, i) =>
-        url.toLowerCase().endsWith('.pdf') ? (
-          <a
-            key={url}
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 text-[10px] font-bold text-gray-600 dark:text-slate-300 hover:border-primary-400"
-          >
-            <FileText size={12} /> PDF {i + 1}
-          </a>
-        ) : (
-          <a key={url} href={url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600 shrink-0">
-            <img src={url} alt={`Hujjat ${i + 1}`} className="w-full h-full object-cover" />
-          </a>
-        )
-      )}
-    </div>
-  );
-};
 
 // Admin review queue for farmer-uploaded vet conclusions - VERIFIED ones become
 // a public trust signal on the project page (see ProjectDetailPage).
@@ -91,7 +66,7 @@ const VetInspectionsTab = ({ onActionDone }) => {
           { key: 'vetName', header: 'Veterinar', render: (v) => <span className="text-xs">{v.vetName}{v.vetLicenseNo ? ` (${v.vetLicenseNo})` : ''}</span> },
           { key: 'inspectionDate', header: 'Sana', render: (v) => <span className="text-xs">{formatDate(v.inspectionDate)}</span> },
           { key: 'healthStatus', header: 'Holat', render: (v) => <Badge status={v.healthStatus} /> },
-          { key: 'documentUrls', header: 'Hujjatlar', render: (v) => <DocumentChips urls={v.documentUrls || []} /> },
+          { key: 'documentUrls', header: 'Hujjatlar', render: (v) => <DocumentChips urls={v.documentUrls || []} emptyLabel="Hujjat yo'q" altPrefix="Hujjat" /> },
           {
             key: 'actions', header: 'Amallar', align: 'right',
             render: (v) => (
@@ -110,7 +85,7 @@ const VetInspectionsTab = ({ onActionDone }) => {
             </div>
             <p className="text-xs text-gray-600 dark:text-slate-300">{v.vetName} · {formatDate(v.inspectionDate)}</p>
             {v.conclusion && <p className="text-xs text-gray-500 dark:text-slate-400">{v.conclusion}</p>}
-            <DocumentChips urls={v.documentUrls || []} />
+            <DocumentChips urls={v.documentUrls || []} emptyLabel="Hujjat yo'q" altPrefix="Hujjat" />
             <div className="flex gap-2 pt-1">
               <Button variant="danger" size="sm" onClick={() => setRejectTarget(v.id)}>Rad etish</Button>
               <Button variant="primary" size="sm" onClick={() => runAction(v.id, true, null)}>Tasdiqlash</Button>

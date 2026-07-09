@@ -10,6 +10,7 @@ import AppShell from './components/layout/AppShell';
 // front regardless of which role (or none, for a guest) they are.
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const ProjectsPage = lazy(() => import('./pages/public/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('./pages/public/ProjectDetailPage'));
 const MyInvestments = lazy(() => import('./pages/investor/MyInvestments'));
@@ -17,6 +18,7 @@ const WalletPage = lazy(() => import('./pages/investor/WalletPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
+const VerifierDashboard = lazy(() => import('./pages/verifier/VerifierDashboard'));
 const KycPage = lazy(() => import('./pages/profile/KycPage'));
 const DisputesPage = lazy(() => import('./pages/disputes/DisputesPage'));
 
@@ -53,11 +55,14 @@ function App() {
     initTheme();
   }, [initTheme]);
 
-  const getDashboardRedirect = () => {
-    if (!user) return <Navigate to="/login" replace />;
+  // guestFallback lets "/" show the public landing page instead of the generic
+  // "bounce anonymous visitors to /login" behavior every other unknown path gets.
+  const getDashboardRedirect = (guestFallback = <Navigate to="/login" replace />) => {
+    if (!user) return guestFallback;
     if (user.role === 'SUPERADMIN') return <Navigate to="/superadmin/dashboard" replace />;
     if (user.role === 'ADMIN' || user.role === 'MODERATOR') return <Navigate to="/admin/dashboard" replace />;
     if (user.role === 'FARMER') return <Navigate to="/farmer/dashboard" replace />;
+    if (user.role === 'VERIFIER') return <Navigate to="/verifier/dashboard" replace />;
     return <Navigate to="/projects" replace />;
   };
 
@@ -65,6 +70,10 @@ function App() {
     <Router>
       <Suspense fallback={<RouteFallback />}>
       <Routes>
+        {/* Public landing page - anonymous visitors see this; logged-in users
+            get redirected straight to their own dashboard */}
+        <Route path="/" element={getDashboardRedirect(<Layout><LandingPage /></Layout>)} />
+
         {/* Public auth pages */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -103,7 +112,7 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'MODERATOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'MODERATOR', 'SUPERADMIN']}>
               <Layout><AdminDashboard /></Layout>
             </ProtectedRoute>
           }
@@ -113,6 +122,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['SUPERADMIN']}>
               <Layout><SuperAdminDashboard /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/verifier/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['VERIFIER']}>
+              <Layout><VerifierDashboard /></Layout>
             </ProtectedRoute>
           }
         />

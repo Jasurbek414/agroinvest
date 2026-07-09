@@ -1,22 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale, Receipt, HeartPulse } from 'lucide-react';
-import { getAdminDashboardStats, getAssetTypeBreakdown, getProjectStatusBreakdown } from '../../api/admin.api';
-import AdminStatsBar from '../../components/admin/AdminStatsBar';
+import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale, Receipt, HeartPulse, Landmark } from 'lucide-react';
+import AdminStatsAndCharts from '../../components/admin/AdminStatsAndCharts';
 import WithdrawalsTab from '../../components/admin/tabs/WithdrawalsTab';
+import DepositRequestsTab from '../../components/admin/tabs/DepositRequestsTab';
 import KycTab from '../../components/admin/tabs/KycTab';
 import ProjectsTab from '../../components/admin/tabs/ProjectsTab';
 import ReportsTab from '../../components/admin/tabs/ReportsTab';
 import DisputesTab from '../../components/admin/tabs/DisputesTab';
 import ExpensesTab from '../../components/admin/tabs/ExpensesTab';
 import VetInspectionsTab from '../../components/admin/tabs/VetInspectionsTab';
-import Card from '../../components/ui/Card';
-import { SkeletonCard } from '../../components/ui/Skeleton';
-import { useToast } from '../../components/ui/ToastProvider';
-import AssetTypeBarChart from '../../components/admin/charts/AssetTypeBarChart';
-import ProjectStatusPieChart from '../../components/admin/charts/ProjectStatusPieChart';
 
 const TABS = [
   { key: 'withdrawals', label: "Yechish so'rovlari", icon: Wallet },
+  { key: 'deposits', label: "To'lov so'rovlari", icon: Landmark },
   { key: 'kyc', label: 'KYC Vetting', icon: ShieldCheck },
   { key: 'projects', label: 'Kutilayotgan loyihalar', icon: FolderKanban },
   { key: 'reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList },
@@ -26,40 +23,11 @@ const TABS = [
 ];
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('withdrawals');
-  const [stats, setStats] = useState(null);
-  const [assetTypeData, setAssetTypeData] = useState(null);
-  const [statusData, setStatusData] = useState(null);
-  const [chartsLoading, setChartsLoading] = useState(true);
-  const { showToast } = useToast();
-
-  const fetchStats = async () => {
-    try {
-      const res = await getAdminDashboardStats();
-      setStats(res.data);
-    } catch (err) {
-      // Previously swallowed with console.error only - the admin had no way to
-      // know the dashboard numbers might be stale/missing.
-      showToast("Statistikani yuklashda xatolik yuz berdi", 'error');
-    }
-  };
-
-  const fetchCharts = async () => {
-    setChartsLoading(true);
-    try {
-      const [assetRes, statusRes] = await Promise.all([getAssetTypeBreakdown(), getProjectStatusBreakdown()]);
-      setAssetTypeData(assetRes.data);
-      setStatusData(statusRes.data);
-    } catch (err) {
-      showToast('Grafik ma\'lumotlarini yuklashda xatolik yuz berdi', 'error');
-    } finally {
-      setChartsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchStats(); fetchCharts(); }, []);
-
-  const refreshAll = () => { fetchStats(); fetchCharts(); };
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'withdrawals';
+  const setActiveTab = (tabKey) => setSearchParams({ tab: tabKey });
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshAll = () => setRefreshKey((k) => k + 1);
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
@@ -88,21 +56,11 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <AdminStatsBar stats={stats} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-slate-100 mb-3">Aktiv turlari bo'yicha loyihalar</h2>
-            {chartsLoading ? <SkeletonCard className="border-0 shadow-none p-0" /> : <AssetTypeBarChart data={assetTypeData} />}
-          </Card>
-          <Card>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-slate-100 mb-3">Loyihalar holati taqsimoti</h2>
-            {chartsLoading ? <SkeletonCard className="border-0 shadow-none p-0" /> : <ProjectStatusPieChart data={statusData} />}
-          </Card>
-        </div>
+        <AdminStatsAndCharts refreshKey={refreshKey} />
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
           {activeTab === 'withdrawals' && <WithdrawalsTab onActionDone={refreshAll} />}
+          {activeTab === 'deposits' && <DepositRequestsTab onActionDone={refreshAll} />}
           {activeTab === 'kyc' && <KycTab onActionDone={refreshAll} />}
           {activeTab === 'projects' && <ProjectsTab onActionDone={refreshAll} />}
           {activeTab === 'reports' && <ReportsTab />}

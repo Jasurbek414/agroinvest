@@ -2,24 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { createProject } from '../../api/projects.api';
 import { getPublicSettings } from '../../api/settings.api';
 import { ASSET_TYPE_META } from '../../utils/assetType';
-import { ANIMAL_TYPE_META } from '../../utils/animalType';
 import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
+import AssetTypePicker from './create-project/AssetTypePicker';
+import FundingModeSection from './create-project/FundingModeSection';
+import ExpensePolicySection from './create-project/ExpensePolicySection';
+import ProfitShareSlider from './create-project/ProfitShareSlider';
+import ReportFrequencySlider from './create-project/ReportFrequencySlider';
 
 const ASSET_TYPES = Object.entries(ASSET_TYPE_META).map(([value, meta]) => ({ value, label: meta.label }));
-const ANIMAL_TYPES = Object.entries(ANIMAL_TYPE_META).map(([value, meta]) => ({ value, label: meta.label }));
-
-const FUNDING_MODES = [
-  { value: 'INVESTOR_FUNDED', label: 'To\'liq investor puliga', hint: 'Barcha hayvonlar yig\'ilgan mablag\'ga sotib olinadi' },
-  { value: 'FARMER_ASSETS', label: 'O\'z hayvonlarim bilan', hint: 'Mavjud hayvonlarni loyihaga qo\'shaman (admin tasdiqlaydi)' },
-  { value: 'MIXED', label: 'Aralash', hint: 'Qisman o\'zim, qisman investor mablag\'i' },
-];
-
-const EXPENSE_POLICIES = [
-  { value: 'INVESTOR_BUDGET', label: 'Loyiha byudjetidan', hint: 'Yig\'ilgan mablag\' ichidan, shaffof hisobda' },
-  { value: 'FARMER_REIMBURSED', label: 'O\'zim to\'layman', hint: 'Sotuvdan keyin, foyda bo\'linishidan OLDIN qaytariladi' },
-  { value: 'MIXED', label: 'Aralash', hint: 'Har bir harajatda alohida belgilayman' },
-];
 
 const CreateProjectForm = ({ onCreated }) => {
   const [title, setTitle] = useState('');
@@ -61,6 +52,11 @@ const CreateProjectForm = ({ onCreated }) => {
     };
     loadSettings();
   }, []);
+
+  const handleAssetTypeChange = (value) => {
+    setAssetType(value);
+    if (value !== 'LIVESTOCK' && value !== 'POULTRY') setAnimalType('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,27 +118,27 @@ const CreateProjectForm = ({ onCreated }) => {
   };
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm max-w-2xl mx-auto">
-      <h2 className="text-lg font-bold text-gray-900 mb-6">Yangi loyiha arizasi</h2>
+    <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm max-w-2xl mx-auto">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-6">Yangi loyiha arizasi</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Loyiha nomi (Title)</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Loyiha nomi (Title)</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Masalan: 50 ta zotdor qo'ylar"
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Aktiv turi</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Aktiv turi</label>
             <select
               value={assetType}
-              onChange={(e) => { setAssetType(e.target.value); if (e.target.value !== 'LIVESTOCK' && e.target.value !== 'POULTRY') setAnimalType(''); }}
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+              onChange={(e) => handleAssetTypeChange(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500"
             >
               {ASSET_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -151,45 +147,15 @@ const CreateProjectForm = ({ onCreated }) => {
           </div>
         </div>
 
-        {isAnimalProject && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Hayvon turi</label>
-              <select
-                value={animalType}
-                onChange={(e) => setAnimalType(e.target.value)}
-                className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
-                required={isAnimalProject}
-              >
-                <option value="">Tanlang</option>
-                {ANIMAL_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Bosh soni</label>
-              <input
-                type="number"
-                value={headcount}
-                onChange={(e) => setHeadcount(e.target.value)}
-                placeholder="50"
-                className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
-                required={isAnimalProject}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Bir bosh narxi (so'm)</label>
-              <input
-                type="number"
-                value={pricePerHead}
-                onChange={(e) => setPricePerHead(e.target.value)}
-                placeholder="1500000"
-                className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
-              />
-            </div>
-          </div>
-        )}
+        <AssetTypePicker
+          isAnimalProject={isAnimalProject}
+          animalType={animalType}
+          setAnimalType={setAnimalType}
+          headcount={headcount}
+          setHeadcount={setHeadcount}
+          pricePerHead={pricePerHead}
+          setPricePerHead={setPricePerHead}
+        />
 
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tavsif (Description)</label>
@@ -198,7 +164,7 @@ const CreateProjectForm = ({ onCreated }) => {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Loyiha jarayoni va batafsil tushuntirish"
             rows="4"
-            className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+            className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
             required
           />
         </div>
@@ -210,24 +176,24 @@ const CreateProjectForm = ({ onCreated }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Kerakli summa (UZS)</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Kerakli summa (UZS)</label>
             <input
               type="number"
               value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
               placeholder="Masalan: 15000000"
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Hudud / Viloyat</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Hudud / Viloyat</label>
             <input
               type="text"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
               placeholder="Masalan: Qashqadaryo"
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
               required
             />
           </div>
@@ -235,29 +201,29 @@ const CreateProjectForm = ({ onCreated }) => {
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Muddati (Kun)</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Muddati (Kun)</label>
             <input
               type="number"
               value={durationDays}
               onChange={(e) => setDurationDays(e.target.value)}
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Kutilayotgan foyda (%)</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Kutilayotgan foyda (%)</label>
             <input
               type="number"
               value={expectedReturnPct}
               onChange={(e) => setExpectedReturnPct(e.target.value)}
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Xavf darajasi</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Xavf darajasi</label>
             <select
               value={riskLevel}
               onChange={(e) => setRiskLevel(e.target.value)}
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500"
             >
               <option value="LOW">Kam xavfli (LOW)</option>
               <option value="MEDIUM">O'rtacha xavfli (MEDIUM)</option>
@@ -266,111 +232,30 @@ const CreateProjectForm = ({ onCreated }) => {
           </div>
         </div>
 
-        {/* --- Funding mode --- */}
-        <div className="pt-2 border-t border-gray-100">
-          <label className="block text-xs font-semibold text-gray-600 mb-2 mt-4">Moliyalashtirish usuli</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {FUNDING_MODES.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => setFundingMode(m.value)}
-                className={`text-left p-3 rounded-xl border text-xs transition ${
-                  fundingMode === m.value ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <p className="font-bold text-gray-800">{m.label}</p>
-                <p className="text-gray-500 mt-0.5">{m.hint}</p>
-              </button>
-            ))}
-          </div>
+        <FundingModeSection
+          fundingMode={fundingMode}
+          setFundingMode={setFundingMode}
+          hasContribution={hasContribution}
+          farmerContributionValue={farmerContributionValue}
+          setFarmerContributionValue={setFarmerContributionValue}
+          farmerContributionNotes={farmerContributionNotes}
+          setFarmerContributionNotes={setFarmerContributionNotes}
+        />
 
-          {hasContribution && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Mening hissam qiymati (so'm)</label>
-                <input
-                  type="number"
-                  value={farmerContributionValue}
-                  onChange={(e) => setFarmerContributionValue(e.target.value)}
-                  placeholder="5000000"
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
-                  required={hasContribution}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Izoh (necha bosh, qanday holatda)</label>
-                <input
-                  type="text"
-                  value={farmerContributionNotes}
-                  onChange={(e) => setFarmerContributionNotes(e.target.value)}
-                  placeholder="Masalan: 10 ta sog'lom qo'y, 8 oylik"
-                  className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <ProfitShareSlider
+          investorSharePct={investorSharePct}
+          setInvestorSharePct={setInvestorSharePct}
+          shareBounds={shareBounds}
+        />
 
-        {/* --- Negotiated profit split --- */}
-        <div className="pt-2 border-t border-gray-100">
-          <label className="block text-xs font-semibold text-gray-600 mb-1 mt-4">
-            Sof foyda taqsimoti ({shareBounds.min}%–{shareBounds.max}%)
-          </label>
-          <p className="text-[11px] text-gray-400 mb-2">Investorlar jamoasiga qancha ulush taklif qilasiz?</p>
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-bold text-green-700 w-24">Investor {investorSharePct}%</span>
-            <input
-              type="range"
-              min={shareBounds.min}
-              max={shareBounds.max}
-              value={investorSharePct}
-              onChange={(e) => setInvestorSharePct(parseInt(e.target.value))}
-              className="flex-1 accent-green-600"
-            />
-            <span className="text-xs font-bold text-amber-600 w-24 text-right">Fermer {100 - investorSharePct}%</span>
-          </div>
-        </div>
+        <ExpensePolicySection expensePolicy={expensePolicy} setExpensePolicy={setExpensePolicy} />
 
-        {/* --- Expense policy --- */}
-        <div className="pt-2 border-t border-gray-100">
-          <label className="block text-xs font-semibold text-gray-600 mb-2 mt-4">Joriy harajatlar siyosati</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {EXPENSE_POLICIES.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setExpensePolicy(p.value)}
-                className={`text-left p-3 rounded-xl border text-xs transition ${
-                  expensePolicy === p.value ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <p className="font-bold text-gray-800">{p.label}</p>
-                <p className="text-gray-500 mt-0.5">{p.hint}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* --- Report frequency --- */}
-        <div className="pt-2 border-t border-gray-100">
-          <label className="block text-xs font-semibold text-gray-600 mb-1 mt-4">
-            Hisobot chastotasi ({reportFrequencyDays === 1 ? 'kunlik' : `har ${reportFrequencyDays} kunda`})
-          </label>
-          <input
-            type="range"
-            min={1}
-            max={14}
-            value={reportFrequencyDays}
-            onChange={(e) => setReportFrequencyDays(parseInt(e.target.value))}
-            className="w-full accent-green-600"
-          />
-        </div>
+        <ReportFrequencySlider reportFrequencyDays={reportFrequencyDays} setReportFrequencyDays={setReportFrequencyDays} />
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl shadow-lg shadow-green-600/10 transition mt-4"
+          className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white font-bold rounded-xl shadow-lg shadow-primary-600/10 transition mt-4"
         >
           {submitting ? 'Yuborilmoqda...' : "Arizani jo'natish"}
         </button>

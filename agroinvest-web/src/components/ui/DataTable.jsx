@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Download } from 'lucide-react';
 import EmptyState from './EmptyState';
 import ErrorState from './ErrorState';
 import SearchBar from './SearchBar';
@@ -16,6 +17,9 @@ import { SkeletonTable } from './Skeleton';
  * renderMobileCard(row): node - card layout shown below md; omit to fall back
  *   to a horizontally-scrollable table on mobile too.
  * selectable + bulkActions: [{ label, tone?, onClick(selectedRows) }]
+ * onExport(): void - shows an "Eksport" toolbar button when provided; callers
+ *   build the CSV themselves via utils/exportCsv.js (exports the current page
+ *   of `rows`, not the full server-side dataset).
  */
 const DataTable = ({
   columns,
@@ -36,6 +40,7 @@ const DataTable = ({
   renderMobileCard,
   selectable,
   bulkActions,
+  onExport,
 }) => {
   const [selected, setSelected] = useState([]);
 
@@ -47,7 +52,7 @@ const DataTable = ({
   };
   const selectedRows = rows.filter((r) => selected.includes(rowKey(r)));
 
-  const hasToolbar = searchable || filters;
+  const hasToolbar = searchable || filters || onExport;
 
   return (
     <div>
@@ -56,7 +61,17 @@ const DataTable = ({
           {searchable && (
             <SearchBar value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="sm:max-w-xs" />
           )}
-          {filters && <div className="flex flex-wrap gap-2">{filters}</div>}
+          <div className="flex items-center gap-2 flex-wrap sm:ml-auto">
+            {filters && <div className="flex flex-wrap gap-2">{filters}</div>}
+            {onExport && (
+              <button
+                onClick={onExport}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-primary-400 hover:text-primary-600 transition"
+              >
+                <Download size={14} /> Eksport
+              </button>
+            )}
+          </div>
         </div>
       )}
 

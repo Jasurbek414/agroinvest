@@ -27,7 +27,7 @@ public class ReportController {
     }
 
     @PostMapping("/project/{projectId}")
-    @PreAuthorize("hasAnyRole('FARMER', 'VERIFIER')")
+    @PreAuthorize("@authz.has('report.submit')")
     public ResponseEntity<ApiResponse<ReportDto>> submitReport(
             @PathVariable UUID projectId,
             @Valid @RequestBody CreateReportRequest request,

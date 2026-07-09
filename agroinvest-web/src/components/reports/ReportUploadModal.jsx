@@ -4,17 +4,17 @@ import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
 
 // Report type values must match the backend ReportType enum (DAILY/ROUTINE/
-// EMERGENCY/FINAL are the farmer-submittable ones; VERIFICATION/COMPLETION
-// are set by staff).
-const REPORT_TYPES = [
+// EMERGENCY/FINAL are the farmer-submittable ones; VERIFICATION is submitted by
+// staff/VERIFIER instead - see reportTypes prop; COMPLETION is set by the system).
+const DEFAULT_REPORT_TYPES = [
   { value: 'DAILY', label: 'Kunlik (Daily)' },
   { value: 'ROUTINE', label: 'Muntazam (Routine)' },
   { value: 'EMERGENCY', label: 'Favqulodda (Emergency)' },
   { value: 'FINAL', label: 'Yakuniy (Final)' },
 ];
 
-const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
-  const [reportType, setReportType] = useState('ROUTINE');
+const ReportUploadModal = ({ projectId, onClose, onSubmitted, reportTypes = DEFAULT_REPORT_TYPES }) => {
+  const [reportType, setReportType] = useState(reportTypes[0]?.value);
   const [notes, setNotes] = useState('');
   const [mediaUrls, setMediaUrls] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -89,15 +89,19 @@ const ReportUploadModal = ({ projectId, onClose, onSubmitted }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Hisobot turi</label>
-            <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-              className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
-            >
-              {REPORT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+            {reportTypes.length === 1 ? (
+              <p className="w-full px-3.5 py-2.5 border rounded-xl text-sm bg-gray-50 text-gray-700">{reportTypes[0].label}</p>
+            ) : (
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className="w-full px-3.5 py-2.5 border rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+              >
+                {reportTypes.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {isDaily && (

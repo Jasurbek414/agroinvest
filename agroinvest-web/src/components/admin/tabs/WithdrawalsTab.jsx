@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { getWithdrawalRequests, approveWithdrawal } from '../../../api/admin.api';
-import { formatAmount } from '../../../utils/format';
+import { formatAmount, formatDate } from '../../../utils/format';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import DataTable from '../../ui/DataTable';
 import PromptDialog from '../../ui/PromptDialog';
 import { useToast } from '../../ui/ToastProvider';
+import { exportToCsv } from '../../../utils/exportCsv';
+
+const WITHDRAWAL_CSV_COLUMNS = [
+  { header: 'Foydalanuvchi', value: (w) => w.userName },
+  { header: 'Bank', value: (w) => w.bankName },
+  { header: 'Karta', value: (w) => w.cardNumber },
+  { header: 'Summa', value: (w) => w.amount },
+  { header: 'Holat', value: (w) => w.status },
+  { header: 'Sana', value: (w) => (w.createdAt ? formatDate(w.createdAt) : '') },
+];
 
 const WithdrawalsTab = ({ onActionDone }) => {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -55,6 +65,7 @@ const WithdrawalsTab = ({ onActionDone }) => {
         rows={withdrawals}
         emptyTitle="Yechib olish so'rovlari yo'q"
         page={{ ...pageInfo, onPageChange: fetchData }}
+        onExport={() => exportToCsv(withdrawals, WITHDRAWAL_CSV_COLUMNS, 'yechish-sorovlari.csv')}
         columns={[
           { key: 'userName', header: 'Foydalanuvchi', render: (w) => <span className="font-semibold">{w.userName}</span> },
           { key: 'card', header: 'Karta', render: (w) => <span className="text-xs font-mono text-gray-400">{w.bankName} - {w.cardNumber}</span> },

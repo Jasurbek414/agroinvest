@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { FileText } from 'lucide-react';
 import { getPendingExpenses, reviewExpense } from '../../../api/expenses.api';
 import { formatAmount, formatDate } from '../../../utils/format';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import DataTable from '../../ui/DataTable';
+import DocumentChips from '../../ui/DocumentChips';
 import PromptDialog from '../../ui/PromptDialog';
 import { useToast } from '../../ui/ToastProvider';
 
@@ -21,34 +21,6 @@ const CATEGORY_LABEL_UZ = {
 const PAYER_LABEL_UZ = {
   INVESTOR_BUDGET: "Loyiha byudjetidan",
   FARMER: "Fermer to'lagan",
-};
-
-// Same "click a thumbnail to view" idea as MediaThumbnails, but receipts may be
-// PDFs (FileStorageService now accepts them) which <img> can't render - so PDFs
-// get a labeled link chip instead of a broken thumbnail.
-const ReceiptChips = ({ urls = [] }) => {
-  if (!urls.length) return <span className="text-xs text-gray-400 dark:text-slate-500">Chek yo'q</span>;
-  return (
-    <div className="flex gap-2 flex-wrap">
-      {urls.map((url, i) =>
-        url.toLowerCase().endsWith('.pdf') ? (
-          <a
-            key={url}
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 text-[10px] font-bold text-gray-600 dark:text-slate-300 hover:border-primary-400"
-          >
-            <FileText size={12} /> PDF {i + 1}
-          </a>
-        ) : (
-          <a key={url} href={url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600 shrink-0">
-            <img src={url} alt={`Chek ${i + 1}`} className="w-full h-full object-cover" />
-          </a>
-        )
-      )}
-    </div>
-  );
 };
 
 // Mirrors ReportsTab's shape (the closest existing "review a PENDING queue" tab)
@@ -109,7 +81,7 @@ const ExpensesTab = ({ onActionDone }) => {
           { key: 'amount', header: 'Summa', render: (e) => <span className="font-bold text-xs">{formatAmount(e.amount)}</span> },
           { key: 'payerSource', header: "To'lovchi", render: (e) => <span className="text-xs">{PAYER_LABEL_UZ[e.payerSource] || e.payerSource}</span> },
           { key: 'expenseDate', header: 'Sana', render: (e) => <span className="text-xs">{formatDate(e.expenseDate)}</span> },
-          { key: 'receiptUrls', header: 'Cheklar', render: (e) => <ReceiptChips urls={e.receiptUrls || []} /> },
+          { key: 'receiptUrls', header: 'Cheklar', render: (e) => <DocumentChips urls={e.receiptUrls || []} emptyLabel="Chek yo'q" altPrefix="Chek" /> },
           {
             key: 'actions', header: 'Amallar', align: 'right',
             render: (e) => (
@@ -130,7 +102,7 @@ const ExpensesTab = ({ onActionDone }) => {
               {CATEGORY_LABEL_UZ[e.category] || e.category} · {formatAmount(e.amount)} · {PAYER_LABEL_UZ[e.payerSource] || e.payerSource}
             </p>
             {e.description && <p className="text-xs text-gray-500 dark:text-slate-400">{e.description}</p>}
-            <ReceiptChips urls={e.receiptUrls || []} />
+            <DocumentChips urls={e.receiptUrls || []} emptyLabel="Chek yo'q" altPrefix="Chek" />
             <div className="flex gap-2 pt-1">
               <Button variant="danger" size="sm" onClick={() => setRejectTarget(e.id)}>Rad etish</Button>
               <Button variant="primary" size="sm" onClick={() => runAction(e.id, true, null)}>Tasdiqlash</Button>

@@ -46,6 +46,11 @@ public class PermissionController {
         return ResponseEntity.ok(ApiResponse.success(permissionService.listPermissions()));
     }
 
+    @GetMapping("/roles/{role}")
+    public ResponseEntity<ApiResponse<List<String>>> getRolePermissions(@PathVariable UserRole role) {
+        return ResponseEntity.ok(ApiResponse.success(permissionService.getRolePermissionCodes(role)));
+    }
+
     @PostMapping("/roles/{role}/grant")
     public ResponseEntity<ApiResponse<Void>> grantToRole(@PathVariable UserRole role, @RequestParam String permissionCode) {
         permissionService.grantToRole(role, permissionCode);

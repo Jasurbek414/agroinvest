@@ -15,4 +15,11 @@ public interface AssetCategoryRepository extends JpaRepository<AssetCategory, UU
     // recursing level by level.
     @EntityGraph(attributePaths = {"parent"})
     List<AssetCategory> findByIsActiveTrueOrderByLevelAscSortOrderAsc();
+
+    // Same shape, but includes inactive rows - used by the SuperAdmin management
+    // tree, which needs to show (and let admins reactivate) soft-deleted categories.
+    @EntityGraph(attributePaths = {"parent"})
+    List<AssetCategory> findAllByOrderByLevelAscSortOrderAsc();
+
+    boolean existsByCode(String code);
 }
