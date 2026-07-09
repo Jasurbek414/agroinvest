@@ -14,7 +14,7 @@ public class VerifyOtpRequest {
     private String phoneNumber;
 
     @NotBlank(message = "OTP tasdiqlash kodi bo'sh bo'lmasligi kerak")
-    @Pattern(regexp = "^\\d{6}$", message = "OTP kodi roppa-rosa 6 ta raqam bo'lishi kerak")
+    @Pattern(regexp = "^\\d{4}$", message = "OTP kodi roppa-rosa 4 ta raqam bo'lishi kerak")
     private String code;
 
     @NotBlank(message = "OTP maqsadi bo'sh bo'lmasligi kerak")

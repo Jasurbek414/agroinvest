@@ -31,7 +31,7 @@ public class OtpService {
     // Eskiz.uz credentials, SMS never actually reaches the user's phone, so - only in
     // that mock mode - every OTP is this fixed code instead of a random one, letting
     // registration/login/withdrawal etc. be tested without reading server logs.
-    private static final String MOCK_OTP_CODE = "123456";
+    private static final String MOCK_OTP_CODE = "1234";
 
     @Value("${sms.email:}")
     private String smsEmail;
@@ -74,7 +74,7 @@ public class OtpService {
         String attemptsKey = getAttemptsKey(phoneNumber, purpose);
 
         String code = isSmsProviderConfigured()
-                ? String.format("%06d", secureRandom.nextInt(1_000_000))
+                ? String.format("%04d", secureRandom.nextInt(10_000))
                 : MOCK_OTP_CODE;
 
         redisTemplate.opsForValue().set(redisKey, code, otpExpiryMinutes, TimeUnit.MINUTES);

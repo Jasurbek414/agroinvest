@@ -24,6 +24,11 @@ class _RegisterPageState extends State<RegisterPage> {
   String _selectedRole = 'INVESTOR';
   bool _obscurePassword = true;
   bool _isSendingOtp = false;
+  // Separate, narrowly-scoped guard against the OTP screen being pushed twice -
+  // kept independent of _isSendingOtp (which only covers the send-code network
+  // call) so the invariant "at most one /otp route is ever open" holds even if
+  // _isSendingOtp's timing changes under future edits.
+  bool _otpPageOpen = false;
 
   @override
   void initState() {
@@ -132,7 +137,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _sendOtp() async {
-    if (_isSendingOtp) return;
+    if (_isSendingOtp || _otpPageOpen) return;
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isSendingOtp = true;
@@ -153,6 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
         final cooldownSeconds = tooSoon ? _parseWaitSeconds(provider.error) : null;
         if (tooSoon) provider.clearError();
 
+        _otpPageOpen = true;
         final verified = await context.push<bool>(
           '/otp',
           extra: {
@@ -162,6 +168,7 @@ class _RegisterPageState extends State<RegisterPage> {
             if (cooldownSeconds != null) 'cooldownSeconds': cooldownSeconds,
           },
         );
+        _otpPageOpen = false;
 
         if (verified == true && mounted) {
           setState(() {

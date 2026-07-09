@@ -32,6 +32,7 @@ class OtpPage extends StatefulWidget {
 }
 
 const _resendCooldownSeconds = 60;
+const _otpLength = 4;
 
 class _OtpPageState extends State<OtpPage> {
   final _otpController = TextEditingController();
@@ -40,11 +41,24 @@ class _OtpPageState extends State<OtpPage> {
   bool _isVerifying = false;
   String? _infoMessage;
 
+  // pin_code_fields' onCompleted can fire more than once for the same fully-
+  // typed code (e.g. once from the keystroke, once from a rebuild while
+  // _isVerifying flips), and the manual "Tasdiqlash" button can also land
+  // right on top of an auto-fired attempt. Since the backend deletes the OTP
+  // from Redis the moment it's verified, a second identical request for a
+  // code that already succeeded comes back as "expired" even though nothing
+  // was actually wrong - this tracks the last code we've already submitted so
+  // a duplicate firing of the same value is a no-op instead of a second
+  // network call. Cleared automatically once the field is edited again
+  // (see _onOtpChanged), so a genuine retry is never blocked.
+  String? _lastAttemptedCode;
+
   @override
   void initState() {
     super.initState();
     _infoMessage = widget.infoMessage;
     _startResendCooldown(widget.initialCooldownSeconds ?? _resendCooldownSeconds);
+    _otpController.addListener(_onOtpChanged);
     // Don't inherit a stale error from whatever flow ran before this screen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
@@ -54,8 +68,15 @@ class _OtpPageState extends State<OtpPage> {
   @override
   void dispose() {
     _resendTimer?.cancel();
+    _otpController.removeListener(_onOtpChanged);
     _otpController.dispose();
     super.dispose();
+  }
+
+  void _onOtpChanged() {
+    if (_otpController.text.length < _otpLength) {
+      _lastAttemptedCode = null;
+    }
   }
 
   // Without this, a user whose SMS never arrives has no way back to a resend
@@ -128,7 +149,7 @@ class _OtpPageState extends State<OtpPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${widget.phoneNumber} raqamiga yuborilgan 6 xonali kodni kiriting.',
+                '${widget.phoneNumber} raqamiga yuborilgan $_otpLength xonali kodni kiriting.',
                 style: const TextStyle(color: AppColors.textMuted),
               ),
               const SizedBox(height: 32),
@@ -179,15 +200,15 @@ class _OtpPageState extends State<OtpPage> {
               // OTP pin fields using pin_code_fields
               PinCodeTextField(
                 appContext: context,
-                length: 6,
+                length: _otpLength,
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 animationType: AnimationType.fade,
                 pinTheme: PinTheme(
                   shape: PinCodeFieldShape.box,
                   borderRadius: BorderRadius.circular(12),
-                  fieldHeight: 54,
-                  fieldWidth: 44,
+                  fieldHeight: 56,
+                  fieldWidth: 56,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.border,
                   selectedColor: AppColors.primary,
@@ -196,6 +217,7 @@ class _OtpPageState extends State<OtpPage> {
                   selectedFillColor: Colors.white,
                 ),
                 enableActiveFill: true,
+                enabled: !_isVerifying,
                 onChanged: (value) {},
                 onCompleted: _verify,
               ),
@@ -245,32 +267,34 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void _verify(String code) async {
-    if (code.length == 6 && !_isVerifying) {
-      setState(() {
-        _isVerifying = true;
-      });
+    if (code.length != _otpLength || _isVerifying || code == _lastAttemptedCode) return;
 
-      final success = await Provider.of<AuthProvider>(context, listen: false).verifyOtpCode(
-        widget.phoneNumber,
-        widget.purpose,
-        code,
-      );
+    _lastAttemptedCode = code;
+    setState(() {
+      _isVerifying = true;
+    });
 
-      if (!mounted) return;
+    final success = await Provider.of<AuthProvider>(context, listen: false).verifyOtpCode(
+      widget.phoneNumber,
+      widget.purpose,
+      code,
+    );
 
-      if (success) {
-        if (context.canPop()) {
-          context.pop(true); // Pop back returning true (verified)
-        }
-      } else {
-        // A wrong/expired code (or a transient network failure) previously left
-        // the pin boxes full with no clean way to retry - clear them so the
-        // next attempt starts fresh instead of editing on top of a stale code.
-        _otpController.clear();
-        setState(() {
-          _isVerifying = false;
-        });
+    if (!mounted) return;
+
+    if (success) {
+      if (context.canPop()) {
+        context.pop(true); // Pop back returning true (verified)
       }
+    } else {
+      // A wrong/expired code (or a transient network failure) previously left
+      // the pin boxes full with no clean way to retry - clear them so the
+      // next attempt starts fresh instead of editing on top of a stale code.
+      // Clearing also resets _lastAttemptedCode via the controller listener.
+      _otpController.clear();
+      setState(() {
+        _isVerifying = false;
+      });
     }
   }
 }
