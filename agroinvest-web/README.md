@@ -1,16 +1,35 @@
-# React + Vite
+# AgroInvest — Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + Vite + Tailwind CSS v4 + Zustand asosidagi veb-ilova: ommaviy landing page, loyihalar katalogi, investor/fermer/admin/superadmin panellari.
 
-Currently, two official plugins are available:
+To'liq loyiha va arxitektura haqida: [../README.md](../README.md), [../ARCHITECTURE.md](../ARCHITECTURE.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Ishga tushirish (dev)
 
-## React Compiler
+```bash
+npm install
+cp .env.example .env.development   # VITE_API_URL ni backend manzilingizga moslang
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`VITE_API_URL` — backend API manzili (standart: `http://localhost:8080/api/v1`).
 
-## Expanding the Oxlint configuration
+## Build
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm run build   # dist/ papkasiga
+npm run preview # build natijasini lokal ko'rish
+```
+
+## Tuzilma
+
+- `src/pages/` — marshrut darajasidagi sahifalar (rol bo'yicha papkalangan: `public/`, `auth/`, `investor/`, `farmer/`, `admin/`, `superadmin/`, `profile/`, `disputes/`, `verifier/`).
+- `src/components/` — qayta ishlatiladigan komponentlar; `ui/` — umumiy dizayn tizimi (Badge, Button, DataTable, Card, ...), qolganlari domen bo'yicha (`projects/`, `farmer/`, `superadmin/`, `landing/`, `reviews/`, ...).
+- `src/api/` — har bir backend moduliga mos `*.api.js` fayllar (axios asosida, `src/api/axios.js`da markazlashgan token/refresh mantiqi).
+- `src/store/` — Zustand global holatlari (`auth.store.js`, `theme.store.js`).
+
+## Kod uslubi
+
+- Yangi funksiya qo'shishda mavjud `ui/` komponentlaridan foydalaning (masalan status ko'rsatish uchun har doim `Badge`, o'zingizning rang-mantig'ingizni yozmang).
+- Dark mode har doim `dark:` prefiksi bilan, `primary-*` rang tokenlaridan foydalaning (`green-*`/`red-*` kabi qattiq kodlangan Tailwind ranglarini emas).
+- 300+ qatorli komponentlar kichik qism-komponentlarga bo'linadi (masalan `components/farmer/create-project/`).
