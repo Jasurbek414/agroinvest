@@ -98,6 +98,17 @@ public class OtpService {
 
         String savedCode = (String) redisTemplate.opsForValue().get(redisKey);
         if (savedCode == null) {
+            // The code is deleted the instant it's successfully verified (below), so a
+            // second request for the SAME code that lands shortly after a first
+            // successful verification - a duplicate submit from the client, a retried
+            // request, a double-firing UI callback - would otherwise surface as a
+            // confusing "expired" error even though nothing actually went wrong. Treat
+            // a resubmission of the code we just accepted as a no-op success instead.
+            String lastVerified = (String) redisTemplate.opsForValue().get(getLastVerifiedKey(phoneNumber, purpose));
+            if (lastVerified != null && lastVerified.equals(code)) {
+                redisTemplate.opsForValue().set(getVerifiedKey(phoneNumber, purpose), "1", verifiedTicketMinutes, TimeUnit.MINUTES);
+                return;
+            }
             throw new ApiException(ErrorCode.OTP_EXPIRED, HttpStatus.BAD_REQUEST);
         }
 
@@ -122,6 +133,9 @@ public class OtpService {
         redisTemplate.delete(redisKey);
         redisTemplate.delete(attemptsKey);
         redisTemplate.opsForValue().set(getVerifiedKey(phoneNumber, purpose), "1", verifiedTicketMinutes, TimeUnit.MINUTES);
+        // Remembered briefly so an immediate duplicate submission of this same code
+        // (see the OTP_EXPIRED branch above) is treated as success, not failure.
+        redisTemplate.opsForValue().set(getLastVerifiedKey(phoneNumber, purpose), code, verifiedTicketMinutes, TimeUnit.MINUTES);
     }
 
     /**
@@ -155,5 +169,9 @@ public class OtpService {
 
     private String getVerifiedKey(String phoneNumber, String purpose) {
         return "otp_verified:" + purpose.toLowerCase() + ":" + phoneNumber;
+    }
+
+    private String getLastVerifiedKey(String phoneNumber, String purpose) {
+        return "otp_last_verified:" + purpose.toLowerCase() + ":" + phoneNumber;
     }
 }
