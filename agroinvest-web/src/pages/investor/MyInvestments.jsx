@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank, Star } from 'lucide-react';
 import { getMyInvestments, cancelInvestment } from '../../api/investments.api';
 import { getMyDashboard } from '../../api/dashboard.api';
 import Badge from '../../components/ui/Badge';
@@ -9,12 +9,15 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import StatCard from '../../components/ui/StatCard';
 import { useToast } from '../../components/ui/ToastProvider';
 import { formatAmount, formatDate } from '../../utils/format';
+import ReviewFormModal from '../../components/reviews/ReviewFormModal';
 
 const MyInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [reviewTarget, setReviewTarget] = useState(null);
+  const [reviewedIds, setReviewedIds] = useState(() => new Set());
   const [portfolio, setPortfolio] = useState(null);
   const { showToast } = useToast();
 
@@ -68,8 +71,8 @@ const MyInvestments = () => {
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sarmoyalarim</h1>
-          <p className="text-sm text-gray-500 mt-1">Siz sarmoya kiritgan faol va yakunlangan qishloq xo'jaligi aktivlari</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Sarmoyalarim</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Siz sarmoya kiritgan faol va yakunlangan qishloq xo'jaligi aktivlari</p>
         </div>
 
         {portfolio && (
@@ -81,11 +84,11 @@ const MyInvestments = () => {
         )}
 
         {loading ? (
-          <p className="text-gray-500 animate-pulse text-center">Yuklanmoqda...</p>
+          <p className="text-gray-500 dark:text-slate-400 animate-pulse text-center">Yuklanmoqda...</p>
         ) : error ? (
           <ErrorState message={error} onRetry={fetchInvestments} />
         ) : investments.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
             <EmptyState title="Sizda hali sarmoyalar mavjud emas" />
           </div>
         ) : (
@@ -93,20 +96,20 @@ const MyInvestments = () => {
             {investments.map((inv) => (
               <div
                 key={inv.id}
-                className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4"
               >
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base mb-1">{inv.projectTitle}</h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+                  <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base mb-1">{inv.projectTitle}</h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-slate-500">
                     <span>Sana: {formatDate(inv.createdAt)}</span>
-                    <span>Ulush: <strong className="text-green-600 font-bold">{inv.sharePct.toFixed(2)}%</strong></span>
+                    <span>Ulush: <strong className="text-primary-600 dark:text-primary-400 font-bold">{inv.sharePct.toFixed(2)}%</strong></span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-6">
                   <div className="text-right">
-                    <p className="text-xs text-gray-400">Kiritilgan sarmoya</p>
-                    <p className="font-extrabold text-gray-900">{formatAmount(inv.amount)}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500">Kiritilgan sarmoya</p>
+                    <p className="font-extrabold text-gray-900 dark:text-slate-100">{formatAmount(inv.amount)}</p>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -115,9 +118,18 @@ const MyInvestments = () => {
                     {inv.status === 'CONFIRMED' && isCancellable(inv.createdAt) && (
                       <button
                         onClick={() => setCancelTarget(inv.id)}
-                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-lg transition"
+                        className="px-3 py-1.5 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-semibold rounded-lg transition"
                       >
                         Bekor qilish
+                      </button>
+                    )}
+
+                    {inv.status === 'PAID_OUT' && !reviewedIds.has(inv.id) && (
+                      <button
+                        onClick={() => setReviewTarget(inv)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-700 dark:text-amber-400 text-xs font-semibold rounded-lg transition"
+                      >
+                        <Star size={13} /> Sharh qoldirish
                       </button>
                     )}
                   </div>
@@ -137,6 +149,17 @@ const MyInvestments = () => {
         onCancel={() => setCancelTarget(null)}
         onConfirm={handleCancel}
       />
+
+      {reviewTarget && (
+        <ReviewFormModal
+          investment={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onSubmitted={() => {
+            setReviewedIds((prev) => new Set(prev).add(reviewTarget.id));
+            setReviewTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 };
