@@ -40,6 +40,9 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     // row into memory with findAll().stream().filter()/.map().reduce().
     long countByStatus(ProjectStatus status);
 
+    // Backs the public landing page's "funded projects" stat tile.
+    long countByStatusIn(List<ProjectStatus> statuses);
+
     @Query("select coalesce(sum(p.raisedAmount), 0) from Project p")
     java.math.BigDecimal sumRaisedAmount();
 

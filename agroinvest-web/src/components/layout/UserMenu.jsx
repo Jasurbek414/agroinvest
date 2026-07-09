@@ -38,12 +38,21 @@ const UserMenu = () => {
 
   if (!user) {
     return (
-      <Link
-        to="/login"
-        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition"
-      >
-        {t('common.login')}
-      </Link>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+          className="p-2 rounded-xl text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+        <Link
+          to="/login"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition"
+        >
+          {t('common.login')}
+        </Link>
+      </div>
     );
   }
 

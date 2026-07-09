@@ -5,3 +5,9 @@ import api from './axios';
 export const getPublicSettings = () => {
   return api.get('/settings/public');
 };
+
+// Coarse, non-sensitive platform-wide counters for the public landing page's
+// trust stat tiles (total investors/farmers/funded projects/invested amount).
+export const getPublicStats = () => {
+  return api.get('/settings/public-stats');
+};

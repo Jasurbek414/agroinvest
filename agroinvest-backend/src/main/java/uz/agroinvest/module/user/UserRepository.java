@@ -25,6 +25,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Used by AdminService's dashboard stats instead of findAll().stream().filter().count().
     long countByKycStatusAndRole(KycStatus kycStatus, UserRole role);
 
+    // Backs the public landing page's trust stat tiles.
+    long countByRole(UserRole role);
+
     // Backs the admin KYC/Accounts tabs' role filter + name/phone search - both
     // params are optional (null = "any"). Every bind parameter is explicitly cast to
     // string, including the bare "IS NULL" checks - Postgres cannot infer a type for

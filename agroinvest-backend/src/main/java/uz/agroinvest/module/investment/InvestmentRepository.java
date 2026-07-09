@@ -4,10 +4,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.module.investment.entity.Investment;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,4 +37,8 @@ public interface InvestmentRepository extends JpaRepository<Investment, UUID> {
 
     Optional<Investment> findByIdempotencyKey(String idempotencyKey);
     boolean existsByProjectIdAndInvestorId(UUID projectId, UUID investorId);
+
+    // Backs the public landing page's "total invested" stat tile.
+    @Query("select coalesce(sum(i.amount), 0) from Investment i where i.status in :statuses")
+    BigDecimal sumAmountByStatusIn(@Param("statuses") List<InvestmentStatus> statuses);
 }
