@@ -96,10 +96,27 @@ public class AgreementService {
 
             document.add(new Paragraph("5. YAKUNIY QOIDALAR").setBold().setFontSize(12));
             document.add(new Paragraph(
-                    "Mablag'lar loyiha to'liq moliyalashtirilgunga qadar platforma hamyonida muzlatiladi. Loyiha muvaffaqiyatsiz tugasa yoki muddatida " +
-                    "yig'ilmasa, barcha mablag'lar investor balansiga komissiyasiz qaytariladi. Shartnoma elektron ko'rinishda tasdiqlangan va yuridik kuchga ega."
+                    "Mablag'lar loyiha to'liq moliyalashtirilgunga qadar platforma hamyonida muzlatiladi. Agar loyiha to'liq moliyalashtirilmasa yoki " +
+                    "Platforma tomonidan hali faollashtirilmasdan bekor qilinsa, barcha mablag'lar investor balansiga to'liq va komissiyasiz qaytariladi. " +
+                    "Shartnoma elektron ko'rinishda tasdiqlangan va yuridik kuchga ega."
             ).setFontSize(10));
             document.add(new Paragraph("\n"));
+
+            // Loss disclosure for the funded-and-ran-but-sold-low scenario - the
+            // paragraph above only covers "never funded/cancelled early" (full
+            // refund), which previously left the far more consequential case (a
+            // funded, ACTIVE project whose sale price comes in low) completely
+            // undisclosed in the document investors actually sign and rely on.
+            document.add(new Paragraph(
+                    "Agar loyiha to'liq moliyalashtirilib faollashtirilgandan so'ng yakuniy sotuv/tugatish summasi loyiha maqsad summasidan kam bo'lsa, " +
+                    "investorning (va o'z hissasi bilan qatnashgan bo'lsa, fermerning) qaytarib olinadigan summasi ular kiritgan mablag'ga PROPORSIONAL " +
+                    "ravishda avtomatik hisoblanadi (Platforma xizmat haqi va fermerning tasdiqlangan xarajatlari chegirilgandan keyingi qoldiq asosida). " +
+                    "Bunday holatda investor o'z asosiy mablag'ining bir qismini yoki to'liqini yo'qotishi mumkin; qaytariladigan summa nolgacha tushishi " +
+                    "mumkin va HECH QANDAY MINIMAL QAYTARIM KAFOLATLANMAYDI. Platformada bunday yo'qotishlarni qoplaydigan alohida zaxira fond yoki " +
+                    "sug'urta mexanizmi mavjud emas."
+            ).setFontSize(10));
+            document.add(new Paragraph("\n"));
+
             document.add(new Paragraph(
                     "OGOHLANTIRISH: Ko'rsatilgan daromad kutilayotgan (taxminiy) ko'rsatkich bo'lib, KAFOLATLANMAGAN. " +
                     "Qishloq xo'jaligi faoliyati tabiiy va bozor risklariga ega - sarmoyaning bir qismi yoki to'liq yo'qotilishi mumkin."

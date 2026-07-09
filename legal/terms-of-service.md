@@ -34,7 +34,7 @@
 
 4.2. Har bir loyiha uchun minimal/maksimal sarmoya chegaralari, kutilayotgan foyda foizi va muddat loyiha sahifasida ko'rsatiladi.
 
-4.3. Sarmoya kiritilgandan so'ng 24 soat ichida, agar loyiha hali to'liq moliyalashtirilmagan bo'lsa, sarmoyani bekor qilish mumkin.
+4.3. Sarmoya kiritilgandan so'ng standart 24 soat ichida, agar loyiha hali to'liq moliyalashtirilmagan (FUNDING) bosqichida bo'lsa, sarmoyani bekor qilish mumkin. **Muhim:** agar loyiha moliyalashtirishning 50% chegarasiga yetib, fermerga birinchi bosqich avans mablag' chiqarilgan bo'lsa, bekor qilish imkoniyati 24 soat to'liq o'tmasdan ham yopilishi mumkin — chunki bu mablag' allaqachon fermerga uzatilgan bo'ladi. Shu sababli amaldagi bekor qilish oynasi ba'zan 24 soatdan qisqaroq bo'lishi mumkin.
 
 4.4. Investitsiya tasdiqlanganda avtomatik shartnoma (PDF) yaratiladi.
 
@@ -46,7 +46,7 @@
 
 5.3. Har bir loyihaning xavf darajasi (Past/O'rtacha/Yuqori) va bu darajaning ma'nosi loyiha sahifasida ko'rsatiladi.
 
-5.4. Yo'qotish yuzaga kelgan taqdirda: veterinar/agronom xulosasi va foto-dalil yuklanadi, Platforma admin jamoasi tekshiradi, mavjud bo'lsa zaxira fondi hisobidan qisman qoplash ko'riladi, barcha investorlarga xabar beriladi. Bu jarayon **to'liq qoplashni kafolatlamaydi**.
+5.4. Yo'qotish yuzaga kelgan taqdirda: loyiha sotilgan/yakunlangan summa (`salePrice`) tizimga admin tomonidan kiritiladi va investorlar hamda fermerning (agar u o'z hissasi bilan qatnashgan bo'lsa) ulushi shu summadan **avtomatik va proporsional ravishda** hisoblanadi — bu jarayon Platforma xizmat haqi va fermer tomonidan to'langan tasdiqlangan xarajatlar chegirilgandan keyingi qoldiq asosida amalga oshiriladi. **Platformada zarar hollarini qisman yoki to'liq qoplaydigan alohida zaxira fond yoki sug'urta mexanizmi mavjud emas** — investorning va (o'z hissasi bilan qatnashgan) fermerning yo'qotishi faqat ular kiritgan mablag' doirasida bo'ladi (ya'ni qo'shimcha to'lov talab qilinmaydi), lekin qaytariladigan summa nolgacha tushishi mumkin va **hech qanday minimal qaytarim kafolatlanmaydi**. Fermer loyiha davomida (veterinar/agronom xulosasi va foto-dalil bilan) davriy holat hisobotlarini yuklashi mumkin — bu shaffoflik va investorlar ishonchini oshirish maqsadida bo'lib, alohida "zarar da'vosi" jarayoni emas. Nizoli holatlarda Platformaning "Shikoyatlar" tizimi orqali murojaat qilish mumkin (§8), biroq bu tizim orqali avtomatik moliyaviy qoplash kafolatlanmaydi — har bir holat admin jamoasi tomonidan alohida ko'rib chiqiladi. To'liq hisob-kitob formulasi va raqamli misol: [`legal/contracts/investor-platform-agreement.md`](./contracts/investor-platform-agreement.md) §7.
 
 ## 6. Fermerlar uchun shartlar
 
@@ -58,7 +58,7 @@
 
 6.4. Favqulodda holat (kasallik, ofat, yo'qotish) yuzaga kelganda, Fermer darhol Platformaga xabar berishi shart.
 
-6.5. Loyiha yakunida daromad/zarar, kelishilgan foyda taqsimoti (masalan investorlar X%, fermer Y%) asosida hisoblanadi.
+6.5. Loyiha yakunida daromad/zarar, kelishilgan foyda taqsimoti (masalan investorlar X%, fermer Y%) asosida hisoblanadi; zarar holatida fermerning o'z hissasi ham (agar mavjud bo'lsa) investorlar bilan bir xil qoidada proporsional kamayishi mumkin. To'liq tartib: [`legal/contracts/farmer-platform-agreement.md`](./contracts/farmer-platform-agreement.md) §8.
 
 ## 7. To'lovlar
 
@@ -66,13 +66,15 @@
 
 7.2. Pul yechish so'rovlari Platforma tomonidan ko'rib chiqiladi va bank/karta orqali amalga oshiriladi; moliyaviy amallar uchun qo'shimcha SMS-tasdiqlash (2FA) talab qilinadi.
 
-7.3. Platforma xizmat haqi (komissiya) miqdori [%, to'ldiring] Platforma sozlamalarida belgilanadi va oldindan e'lon qilinadi.
+7.3. Platforma xizmat haqi (komissiya) miqdori Platforma sozlamalarida belgilanadi (hozirgi standart qiymat — sotuv/yakunlash summasidan **10%**) va har bir loyiha yaratilgan paytdagi qiymat sifatida shu loyihaga biriktiriladi (keyinchalik umumiy sozlama o'zgarsa ham, allaqachon yaratilgan loyihalarga ta'sir qilmaydi). Komissiya loyiha yakunlanib sotilganda, hisob-kitobning birinchi bosqichi sifatida, boshqa barcha to'lovlardan (fermerning tasdiqlangan xarajatlari, investorlarning asosiy mablag'i va foyda/zarar ulushi) oldin ushlab qolinadi.
 
 ## 8. Nizolarni hal qilish
 
 8.1. Investor va Fermer o'rtasidagi kelishmovchiliklar Platforma ichidagi "Shikoyatlar" tizimi orqali bildiriladi va admin jamoasi tomonidan ko'rib chiqiladi.
 
-8.2. Platforma qarori bilan rozi bo'lmagan taraf O'zbekiston Respublikasi qonunchiligida belgilangan tartibda sudga murojaat qilish huquqiga ega.
+8.2. **Shikoyat tizimi orqali murojaat qilish avtomatik moliyaviy qoplashni kafolatlamaydi.** Bu — muloqot va ko'rib chiqish jarayoni: admin jamoasi holatni tekshiradi va yozma xulosa (rezolyutsiya) beradi; agar moliyaviy tuzatish (masalan, qo'shimcha to'lov yoki hisobni tuzatish) zarur deb topilsa, bu alohida, qo'lda bajariladigan ma'muriy amal bo'lib, shikoyatni yopish bilan avtomatik ravishda amalga oshmaydi.
+
+8.3. Platforma qarori bilan rozi bo'lmagan taraf O'zbekiston Respublikasi qonunchiligida belgilangan tartibda sudga murojaat qilish huquqiga ega.
 
 ## 9. Javobgarlikni cheklash
 

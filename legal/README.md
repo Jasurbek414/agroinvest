@@ -6,10 +6,20 @@
 
 | Fayl | Holati |
 |---|---|
-| [`terms-of-service.md`](./terms-of-service.md) | Qoralama — asosiy tarkib bor |
+| [`terms-of-service.md`](./terms-of-service.md) | Qoralama — asosiy tarkib bor, zarar/komissiya bandlari kod bilan solishtirilgan |
 | [`privacy-policy.md`](./privacy-policy.md) | Qoralama — asosiy tarkib bor |
-| [`contracts-overview.md`](./contracts-overview.md) | Faqat tuzilma/talablar ro'yxati — TZ §9'da nomlangan 3 shartnoma (Investor–Platforma, Fermer–Platforma, Investor–Fermer) haqiqiy moliyaviy shartnoma matni bo'lib, buni albatta yurist tayyorlashi kerak |
+| [`contracts-overview.md`](./contracts-overview.md) | Talablar ro'yxati — yurist uchun tekshirish ro'yxati (checklist) sifatida saqlanadi |
+| [`contracts/investor-platform-agreement.md`](./contracts/investor-platform-agreement.md) | **To'liq matn qoralamasi** — Investor–Platforma ommaviy oferta shartnomasi |
+| [`contracts/farmer-platform-agreement.md`](./contracts/farmer-platform-agreement.md) | **To'liq matn qoralamasi** — Fermer–Platforma ommaviy oferta shartnomasi |
+| [`contracts/investor-farmer-agreement.md`](./contracts/investor-farmer-agreement.md) | **To'liq matn qoralamasi** — har bir investitsiya uchun avtomatik generatsiya qilinadigan shartnomaning kengaytirilgan matni (`AgreementService.java`ga mos) |
 
-## Nima uchun to'liq shartnoma matnlari yozilmagan
+## Nima uchun to'liq shartnoma matnlari endi yozilgan, lekin baribir yurist zarur
 
-Investor-fermer o'rtasidagi haqiqiy pul oqimi, foyda taqsimoti va zarar javobgarligini belgilaydigan shartnoma — bu jiddiy moliyaviy-huquqiy hujjat. Noto'g'ri tuzilgan shartnoma investorlarni ham, platformani ham himoyasiz qoldirishi mumkin. Shuning uchun faqat **qanday bandlar bo'lishi kerakligi** ro'yxati tayyorlandi — matnning o'zi litsenziyalangan yurist bilan tayyorlanishi shart.
+Ilgari faqat "qanday bandlar bo'lishi kerakligi" ro'yxati bor edi. Endi uchala shartnomaning **to'liq matni** yozilgan — komissiya, foyda/zarar taqsimoti, bekor qilish oynasi, hisobot majburiyati kabi bandlar Platformaning haqiqiy dasturiy mexanizmiga (kod bazasiga) mos tekshirilgan holda tuzilgan (masalan: zarar holatida proporsional taqsimot formulasi, "zaxira fond yo'qligi" haqidagi aniq ogohlantirish — bular avval mavjud bo'lmagan yoki noto'g'ri tasvirlangan edi, tuzatildi).
+
+**Baribir quyidagilar litsenziyalangan yurist tomonidan tasdiqlanishi shart** (men yurist emasman):
+- O'zbekiston Respublikasi fuqarolik va moliyaviy faoliyatni tartibga soluvchi qonunchiligiga to'liq muvofiqlik;
+- Ommaviy oferta shaklining yuridik kuchga ega bo'lishi uchun rasmiy talablar (agar mahalliy qonunchilik buni talab qilsa — masalan, ro'yxatga olish yoki litsenziya);
+- Soliq oqibatlari (komissiya, foyda ulushi bo'yicha soliq majburiyatlari);
+- Moliyaviy monitoring/AML talablariga muvofiqlik;
+- Yuridik shaxs rekvizitlari, STIR va boshqa "[to'ldiring]" deb belgilangan joylarni to'ldirish.

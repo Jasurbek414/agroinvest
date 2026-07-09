@@ -1,6 +1,6 @@
-# Shartnoma shablonlari — talablar ro'yxati (matn emas)
+# Shartnoma shablonlari — talablar ro'yxati va yurist uchun tekshirish checklisti
 
-> **Bu yerda tayyor shartnoma matni yo'q.** TZ §9'da uchta shartnoma nomlangan: Investor–Platforma, Fermer–Platforma, Investor–Fermer. Bular real pul oqimini tartibga soluvchi moliyaviy shartnomalar bo'lgani uchun, matnning o'zini litsenziyalangan yurist tayyorlashi shart. Quyida — har bir shartnomada **qanday band bo'lishi kerakligi** ro'yxati, kod bazasida allaqachon mavjud mexanizmlarga tayangan holda.
+> **To'liq matn qoralamalari endi mavjud**: [`contracts/investor-platform-agreement.md`](./contracts/investor-platform-agreement.md), [`contracts/farmer-platform-agreement.md`](./contracts/farmer-platform-agreement.md), [`contracts/investor-farmer-agreement.md`](./contracts/investor-farmer-agreement.md). Bu fayl endi ularni **tekshirish ro'yxati (checklist)** sifatida xizmat qiladi — yurist matnlarni ko'rib chiqayotganda har bir band haqiqatan ham kiritilganini shu ro'yxat bo'yicha tasdiqlashi mumkin. TZ §9'da uchta shartnoma nomlangan: Investor–Platforma, Fermer–Platforma, Investor–Fermer. Bular real pul oqimini tartibga soluvchi moliyaviy shartnomalar bo'lgani uchun, **yakuniy matnni albatta litsenziyalangan yurist tasdiqlashi shart** — quyidagi ro'yxat kod bazasida allaqachon mavjud mexanizmlarga tayangan holda tuzilgan.
 
 ## 1. Investor–Platforma shartnomasi
 
@@ -37,9 +37,8 @@ Har bir tasdiqlangan investitsiya uchun avtomatik PDF sifatida yaratiladi (F-3.4
 
 ## Texnik eslatma
 
-Barcha uchta shartnoma matni tayyor bo'lgach, ularni:
-1. Statik matn sifatida (masalan `legal/templates/`) saqlash,
-2. Investor-Fermer shartnomasi uchun `InvestmentService`ga PDF generatsiya qilishda shu shablondan foydalanish,
-3. Ro'yxatdan o'tish/loyiha yaratish oqimida "Men shartlarga roziman" checkbox'ini majburiy qilish
-
-kabi bosqichlar bilan kodga integratsiya qilish kerak bo'ladi — bu alohida dasturlash vazifasi.
+Amalga oshirish holati:
+1. ✅ **Statik matn** — `legal/contracts/` papkasida uchta to'liq matn qoralamasi mavjud.
+2. ✅ **Investor–Fermer shartnomasi uchun PDF generatsiya** — `AgreementService.java` (`generateInvestmentAgreementPdf`) allaqachon mavjud edi; bu sessiyada uning §5 (yakuniy qoidalar) bandi tuzatildi, chunki u faqat "loyiha moliyalashtirilmasa — to'liq qaytariladi" holatini tasvirlab, ancha muhimroq "loyiha moliyalashtirilib, past narxda sotilsa" (zarar) holatini umuman yoritmagan edi — endi ikkala holat ham aniq yozilgan.
+3. ⬜ **"Men shartlarga roziman" checkbox'ini majburiy qilish** — ro'yxatdan o'tish/loyiha yaratish/sarmoya kiritish oqimida hali kodda majburiy checkbox sifatida amalga oshirilmagan (mobil sarmoya kiritish formasida shunga o'xshash "kafolatlanmagan daromadni tushunaman" checkbox bor, lekin u to'liq shartnoma matniga havola qilmaydi). Bu — alohida, kelajakdagi dasturlash vazifasi.
+4. ⬜ **Elektron imzo (EDS)** — hali amalga oshirilmagan (F-3.5).
