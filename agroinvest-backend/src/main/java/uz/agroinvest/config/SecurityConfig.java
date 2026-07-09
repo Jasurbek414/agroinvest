@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 import uz.agroinvest.security.JwtAuthFilter;
+import uz.agroinvest.security.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -24,10 +25,12 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsFilter corsFilter;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, CorsFilter corsFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, CorsFilter corsFilter, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.corsFilter = corsFilter;
+        this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
     }
 
     @Bean
@@ -46,6 +49,7 @@ public class SecurityConfig {
                 .addFilterBefore(corsFilter, CorsFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         // Checkout-URL generation needs the caller's own identity (it embeds
                         // their userId in the returned Payme/Click URL) - carved out ahead of
@@ -63,6 +67,8 @@ public class SecurityConfig {
                                 "/api/v1/projects/{id}",
                                 "/api/v1/categories",
                                 "/api/v1/settings/public",
+                                "/api/v1/settings/public-stats",
+                                "/api/v1/banners",
                                 "/api/v1/payments/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

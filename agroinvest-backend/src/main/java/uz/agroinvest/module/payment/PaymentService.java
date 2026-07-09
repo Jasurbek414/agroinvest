@@ -537,8 +537,9 @@ public class PaymentService {
      * INFRASTRUCTURE ONLY: with clickMerchantId/clickServiceId/paymeMerchantId
      * left unconfigured (the default), this produces a URL that will not
      * actually complete a real payment - same "safe until configured" pattern
-     * as FcmPushService. DevPaymentController/testDeposit remain the way to
-     * credit a wallet in dev/staging until real merchant credentials exist.
+     * as FcmPushService. Wallets are credited via the superadmin-approved
+     * deposit-request flow (DepositRequestService) until real merchant
+     * credentials exist.
      */
     public String buildCheckoutUrl(PaymentProvider provider, UUID userId, BigDecimal amount) {
         if (provider == PaymentProvider.CLICK) {
@@ -555,27 +556,5 @@ public class PaymentService {
             return "https://checkout.paycom.uz/" + encoded;
         }
         throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Noma'lum to'lov provayderi");
-    }
-
-    @Transactional
-    public void testDeposit(UUID userId, BigDecimal amount) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "User not found"));
-
-        Wallet wallet = walletRepository.findByUserIdForUpdate(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Wallet not found"));
-
-        wallet.setBalance(wallet.getBalance().add(amount));
-        walletRepository.save(wallet);
-
-        Transaction transaction = Transaction.builder()
-                .user(user)
-                .type(TransactionType.DEPOSIT)
-                .amount(amount)
-                .paymentProvider(PaymentProvider.CLICK)
-                .externalPaymentId("TEST-" + UUID.randomUUID())
-                .status(TransactionStatus.COMPLETED)
-                .build();
-        transactionRepository.save(transaction);
     }
 }

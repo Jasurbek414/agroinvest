@@ -1,5 +1,9 @@
 package uz.agroinvest.module.permission;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,7 @@ import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.security.UserPrincipal;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,9 +35,18 @@ import java.util.stream.Collectors;
  *
  * Also the single write path for permission/custom-role CRUD used by the
  * SuperAdmin management endpoints (PermissionController).
+ *
+ * Implements ApplicationRunner to evict every role_permissions:* cache entry on
+ * startup: a Flyway migration that seeds new role_permissions rows (e.g. V24
+ * granting SUPERADMIN 'banner.manage') writes straight to the DB, bypassing
+ * grantToRole()/evictRoleCache() - without this, a role's cached permission set
+ * from before the migration would keep denying the newly-granted permission
+ * for up to ROLE_CACHE_TTL_HOURS after every deploy.
  */
 @Service
-public class PermissionService {
+public class PermissionService implements ApplicationRunner {
+
+    private static final Logger logger = LoggerFactory.getLogger(PermissionService.class);
 
     private static final String ROLE_CACHE_KEY_PREFIX = "role_permissions:";
     private static final long ROLE_CACHE_TTL_HOURS = 6;
@@ -63,6 +77,21 @@ public class PermissionService {
         this.redisTemplate = redisTemplate;
     }
 
+    @Override
+    public void run(ApplicationArguments args) {
+        try {
+            Set<String> keys = redisTemplate.keys(ROLE_CACHE_KEY_PREFIX + "*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                logger.info("Evicted {} stale role-permission cache entries on startup", keys.size());
+            }
+        } catch (Exception e) {
+            // Redis being briefly unavailable at startup shouldn't fail the boot -
+            // getRolePermissions() already falls back to the DB on any cache-read error.
+            logger.warn("Could not evict role-permission cache on startup: {}", e.getMessage());
+        }
+    }
+
     /** Used by the `@authz.has(...)` SpEL bean backing @PreAuthorize("hasPermission(...)") checks. */
     @Transactional(readOnly = true)
     public boolean hasPermission(UserPrincipal principal, String code) {
@@ -77,23 +106,37 @@ public class PermissionService {
         return effective;
     }
 
-    @SuppressWarnings("unchecked")
     private Set<String> getRolePermissions(UserRole role) {
         String cacheKey = ROLE_CACHE_KEY_PREFIX + role.name();
-        Object cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached instanceof List<?> list) {
-            return list.stream().map(Object::toString).collect(Collectors.toSet());
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached instanceof List<?> list) {
+                return list.stream().map(Object::toString).collect(Collectors.toSet());
+            }
+        } catch (Exception e) {
+            // A cache entry written as List.copyOf(...) (a JDK-internal immutable
+            // collection type) doesn't reliably round-trip through Jackson's
+            // polymorphic Redis serializer across JVM restarts - treat any
+            // deserialization failure as a cache miss instead of failing every
+            // permission check for the role until the 6h TTL happens to expire.
+            logger.warn("Could not read cached permissions for role {}, recomputing from DB: {}", role, e.getMessage());
         }
 
         Set<String> codes = rolePermissionRepository.findByRole(role).stream()
                 .map(RolePermission::getPermissionCode)
                 .collect(Collectors.toSet());
-        redisTemplate.opsForValue().set(cacheKey, List.copyOf(codes), ROLE_CACHE_TTL_HOURS, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(cacheKey, new ArrayList<>(codes), ROLE_CACHE_TTL_HOURS, TimeUnit.HOURS);
         return codes;
     }
 
     private void evictRoleCache(UserRole role) {
         redisTemplate.delete(ROLE_CACHE_KEY_PREFIX + role.name());
+    }
+
+    /** Backs the SuperAdmin permission-matrix UI: which codes are currently granted to a role. */
+    @Transactional(readOnly = true)
+    public List<String> getRolePermissionCodes(UserRole role) {
+        return getRolePermissions(role).stream().sorted().toList();
     }
 
     // ---- Permission CRUD (SuperAdmin) ----
