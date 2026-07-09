@@ -127,7 +127,10 @@ class _OtpPageState extends State<OtpPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('SMS kodni tasdiqlash'),
+        title: const Text(
+          'SMS kodni tasdiqlash',
+          style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppColors.textDark,
@@ -217,7 +220,6 @@ class _OtpPageState extends State<OtpPage> {
                   selectedFillColor: Colors.white,
                 ),
                 enableActiveFill: true,
-                enabled: !_isVerifying,
                 onChanged: (value) {},
                 onCompleted: _verify,
               ),
