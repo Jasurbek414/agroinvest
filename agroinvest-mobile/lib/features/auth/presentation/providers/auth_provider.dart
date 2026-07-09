@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/api_error.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../data/auth_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -44,6 +45,10 @@ class AuthProvider extends ChangeNotifier {
     if (userDataStr != null) {
       _user = jsonDecode(userDataStr);
       notifyListeners();
+      // Restored an existing session on app startup - register for push the
+      // same as a fresh login (initialize() is idempotent and no-ops silently
+      // if no Firebase project is configured yet).
+      PushNotificationService().initialize();
     }
   }
 
@@ -155,6 +160,12 @@ class AuthProvider extends ChangeNotifier {
     await SecureStorage.saveUserData(jsonEncode(_user));
     _error = null; // clear any previous session-expired errors
     _errorCode = null;
+
+    // Register this device for push notifications now that we have a fresh
+    // access token to attach the FCM token to. See push_notification_service.dart -
+    // this is the "step 3" its own doc comment asked for; it stays a silent
+    // no-op until a real Firebase project is configured.
+    PushNotificationService().initialize();
   }
 
   /// Updates the cached session user's name after a profile edit, so the

@@ -3,7 +3,7 @@ import { getMyProjects } from '../../api/projects.api';
 import { getMyDashboard } from '../../api/dashboard.api';
 import ProjectListTab from '../../components/farmer/ProjectListTab';
 import CreateProjectForm from '../../components/farmer/CreateProjectForm';
-import ReportUploadModal from '../../components/farmer/ReportUploadModal';
+import ReportUploadModal from '../../components/reports/ReportUploadModal';
 import ExpenseFormModal from '../../components/farmer/ExpenseFormModal';
 import VetUploadModal from '../../components/farmer/VetUploadModal';
 import FarmerStatsBar from '../../components/farmer/FarmerStatsBar';
@@ -54,14 +54,14 @@ const FarmerDashboard = () => {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fermer ish stoli (Farmer Dashboard)</h1>
-            <p className="text-sm text-gray-500 mt-1">Loyihalaringiz holati va yangi hisobotlar taqdim etish paneli</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fermer ish stoli (Farmer Dashboard)</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Loyihalaringiz holati va yangi hisobotlar taqdim etish paneli</p>
           </div>
-          <div className="flex bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
             <button
               onClick={() => setActiveTab('list')}
               className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
-                activeTab === 'list' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-500 hover:text-green-600'
+                activeTab === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
               }`}
             >
               Loyihalarim
@@ -69,7 +69,7 @@ const FarmerDashboard = () => {
             <button
               onClick={() => setActiveTab('create')}
               className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
-                activeTab === 'create' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-500 hover:text-green-600'
+                activeTab === 'create' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
               }`}
             >
               + Loyiha qo'shish

@@ -41,11 +41,11 @@ const ProjectExpensesList = ({ projectId }) => {
   }, [projectId]);
 
   if (loading) {
-    return <p className="text-sm text-gray-400 animate-pulse">Yuklanmoqda...</p>;
+    return <p className="text-sm text-gray-400 dark:text-slate-500 animate-pulse">Yuklanmoqda...</p>;
   }
 
   if (forbidden) {
-    return <p className="text-xs text-gray-400">Harajatlarni faqat loyiha egasi, investorlari va adminlar ko'ra oladi</p>;
+    return <p className="text-xs text-gray-400 dark:text-slate-500">Harajatlarni faqat loyiha egasi, investorlari va adminlar ko'ra oladi</p>;
   }
 
   if (expenses.length === 0) {
@@ -55,16 +55,16 @@ const ProjectExpensesList = ({ projectId }) => {
   return (
     <div className="space-y-3">
       {expenses.map((e) => (
-        <div key={e.id} className="border border-gray-100 rounded-2xl p-4">
+        <div key={e.id} className="border border-gray-100 dark:border-slate-700 rounded-2xl p-4">
           <div className="flex justify-between items-start gap-3 mb-1.5">
-            <span className="text-xs font-bold text-gray-700">{CATEGORY_LABEL_UZ[e.category] || e.category}</span>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{CATEGORY_LABEL_UZ[e.category] || e.category}</span>
             <Badge status={e.status} />
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm font-bold text-gray-900">{formatAmount(e.amount)}</span>
-            <span className="text-[11px] text-gray-400">{formatDate(e.expenseDate)}</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-slate-100">{formatAmount(e.amount)}</span>
+            <span className="text-[11px] text-gray-400 dark:text-slate-500">{formatDate(e.expenseDate)}</span>
           </div>
-          {e.description && <p className="text-xs text-gray-500 mt-1">{e.description}</p>}
+          {e.description && <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{e.description}</p>}
         </div>
       ))}
     </div>

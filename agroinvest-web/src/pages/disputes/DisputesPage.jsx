@@ -32,24 +32,24 @@ const DisputesPage = () => {
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
+          <div className="w-11 h-11 rounded-2xl bg-red-50 dark:bg-red-950 flex items-center justify-center text-red-600 dark:text-red-400">
             <Scale size={22} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Shikoyatlar</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Loyiha bo'yicha muammo yuzaga kelsa, shu yerdan shikoyat oching</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Shikoyatlar</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Loyiha bo'yicha muammo yuzaga kelsa, shu yerdan shikoyat oching</p>
           </div>
         </div>
 
         <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Yangi shikoyat</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mb-4">Yangi shikoyat</h2>
           <DisputeForm user={user} onFiled={fetchDisputes} />
         </Card>
 
         <div>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Mening shikoyatlarim</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mb-4">Mening shikoyatlarim</h2>
           {loading ? (
-            <p className="text-sm text-gray-400 animate-pulse">Yuklanmoqda...</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 animate-pulse">Yuklanmoqda...</p>
           ) : error ? (
             <ErrorState message={error} onRetry={fetchDisputes} />
           ) : (

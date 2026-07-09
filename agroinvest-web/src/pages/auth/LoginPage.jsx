@@ -48,22 +48,22 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-slate-900 dark:to-slate-800 p-4">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-green-700 tracking-tight">AgroInvest</h1>
-          <p className="text-gray-500 mt-2">Tizimga kirish uchun ma'lumotlarni kiriting</p>
+          <Link to="/" className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">AgroInvest</Link>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">Tizimga kirish uchun ma'lumotlarni kiriting</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 text-sm">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border-l-4 border-red-500 rounded-lg text-red-700 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
               Telefon raqam
             </label>
             <input
@@ -71,13 +71,13 @@ const LoginPage = () => {
               value={phoneNumber}
               onChange={handlePhoneChange}
               placeholder="+998901234567"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
               Parol
             </label>
             <input
@@ -85,7 +85,7 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
               required
             />
           </div>
@@ -93,15 +93,15 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-xl shadow-lg shadow-green-600/20 hover:shadow-green-700/30 transition duration-200"
+            className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-semibold rounded-xl shadow-lg shadow-primary-600/20 hover:shadow-primary-700/30 transition duration-200"
           >
             {loading ? 'Kirilmoqda...' : 'Kirish'}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-gray-600">
+        <div className="mt-8 text-center text-sm text-gray-600 dark:text-slate-400">
           Hisobingiz yo'qmi?{' '}
-          <Link to="/register" className="font-bold text-green-600 hover:text-green-700 hover:underline">
+          <Link to="/register" className="font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline">
             Ro'yxatdan o'tish
           </Link>
         </div>

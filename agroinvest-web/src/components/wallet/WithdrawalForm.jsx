@@ -43,39 +43,39 @@ const WithdrawalForm = ({ balance, onRequested }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       <div>
-        <label className="block text-sm text-gray-600 mb-2">Yechish summasi (UZS)</label>
+        <label className="block text-sm text-gray-600 dark:text-slate-400 mb-2">Yechish summasi (UZS)</label>
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Masalan: 100000"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
         />
       </div>
       <div>
-        <label className="block text-sm text-gray-600 mb-2">Bank nomi</label>
+        <label className="block text-sm text-gray-600 dark:text-slate-400 mb-2">Bank nomi</label>
         <input
           type="text"
           value={bankName}
           onChange={(e) => setBankName(e.target.value)}
           placeholder="Masalan: Xalq banki"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
         />
       </div>
       <div>
-        <label className="block text-sm text-gray-600 mb-2">Karta raqami</label>
+        <label className="block text-sm text-gray-600 dark:text-slate-400 mb-2">Karta raqami</label>
         <input
           type="text"
           value={cardNumber}
           onChange={(e) => setCardNumber(e.target.value)}
           placeholder="8600 XXXX XXXX XXXX"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
         />
       </div>
       <button
         type="submit"
         disabled={submitting}
-        className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl shadow-sm transition"
+        className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white font-bold rounded-xl shadow-sm transition"
       >
         {submitting ? 'Yuborilmoqda...' : "So'rov yuborish"}
       </button>

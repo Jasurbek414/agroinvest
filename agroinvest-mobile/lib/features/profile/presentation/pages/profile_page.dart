@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 
@@ -195,6 +196,16 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
 
+        // Mening hamyonim (har ikkala rol uchun)
+        _buildMenuButton(
+          context: context,
+          icon: Icons.account_balance_wallet_outlined,
+          label: 'Mening hamyonim',
+          onTap: () {
+            context.push('/wallet');
+          },
+        ),
+
         // KYC (har ikkala rol uchun)
         _buildMenuButton(
           context: context,
@@ -221,6 +232,14 @@ class ProfilePage extends StatelessWidget {
           icon: Icons.language_rounded,
           label: 'Til',
           onTap: () => _showLanguagePicker(context),
+        ),
+
+        // Ko'rinish (tungi rejim)
+        _buildMenuButton(
+          context: context,
+          icon: Icons.dark_mode_outlined,
+          label: "Ko'rinish",
+          onTap: () => _showThemePicker(context),
         ),
 
         const Spacer(),
@@ -265,6 +284,42 @@ class ProfilePage extends StatelessWidget {
                 trailing: entry.key == currentCode ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
                 onTap: () {
                   sheetContext.setLocale(Locale(entry.key));
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    const options = {
+      ThemeMode.system: ("Tizim bo'yicha", Icons.brightness_auto_rounded),
+      ThemeMode.light: ('Yorug\'', Icons.light_mode_rounded),
+      ThemeMode.dark: ('Tungi', Icons.dark_mode_rounded),
+    };
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(18),
+              child: Text("Ko'rinishni tanlang", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            for (final entry in options.entries)
+              ListTile(
+                leading: Icon(entry.value.$2, color: AppColors.primary),
+                title: Text(entry.value.$1),
+                trailing: entry.key == themeProvider.themeMode ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
+                onTap: () {
+                  themeProvider.setThemeMode(entry.key);
                   Navigator.of(sheetContext).pop();
                 },
               ),

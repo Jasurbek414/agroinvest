@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { sendOtp, verifyOtp } from '../../api/auth.api';
 import OTPInput from '../../components/auth/OTPInput';
 
 const RegisterPage = () => {
+  const [searchParams] = useSearchParams();
+  const presetRole = searchParams.get('role') === 'FARMER' ? 'FARMER' : 'INVESTOR';
+
   const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: Profile Details
   const [phoneNumber, setPhoneNumber] = useState('+998');
-  const [otpCode, setOtpCode] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('INVESTOR'); // default
+  const [role, setRole] = useState(presetRole);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -86,11 +88,11 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-slate-900 dark:to-slate-800 p-4">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-green-700 tracking-tight">Ro'yxatdan o'tish</h1>
-          <p className="text-gray-500 mt-2">
+          <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Ro'yxatdan o'tish</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">
             {step === 1 && "Telefon raqamingizni kiriting"}
             {step === 2 && "Telefoningizga kelgan OTP kodini kiriting"}
             {step === 3 && "Shaxsiy profilingiz tafsilotlarini kiriting"}
@@ -98,7 +100,7 @@ const RegisterPage = () => {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 text-sm">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border-l-4 border-red-500 rounded-lg text-red-700 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
@@ -106,7 +108,7 @@ const RegisterPage = () => {
         {step === 1 && (
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 Telefon raqam
               </label>
               <input
@@ -114,7 +116,7 @@ const RegisterPage = () => {
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 placeholder="+998901234567"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                 required
               />
             </div>
@@ -122,7 +124,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-xl shadow-lg shadow-green-600/20 transition duration-200"
+              className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-semibold rounded-xl shadow-lg shadow-primary-600/20 transition duration-200"
             >
               {loading ? 'Yuborilmoqda...' : "Kodni yuborish"}
             </button>
@@ -135,19 +137,19 @@ const RegisterPage = () => {
             <div className="text-center">
               <button
                 onClick={() => setStep(1)}
-                className="text-sm text-green-600 hover:text-green-700 font-semibold"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold"
               >
                 Telefon raqamni tahrirlash
               </button>
             </div>
-            {loading && <p className="text-center text-sm text-gray-500">Tekshirilmoqda...</p>}
+            {loading && <p className="text-center text-sm text-gray-500 dark:text-slate-400">Tekshirilmoqda...</p>}
           </div>
         )}
 
         {step === 3 && (
           <form onSubmit={handleRegisterSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 To'liq ism (F.I.SH)
               </label>
               <input
@@ -155,13 +157,13 @@ const RegisterPage = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Jasurbek Eshmatov"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 Email manzil (ixtiyoriy)
               </label>
               <input
@@ -169,12 +171,12 @@ const RegisterPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@mail.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 Parol
               </label>
               <input
@@ -182,13 +184,13 @@ const RegisterPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Kamida 6 ta belgi"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 Tizimdagi rolingiz
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -197,8 +199,8 @@ const RegisterPage = () => {
                   onClick={() => setRole('INVESTOR')}
                   className={`py-3 border-2 rounded-xl font-semibold transition ${
                     role === 'INVESTOR'
-                      ? 'border-green-600 bg-green-50 text-green-700'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400'
+                      : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'
                   }`}
                 >
                   Investor
@@ -208,8 +210,8 @@ const RegisterPage = () => {
                   onClick={() => setRole('FARMER')}
                   className={`py-3 border-2 rounded-xl font-semibold transition ${
                     role === 'FARMER'
-                      ? 'border-green-600 bg-green-50 text-green-700'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400'
+                      : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'
                   }`}
                 >
                   Fermer
@@ -220,16 +222,16 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-xl shadow-lg shadow-green-600/20 transition duration-200"
+              className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-semibold rounded-xl shadow-lg shadow-primary-600/20 transition duration-200"
             >
               {loading ? 'Yuklanmoqda...' : "Ro'yxatdan o'tish"}
             </button>
           </form>
         )}
 
-        <div className="mt-8 text-center text-sm text-gray-600">
+        <div className="mt-8 text-center text-sm text-gray-600 dark:text-slate-400">
           Hisobingiz bormi?{' '}
-          <Link to="/login" className="font-bold text-green-600 hover:text-green-700 hover:underline">
+          <Link to="/login" className="font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline">
             Kirish
           </Link>
         </div>

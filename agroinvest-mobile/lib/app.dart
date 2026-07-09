@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
@@ -20,6 +21,7 @@ import 'features/investments/presentation/providers/investment_provider.dart';
 import 'features/investments/presentation/pages/my_investments_page.dart';
 import 'features/wallet/presentation/pages/wallet_page.dart';
 import 'features/wallet/presentation/providers/wallet_provider.dart';
+import 'features/services/presentation/pages/services_page.dart';
 import 'features/disputes/presentation/pages/disputes_page.dart';
 import 'features/disputes/presentation/providers/dispute_provider.dart';
 import 'features/notifications/presentation/pages/notifications_page.dart';
@@ -35,6 +37,7 @@ import 'features/vet/presentation/pages/project_vet_page.dart';
 import 'features/vet/presentation/pages/add_vet_inspection_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/profile/presentation/pages/edit_profile_page.dart';
+import 'features/reviews/presentation/pages/farmer_reviews_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -80,7 +83,14 @@ class AgroInvestApp extends StatefulWidget {
 
 class _AgroInvestAppState extends State<AgroInvestApp> {
   final AuthProvider _authProvider = AuthProvider();
+  final ThemeProvider _themeProvider = ThemeProvider();
   late final GoRouter _router = _buildRouter();
+
+  @override
+  void initState() {
+    super.initState();
+    _themeProvider.load();
+  }
 
   GoRouter _buildRouter() {
     return GoRouter(
@@ -123,6 +133,16 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         GoRoute(path: '/projects/create', builder: (context, state) => const CreateProjectPage()),
         GoRoute(path: '/projects/my', builder: (context, state) => const MyProjectsPage()),
         GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfilePage()),
+        GoRoute(
+          path: '/farmers/:id/reviews',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return FarmerReviewsPage(
+              farmerId: state.pathParameters['id']!,
+              farmerName: extra['farmerName']?.toString(),
+            );
+          },
+        ),
         GoRoute(
           path: '/projects/:id/report',
           builder: (context, state) => SubmitReportPage(projectId: state.pathParameters['id']!),
@@ -179,6 +199,10 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
           builder: (context, state) => AddVetInspectionPage(projectId: state.pathParameters['id']!),
         ),
         GoRoute(
+          path: '/wallet',
+          builder: (context, state) => const WalletPage(),
+        ),
+        GoRoute(
           path: '/projects/:id',
           builder: (context, state) => ProjectDetailPage(projectId: state.pathParameters['id']!),
         ),
@@ -192,7 +216,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
               GoRoute(path: '/projects', builder: (context, state) => const ProjectsListPage()),
             ]),
             StatefulShellBranch(routes: [
-              GoRoute(path: '/wallet', builder: (context, state) => const WalletPage()),
+              GoRoute(path: '/services', builder: (context, state) => const ServicesPage()),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
@@ -215,15 +239,20 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         ChangeNotifierProvider(create: (_) => DisputeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => KycProvider()),
+        ChangeNotifierProvider<ThemeProvider>.value(value: _themeProvider),
       ],
-      child: MaterialApp.router(
-        title: 'AgroInvest',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        routerConfig: _router,
-        localizationsDelegates: context.localizationDelegates,
-        supportedLocales: context.supportedLocales,
-        locale: context.locale,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp.router(
+          title: 'AgroInvest',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeProvider.themeMode,
+          routerConfig: _router,
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
+        ),
       ),
     );
   }
@@ -378,11 +407,6 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
         elevation: 8,
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 2 && user == null) {
-            // Redirect to login for Wallet tab
-            context.push('/login');
-            return;
-          }
           widget.navigationShell.goBranch(
             index,
             initialLocation: index == widget.navigationShell.currentIndex,
@@ -404,8 +428,8 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
             label: 'Loyihalar',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_rounded),
-            label: 'Hamyon',
+            icon: Icon(Icons.storefront_rounded),
+            label: 'Market',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),

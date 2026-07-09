@@ -34,7 +34,7 @@ const ProjectReportsList = ({ projectId }) => {
   }, [projectId]);
 
   if (loading) {
-    return <p className="text-sm text-gray-400 animate-pulse">Yuklanmoqda...</p>;
+    return <p className="text-sm text-gray-400 dark:text-slate-500 animate-pulse">Yuklanmoqda...</p>;
   }
 
   if (reports.length === 0) {
@@ -44,25 +44,25 @@ const ProjectReportsList = ({ projectId }) => {
   return (
     <div className="space-y-4">
       {reports.map((r) => (
-        <div key={r.id} className="border border-gray-100 rounded-2xl p-5">
+        <div key={r.id} className="border border-gray-100 dark:border-slate-700 rounded-2xl p-5">
           <div className="flex justify-between items-start gap-3 mb-2">
             <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-              r.reportType === 'EMERGENCY' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'
+              r.reportType === 'EMERGENCY' ? 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300' : 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
             }`}>
               {REPORT_TYPE_LABELS[r.reportType] || r.reportType}
             </span>
-            <span className="text-[11px] text-gray-400">{formatDate(r.createdAt)}</span>
+            <span className="text-[11px] text-gray-400 dark:text-slate-500">{formatDate(r.createdAt)}</span>
           </div>
-          <p className="text-sm text-gray-700">{r.notes}</p>
+          <p className="text-sm text-gray-700 dark:text-slate-300">{r.notes}</p>
           {r.mediaUrls && r.mediaUrls.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mt-3">
               {r.mediaUrls.map((url, i) => (
-                <img key={i} src={url} alt={`Fermer hisobotidan rasm ${i + 1}`} className="rounded-lg h-20 w-full object-cover border" />
+                <img key={i} src={url} alt={`Fermer hisobotidan rasm ${i + 1}`} className="rounded-lg h-20 w-full object-cover border border-gray-100 dark:border-slate-600" />
               ))}
             </div>
           )}
           {r.isVerified && (
-            <p className="text-[11px] text-green-600 font-bold mt-2">Admin tomonidan tasdiqlangan</p>
+            <p className="text-[11px] text-primary-600 dark:text-primary-400 font-bold mt-2">Admin tomonidan tasdiqlangan</p>
           )}
         </div>
       ))}

@@ -30,14 +30,14 @@ const ProjectsPage = () => {
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Investitsiya loyihalari</h1>
-          <p className="text-gray-500 mt-2">Fermerlarni qo'llab-quvvatlang va birgalikda daromad oling</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Investitsiya loyihalari</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">Fermerlarni qo'llab-quvvatlang va birgalikda daromad oling</p>
         </div>
 
         <ProjectFilters currentStatus={status} onStatusChange={setStatus} />
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 text-sm">
+          <div className="p-4 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 rounded-2xl border border-red-100 dark:border-red-900 text-sm">
             {error}
           </div>
         )}
@@ -45,12 +45,12 @@ const ProjectsPage = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white rounded-2xl h-80 animate-pulse border border-gray-100" />
+              <div key={n} className="bg-white dark:bg-slate-800 rounded-2xl h-80 animate-pulse border border-gray-100 dark:border-slate-700" />
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <p className="text-gray-400 text-sm">Hozirda ushbu turkumda loyihalar mavjud emas</p>
+          <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
+            <p className="text-gray-400 dark:text-slate-500 text-sm">Hozirda ushbu turkumda loyihalar mavjud emas</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

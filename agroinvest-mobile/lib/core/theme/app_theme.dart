@@ -172,4 +172,113 @@ class AppTheme {
       ),
     );
   }
+
+  /// Dark counterpart, wired via MaterialApp.router's `darkTheme`/`themeMode`
+  /// (see ThemeProvider). Drives every widget that reads from Theme.of(context)
+  /// (Scaffold background, AppBar, inputs, buttons, cards, sheets, dividers,
+  /// chips, snackbars). Screens that hardcode `AppColors.*`/`Colors.white`
+  /// directly instead of going through the theme won't repaint - the same
+  /// "mechanism, not full coverage" scoping this codebase already used for
+  /// i18n (PLATFORM_ROADMAP.md Phase 0.5); migrating every such reference is
+  /// tracked separately.
+  static ThemeData dark() {
+    const darkBg = Color(0xFF0F172A); // Slate 900
+    const darkSurface = Color(0xFF1E293B); // Slate 800
+    const darkBorder = Color(0xFF334155); // Slate 700
+    const darkTextMuted = Color(0xFF94A3B8); // Slate 400
+    final borderRadius = BorderRadius.circular(AppSpacing.radius);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      primaryColor: AppColors.primary,
+      scaffoldBackgroundColor: darkBg,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.dark,
+        surface: darkSurface,
+      ),
+      fontFamily: 'Roboto',
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontFamily: 'Roboto',
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurface,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: const BorderSide(color: darkBorder, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        ),
+        hintStyle: const TextStyle(color: darkTextMuted, fontWeight: FontWeight.w500),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Roboto'),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Roboto'),
+        ),
+      ),
+      cardTheme: CardTheme(
+        color: darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: borderRadius,
+          side: const BorderSide(color: darkBorder, width: 1.5),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: darkSurface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(color: darkBorder, thickness: 1),
+      chipTheme: ChipThemeData(
+        backgroundColor: darkSurface,
+        selectedColor: AppColors.primaryDark,
+        side: const BorderSide(color: darkBorder, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: darkSurface,
+        contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontFamily: 'Roboto'),
+      ),
+    );
+  }
 }

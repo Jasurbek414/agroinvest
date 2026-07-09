@@ -97,12 +97,12 @@ const DisputeForm = ({ user, onFiled }) => {
   };
 
   if (loadingProjects) {
-    return <p className="text-sm text-gray-400 animate-pulse">Yuklanmoqda...</p>;
+    return <p className="text-sm text-gray-400 dark:text-slate-500 animate-pulse">Yuklanmoqda...</p>;
   }
 
   if (projects.length === 0) {
     return (
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-gray-400 dark:text-slate-500">
         {isInvestor
           ? "Shikoyat ochish uchun avval biror loyihaga sarmoya kiritgan bo'lishingiz kerak."
           : "Shikoyat ochish uchun avval tasdiqlangan loyihangiz bo'lishi kerak."}
@@ -113,11 +113,11 @@ const DisputeForm = ({ user, onFiled }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Loyiha</label>
+        <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Loyiha</label>
         <select
           value={projectId}
           onChange={(e) => handleProjectChange(e.target.value)}
-          className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+          className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500"
           required
         >
           <option value="">Loyihani tanlang</option>
@@ -129,14 +129,14 @@ const DisputeForm = ({ user, onFiled }) => {
 
       {!isInvestor && projectId && (
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Shikoyat qilinayotgan investor</label>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Shikoyat qilinayotgan investor</label>
           <select
             value={against?.id || ''}
             onChange={(e) => {
               const found = investorOptions.find((o) => o.id === e.target.value);
               setAgainst(found || null);
             }}
-            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+            className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500"
             required
           >
             <option value="">Investorni tanlang</option>
@@ -148,17 +148,17 @@ const DisputeForm = ({ user, onFiled }) => {
       )}
 
       {isInvestor && against && (
-        <p className="text-xs text-gray-500">
-          Shikoyat qilinadigan fermer: <span className="font-bold text-gray-700">{against.name}</span>
+        <p className="text-xs text-gray-500 dark:text-slate-400">
+          Shikoyat qilinadigan fermer: <span className="font-bold text-gray-700 dark:text-slate-300">{against.name}</span>
         </p>
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Shikoyat turi</label>
+        <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Shikoyat turi</label>
         <select
           value={disputeType}
           onChange={(e) => setDisputeType(e.target.value)}
-          className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white focus:ring-1 focus:ring-green-500"
+          className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500"
         >
           {DISPUTE_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -167,13 +167,13 @@ const DisputeForm = ({ user, onFiled }) => {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tafsilotlar</label>
+        <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Tafsilotlar</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows="4"
           placeholder="Vaziyatni batafsil tasvirlab bering"
-          className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+          className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
           required
         />
       </div>

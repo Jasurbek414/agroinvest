@@ -77,6 +77,11 @@ dependencies:
   webview_flutter: ^4.7.0
   easy_localization: ^3.0.8
 
+  # Persists the dark/light mode choice (theme_provider.dart) - was already a
+  # transitive dependency via easy_localization, now declared directly since
+  # we import it ourselves.
+  shared_preferences: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

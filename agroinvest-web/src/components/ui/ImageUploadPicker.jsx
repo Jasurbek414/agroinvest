@@ -41,13 +41,13 @@ const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5, accept = '
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-xl border border-gray-100 bg-gray-50 text-gray-500"
+                className="w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-xl border border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400"
               >
                 <FileText size={20} />
                 <span className="text-[9px] font-bold">PDF</span>
               </a>
             ) : (
-              <img src={url} alt={`Yuklangan fayl ${i + 1}`} className="w-20 h-20 object-cover rounded-xl border border-gray-100" />
+              <img src={url} alt={`Yuklangan fayl ${i + 1}`} className="w-20 h-20 object-cover rounded-xl border border-gray-100 dark:border-slate-600" />
             )}
             <button
               type="button"
@@ -64,14 +64,14 @@ const ImageUploadPicker = ({ category, urls, onChange, maxImages = 5, accept = '
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="w-20 h-20 border-2 border-dashed border-gray-200 hover:border-green-400 rounded-xl flex items-center justify-center text-gray-400 transition"
+            className="w-20 h-20 border-2 border-dashed border-gray-200 dark:border-slate-600 hover:border-primary-400 rounded-xl flex items-center justify-center text-gray-400 dark:text-slate-500 transition"
           >
             {uploading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
           </button>
         )}
       </div>
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFileChange} />
-      {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+      {error && <p className="text-xs text-red-600 dark:text-red-400 mt-2">{error}</p>}
     </div>
   );
 };

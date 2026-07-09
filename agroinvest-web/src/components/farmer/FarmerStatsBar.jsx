@@ -21,7 +21,7 @@ const FarmerStatsBar = ({ stats }) => (
         label="Bugun hisobot kerak"
         value={`${stats.reportsDue} ta loyiha`}
         icon={AlertCircle}
-        className="col-span-2 md:col-span-4 border-amber-200 bg-amber-50"
+        className="col-span-2 md:col-span-4 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40"
       />
     )}
   </div>

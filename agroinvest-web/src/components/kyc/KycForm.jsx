@@ -55,42 +55,42 @@ const KycForm = ({ onSubmitted }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Pasport seriya va raqami</label>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Pasport seriya va raqami</label>
           <input
             type="text"
             value={passportNumber}
             onChange={(e) => setPassportNumber(e.target.value)}
             placeholder="AB1234567"
-            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+            className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
             required
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">JSHSHIR (PINFL)</label>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">JSHSHIR (PINFL)</label>
           <input
             type="text"
             value={pinfl}
             onChange={(e) => setPinfl(e.target.value)}
             placeholder="12345678901234"
-            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+            className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
             required
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tug'ilgan sana</label>
+        <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Tug'ilgan sana</label>
         <input
           type="date"
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
-          className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-500"
+          className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Pasport rasmi</label>
-        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-6 cursor-pointer hover:border-green-400 transition text-sm text-gray-500">
+        <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Pasport rasmi</label>
+        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-slate-600 rounded-xl py-6 cursor-pointer hover:border-primary-400 transition text-sm text-gray-500 dark:text-slate-400">
           <UploadCloud size={18} />
           {uploading ? 'Yuklanmoqda...' : 'Rasm tanlash uchun bosing'}
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} disabled={uploading} />
@@ -98,7 +98,7 @@ const KycForm = ({ onSubmitted }) => {
         {documentUrls.length > 0 && (
           <ul className="mt-2 space-y-1">
             {documentUrls.map((url) => (
-              <li key={url} className="flex items-center gap-2 text-xs text-green-700">
+              <li key={url} className="flex items-center gap-2 text-xs text-primary-700 dark:text-primary-400">
                 <CheckCircle2 size={14} /> Hujjat yuklandi
               </li>
             ))}
@@ -109,7 +109,7 @@ const KycForm = ({ onSubmitted }) => {
       <button
         type="submit"
         disabled={submitting || uploading}
-        className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl shadow-sm transition"
+        className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white font-bold rounded-xl shadow-sm transition"
       >
         {submitting ? 'Yuborilmoqda...' : 'Tasdiqlashga yuborish'}
       </button>
