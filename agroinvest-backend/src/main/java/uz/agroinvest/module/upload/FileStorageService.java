@@ -37,7 +37,7 @@ public class FileStorageService {
             "image/webp", ".webp",
             "application/pdf", ".pdf"
     );
-    private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general", "vet", "expense");
+    private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general", "vet", "expense", "deposit", "banner");
 
     private final S3Client s3Client;
     private final String bucket;

@@ -41,3 +41,13 @@ export const blockUser = (id, block, reason) => {
   return api.patch(`/users/${id}/block`, {}, { params });
 };
 
+export const getDepositRequests = (page = 0, size = 12) => {
+  return api.get('/deposit-requests', { params: { page, size } });
+};
+
+export const approveDeposit = (id, approve, adminComment) => {
+  const params = { approve };
+  if (adminComment) params.adminComment = adminComment;
+  return api.patch(`/deposit-requests/${id}`, {}, { params });
+};
+

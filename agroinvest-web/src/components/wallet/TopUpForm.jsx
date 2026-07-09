@@ -1,68 +1,64 @@
 import React, { useState } from 'react';
+import { requestDeposit } from '../../api/wallet.api';
+import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
 
-const PAYME_MERCHANT_ID = import.meta.env.VITE_PAYME_MERCHANT_ID;
-const CLICK_SERVICE_ID = import.meta.env.VITE_CLICK_SERVICE_ID;
-const CLICK_MERCHANT_ID = import.meta.env.VITE_CLICK_MERCHANT_ID;
-
-const TopUpForm = ({ userId }) => {
-  const [topUpAmount, setTopUpAmount] = useState('');
+// Real Payme/Click gateway integration is dormant (no merchant credentials
+// configured) - for now, top-ups go through manual admin/superadmin approval:
+// the user declares an amount (and optionally attaches a bank-transfer receipt),
+// staff verifies it against the "Depozit so'rovlari" queue, and only then is the
+// wallet credited. See DepositRequestsTab.jsx for the review side.
+const TopUpForm = ({ onRequested }) => {
+  const [amount, setAmount] = useState('');
+  const [proofUrls, setProofUrls] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
 
-  const handleTopUpSubmit = (e, provider) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const numAmt = parseFloat(topUpAmount);
-    if (isNaN(numAmt) || numAmt <= 0) {
-      showToast("To'g'ri to'lov summasini kiriting", 'error');
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount < 1000) {
+      showToast("Minimal to'ldirish summasi 1 000 UZS", 'error');
       return;
     }
 
-    if (provider === 'payme') {
-      if (!PAYME_MERCHANT_ID) {
-        showToast('Payme integratsiyasi hali sozlanmagan (VITE_PAYME_MERCHANT_ID)', 'error');
-        return;
-      }
-      const amountInTiyin = numAmt * 100;
-      const params = `m=${PAYME_MERCHANT_ID};ac.userId=${userId};a=${amountInTiyin}`;
-      window.open(`https://checkout.paycom.uz/${btoa(params)}`, '_blank');
-    } else if (provider === 'click') {
-      if (!CLICK_SERVICE_ID || !CLICK_MERCHANT_ID) {
-        showToast('Click integratsiyasi hali sozlanmagan (VITE_CLICK_SERVICE_ID / VITE_CLICK_MERCHANT_ID)', 'error');
-        return;
-      }
-      const url = `https://my.click.uz/services/pay?service_id=${CLICK_SERVICE_ID}&merchant_id=${CLICK_MERCHANT_ID}&amount=${numAmt}&transaction_param=${userId}`;
-      window.open(url, '_blank');
+    setSubmitting(true);
+    try {
+      await requestDeposit(numAmount, proofUrls[0] || null);
+      showToast("So'rov yuborildi, admin tekshiruvidan so'ng hamyoningizga tushadi");
+      setAmount('');
+      setProofUrls([]);
+      onRequested?.();
+    } catch (err) {
+      showToast(err.error?.message || "So'rov yuborishda xatolik yuz berdi", 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <form className="space-y-4 max-w-md">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       <div>
         <label className="block text-sm text-gray-600 mb-2">To'ldirish summasi (UZS)</label>
         <input
           type="number"
-          value={topUpAmount}
-          onChange={(e) => setTopUpAmount(e.target.value)}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
           placeholder="Masalan: 100000"
           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
         />
       </div>
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={(e) => handleTopUpSubmit(e, 'payme')}
-          className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold rounded-xl shadow-sm transition"
-        >
-          Payme orqali
-        </button>
-        <button
-          type="button"
-          onClick={(e) => handleTopUpSubmit(e, 'click')}
-          className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-sm transition"
-        >
-          Click orqali
-        </button>
+      <div>
+        <label className="block text-sm text-gray-600 mb-2">To'lov cheki (ixtiyoriy)</label>
+        <ImageUploadPicker category="deposit" urls={proofUrls} onChange={setProofUrls} maxImages={1} />
       </div>
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl shadow-sm transition"
+      >
+        {submitting ? 'Yuborilmoqda...' : "So'rov yuborish"}
+      </button>
     </form>
   );
 };

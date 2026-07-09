@@ -49,9 +49,9 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> testDeposit(double amount) async {
+  Future<bool> requestDeposit({required double amount, String? proofUrl}) async {
     try {
-      await _repository.testDeposit(amount);
+      await _repository.requestDeposit(amount: amount, proofUrl: proofUrl);
       await fetchWallet();
       return true;
     } catch (e) {

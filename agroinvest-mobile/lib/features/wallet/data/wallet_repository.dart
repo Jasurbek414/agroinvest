@@ -23,11 +23,24 @@ class WalletRepository {
     }
   }
 
-  /// Dev/staging-only simulated top-up. Mirrors the backend's `/payments/test-deposit`,
-  /// which only exists when the "dev"/"test" profile is active - see DevPaymentController.
-  Future<void> testDeposit(double amount) async {
+  /// Manual top-up approval queue (interim replacement for a live Payme/Click
+  /// gateway - see DepositRequestsTab.jsx on the web admin side for the review
+  /// flow). Does not touch the wallet immediately; staff approval does.
+  Future<void> requestDeposit({required double amount, String? proofUrl}) async {
     try {
-      await _dio.post('/payments/test-deposit', queryParameters: {'amount': amount});
+      await _dio.post('/deposit-requests', data: {
+        'amount': amount,
+        if (proofUrl != null) 'proofUrl': proofUrl,
+      });
+    } on DioException catch (e) {
+      throw parseDioError(e);
+    }
+  }
+
+  Future<List<dynamic>> getMyDepositRequests() async {
+    try {
+      final response = await _dio.get('/deposit-requests/my');
+      return response.data['data']['content'] ?? [];
     } on DioException catch (e) {
       throw parseDioError(e);
     }
