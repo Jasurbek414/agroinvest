@@ -263,6 +263,10 @@ class _OtpPageState extends State<OtpPage> {
           context.pop(true); // Pop back returning true (verified)
         }
       } else {
+        // A wrong/expired code (or a transient network failure) previously left
+        // the pin boxes full with no clean way to retry - clear them so the
+        // next attempt starts fresh instead of editing on top of a stale code.
+        _otpController.clear();
         setState(() {
           _isVerifying = false;
         });

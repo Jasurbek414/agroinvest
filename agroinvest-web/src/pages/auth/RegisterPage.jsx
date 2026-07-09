@@ -17,6 +17,8 @@ const RegisterPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [otpError, setOtpError] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const { register } = useAuthStore();
   const navigate = useNavigate();
@@ -52,14 +54,29 @@ const RegisterPage = () => {
 
   const handleVerifyOtp = async (code) => {
     setError(null);
+    setOtpError(false);
     setLoading(true);
     try {
       await verifyOtp(phoneNumber, 'REGISTER', code);
       setStep(3);
     } catch (err) {
       setError(err.error?.message || 'OTP kod xato yoki muddati tugagan');
+      setOtpError(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    setOtpError(false);
+    setResending(true);
+    try {
+      await sendOtp(phoneNumber, 'REGISTER');
+    } catch (err) {
+      setError(err.error?.message || 'Kodni qayta yuborishda xatolik yuz berdi');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -133,13 +150,21 @@ const RegisterPage = () => {
 
         {step === 2 && (
           <div className="space-y-6">
-            <OTPInput onComplete={handleVerifyOtp} />
-            <div className="text-center">
+            <OTPInput onComplete={handleVerifyOtp} error={otpError} disabled={loading} />
+            <div className="flex items-center justify-center gap-4 text-sm">
               <button
                 onClick={() => setStep(1)}
-                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold"
               >
                 Telefon raqamni tahrirlash
+              </button>
+              <span className="text-gray-300 dark:text-slate-600">|</span>
+              <button
+                onClick={handleResendOtp}
+                disabled={resending || loading}
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold disabled:opacity-50"
+              >
+                {resending ? 'Yuborilmoqda...' : 'Kodni qayta yuborish'}
               </button>
             </div>
             {loading && <p className="text-center text-sm text-gray-500 dark:text-slate-400">Tekshirilmoqda...</p>}
