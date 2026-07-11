@@ -260,38 +260,6 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _downloadContract(inv['id'], 'word'),
-                          icon: const Icon(Icons.description, size: 14),
-                          label: const Text('Word (DOC)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blueGrey,
-                            side: const BorderSide(color: Colors.blueGrey, width: 1.2),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _downloadContract(inv['id'], 'pdf'),
-                          icon: const Icon(Icons.picture_as_pdf, size: 14),
-                          label: const Text('PDF Yuklash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ] else ...[
                   ElevatedButton(
                     onPressed: () {
@@ -308,6 +276,38 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                     child: const Text('Tasdiqlash va imzolash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _downloadContract(inv['id'], 'word'),
+                        icon: const Icon(Icons.description, size: 14),
+                        label: const Text('Word (DOC)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blueGrey,
+                          side: const BorderSide(color: Colors.blueGrey, width: 1.2),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _downloadContract(inv['id'], 'pdf'),
+                        icon: const Icon(Icons.picture_as_pdf, size: 14),
+                        label: const Text('PDF Yuklash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
               ],
             );
