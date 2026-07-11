@@ -327,9 +327,8 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
       final url = '$baseUrl$path?token=$token';
       
       final launchUri = Uri.parse(url);
-      if (await canLaunchUrl(launchUri)) {
-        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
-      } else {
+      final success = await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+      if (!success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Shartnomani ochib bo\'lmadi'), backgroundColor: AppColors.danger),
