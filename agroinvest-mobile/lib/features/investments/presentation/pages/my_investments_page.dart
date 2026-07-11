@@ -12,6 +12,8 @@ import '../widgets/portfolio_summary_card.dart';
 import '../widgets/investment_filter_tabs.dart';
 import '../widgets/investment_card.dart';
 import '../../../../core/network/dio_client.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/storage/secure_storage.dart';
 
 class MyInvestmentsPage extends StatefulWidget {
   const MyInvestmentsPage({super.key});
@@ -258,6 +260,38 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _downloadContract(inv['id'], 'word'),
+                          icon: const Icon(Icons.description, size: 14),
+                          label: const Text('Word (DOC)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blueGrey,
+                            side: const BorderSide(color: Colors.blueGrey, width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _downloadContract(inv['id'], 'pdf'),
+                          icon: const Icon(Icons.picture_as_pdf, size: 14),
+                          label: const Text('PDF Yuklash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ] else ...[
                   ElevatedButton(
                     onPressed: () {
@@ -281,6 +315,34 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
         );
       },
     );
+  }
+
+  Future<void> _downloadContract(String investmentId, String format) async {
+    try {
+      final token = await SecureStorage.getAccessToken();
+      final baseUrl = _dio.options.baseUrl;
+      final path = format == 'pdf' 
+          ? '/investments/$investmentId/agreement' 
+          : '/investments/$investmentId/agreement/word';
+      final url = '$baseUrl$path?token=$token';
+      
+      final launchUri = Uri.parse(url);
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Shartnomani ochib bo\'lmadi'), backgroundColor: AppColors.danger),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yuklashda xatolik: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
   }
 
   Future<void> _signContract(String investmentId) async {

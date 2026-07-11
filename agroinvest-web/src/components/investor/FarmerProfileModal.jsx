@@ -37,6 +37,56 @@ const FarmerProfileModal = ({ investment, onClose }) => {
     }
   };
 
+  const handleDownloadPdf = () => {
+    const token = localStorage.getItem('accessToken');
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${investment.id}/agreement`;
+    
+    fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Faylni yuklashda xatolik");
+      return response.blob();
+    })
+    .then(blob => {
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `shartnoma-${investment.id.substring(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    })
+    .catch(err => alert("Shartnomani yuklab olishda xatolik yuz berdi: " + err.message));
+  };
+
+  const handleDownloadWord = () => {
+    const token = localStorage.getItem('accessToken');
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${investment.id}/agreement/word`;
+    
+    fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Faylni yuklashda xatolik");
+      return response.blob();
+    })
+    .then(blob => {
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `shartnoma-${investment.id.substring(0, 8)}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    })
+    .catch(err => alert("Shartnomani yuklab olishda xatolik yuz berdi: " + err.message));
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[32px] border border-gray-150/40 dark:border-slate-800/80 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -55,7 +105,7 @@ const FarmerProfileModal = ({ investment, onClose }) => {
             <X size={18} className="text-gray-500 dark:text-slate-400" />
           </button>
         </div>
-
+ 
         {/* Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6 scrollbar-none flex-1 text-xs">
           
@@ -67,21 +117,21 @@ const FarmerProfileModal = ({ investment, onClose }) => {
                 <span className="font-extrabold text-gray-950 dark:text-slate-150">Fermer F.I.Sh</span>
               </div>
               <p className="font-bold text-gray-700 dark:text-slate-300 pl-6">{farmerName}</p>
-
+ 
               <div className="flex items-center gap-2">
                 <Phone size={16} className="text-gray-400" />
                 <span className="font-bold text-gray-500">Telefon raqam</span>
               </div>
               <p className="font-bold text-gray-700 dark:text-slate-300 pl-6">{phoneVal}</p>
             </div>
-
+ 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Scale size={16} className="text-amber-500" />
                 <span className="font-extrabold text-gray-950 dark:text-slate-150">Yuridik Xo'jalik STIR</span>
               </div>
               <p className="font-bold text-gray-700 dark:text-slate-300 pl-6">{farmTin} (FX)</p>
-
+ 
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-gray-400" />
                 <span className="font-bold text-gray-500">Er maydoni o'lchami</span>
@@ -89,7 +139,7 @@ const FarmerProfileModal = ({ investment, onClose }) => {
               <p className="font-bold text-gray-700 dark:text-slate-300 pl-6">{farmLandSize} gektar sug'oriladigan er</p>
             </div>
           </div>
-
+ 
           {/* Section 2: Electronic Contract parameters */}
           <div className="border border-gray-100 dark:border-slate-800 p-4 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
@@ -110,7 +160,7 @@ const FarmerProfileModal = ({ investment, onClose }) => {
               </div>
             </div>
           </div>
-
+ 
           {/* Section 3: Recent updates feed for this project */}
           <div className="space-y-4">
             <h3 className="font-extrabold text-gray-950 dark:text-slate-100 text-sm">Fermerning ushbu loyihada kiritgan oxirgi yangilanishlari</h3>
@@ -129,7 +179,7 @@ const FarmerProfileModal = ({ investment, onClose }) => {
                       </span>
                       <span className="text-gray-400">{formatDate(rep.createdAt)}</span>
                     </div>
-                    <p className="text-gray-650 dark:text-slate-350 leading-relaxed">{rep.content}</p>
+                    <p className="text-gray-650 dark:text-slate-355 leading-relaxed">{rep.content}</p>
                     {rep.mediaUrls && rep.mediaUrls.length > 0 && (
                       <div className="flex gap-2">
                         {rep.mediaUrls.map((img, i) => (
@@ -142,19 +192,27 @@ const FarmerProfileModal = ({ investment, onClose }) => {
               </div>
             )}
           </div>
-
+ 
         </div>
-
+ 
         {/* Footer */}
-        <div className="p-5 border-t border-gray-100 dark:border-slate-800/60 bg-gray-50/30 dark:bg-slate-900/30 flex justify-end">
+        <div className="p-5 border-t border-gray-100 dark:border-slate-800/60 bg-gray-50/30 dark:bg-slate-900/30 flex justify-end gap-2.5">
           <button
-            onClick={() => alert("Elektron shartnoma yuklab olinmoqda (PDF formatda).")}
-            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-extrabold rounded-xl shadow-sm transition"
+            onClick={handleDownloadWord}
+            className="px-5 py-2.5 bg-gray-100 dark:bg-slate-850 hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-extrabold rounded-xl transition flex items-center gap-1.5"
           >
-            Shartnomani Yuklash (PDF)
+            <FileText size={14} />
+            <span>Word (DOC)</span>
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5"
+          >
+            <FileText size={14} />
+            <span>PDF Yuklash</span>
           </button>
         </div>
-
+ 
       </div>
     </div>
   );

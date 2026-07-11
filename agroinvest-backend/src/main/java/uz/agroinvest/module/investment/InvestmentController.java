@@ -21,7 +21,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/investments")
-@PreAuthorize("hasRole('INVESTOR')")
 public class InvestmentController {
 
     private final InvestmentService investmentService;
@@ -33,6 +32,7 @@ public class InvestmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('INVESTOR')")
     public ResponseEntity<ApiResponse<InvestmentDto>> createInvestment(
             @Valid @RequestBody CreateInvestmentRequest request,
             @AuthenticationPrincipal UserPrincipal principal
@@ -42,6 +42,7 @@ public class InvestmentController {
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('INVESTOR')")
     public ResponseEntity<ApiResponse<Void>> cancelInvestment(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal
@@ -51,6 +52,7 @@ public class InvestmentController {
     }
 
     @GetMapping("/my")
+    @PreAuthorize("hasRole('INVESTOR')")
     public ResponseEntity<ApiResponse<PageResponse<InvestmentDto>>> getMyInvestments(
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable
@@ -70,11 +72,12 @@ public class InvestmentController {
     }
 
     @GetMapping("/{id}/agreement")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'FARMER', 'ADMIN', 'MODERATOR', 'SUPERADMIN')")
     public ResponseEntity<byte[]> getAgreementPdf(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        byte[] pdfBytes = agreementService.generateInvestmentAgreementPdf(id, principal.getId());
+        byte[] pdfBytes = agreementService.generateInvestmentAgreementPdf(id, principal.getId(), principal.getRole().name());
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -83,7 +86,23 @@ public class InvestmentController {
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}/agreement/word")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'FARMER', 'ADMIN', 'MODERATOR', 'SUPERADMIN')")
+    public ResponseEntity<byte[]> getAgreementWord(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        byte[] wordBytes = agreementService.generateInvestmentAgreementWord(id, principal.getId(), principal.getRole().name());
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/msword"));
+        headers.setContentDispositionFormData("attachment", "investment-agreement-" + id.toString().substring(0, 8) + ".doc");
+        
+        return new ResponseEntity<>(wordBytes, headers, HttpStatus.OK);
+    }
+
     @PostMapping("/{id}/sign")
+    @PreAuthorize("hasRole('INVESTOR')")
     public ResponseEntity<ApiResponse<InvestmentDto>> signContract(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal
