@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getSuperAdminCoopOffers, updateCoopOfferStatus, deleteCoopOffer } from '../../api/coop.api';
 import { useToast } from '../ui/ToastProvider';
-import { Check, X, Trash2, Calendar, Phone, User, AlertCircle, BarChart3, Search, Eye, Filter, RefreshCw } from 'lucide-react';
+import { Check, X, Trash2, Calendar, Phone, User, AlertCircle, BarChart3, Search, Eye, Filter, RefreshCw, FileText, FileSpreadsheet, File, Download } from 'lucide-react';
 import { formatAmount, formatDate } from '../../utils/format';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -24,6 +24,40 @@ const CoopModerationPanel = () => {
   // Dialog/Modal targets
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
+
+  const extractAttachments = (text) => {
+    if (!text) return { docs: [], images: [] };
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = text.match(urlRegex) || [];
+    
+    const docs = [];
+    const images = [];
+    
+    matches.forEach(url => {
+      const cleanUrl = url.replace(/[.,;)]$/, '');
+      const lowercase = cleanUrl.toLowerCase();
+      if (
+        lowercase.endsWith('.pdf') || 
+        lowercase.endsWith('.doc') || 
+        lowercase.endsWith('.docx') || 
+        lowercase.endsWith('.xls') || 
+        lowercase.endsWith('.xlsx')
+      ) {
+        docs.push(cleanUrl);
+      } else if (
+        lowercase.endsWith('.png') || 
+        lowercase.endsWith('.jpg') || 
+        lowercase.endsWith('.jpeg') || 
+        lowercase.endsWith('.webp')
+      ) {
+        images.push(cleanUrl);
+      } else {
+        docs.push(cleanUrl);
+      }
+    });
+    
+    return { docs, images };
+  };
 
   useEffect(() => {
     fetchOffers();
@@ -419,10 +453,94 @@ const CoopModerationPanel = () => {
 
               <div className="space-y-1">
                 <span className="text-gray-400 block uppercase tracking-wider text-[10px]">Taklif / Loyiha batafsil tavsifi</span>
-                <p className="text-gray-700 dark:text-slate-300 font-semibold leading-relaxed p-4 bg-gray-50 dark:bg-slate-950/60 rounded-2xl border border-gray-100/5">
+                <p className="text-gray-700 dark:text-slate-350 font-semibold leading-relaxed p-4 bg-gray-50 dark:bg-slate-950/60 rounded-2xl border border-gray-100/5 whitespace-pre-wrap">
                   {detailTarget.description}
                 </p>
               </div>
+
+              {(() => {
+                const { docs, images } = extractAttachments(detailTarget.description);
+                if (docs.length === 0 && images.length === 0) return null;
+                return (
+                  <div className="space-y-2 border-t border-gray-100 dark:border-slate-800/60 pt-3">
+                    <span className="text-gray-400 block uppercase tracking-wider text-[10px]">Ilova qilingan hujjatlar va fayllar</span>
+                    <div className="grid grid-cols-1 gap-2">
+                      {docs.map((url, i) => {
+                        const parts = url.split('/');
+                        const filename = decodeURIComponent(parts[parts.length - 1] || 'hujjat');
+                        const isPdf = filename.toLowerCase().endsWith('.pdf');
+                        const isExcel = filename.toLowerCase().endsWith('.xls') || filename.toLowerCase().endsWith('.xlsx');
+                        return (
+                          <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-gray-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                                {isPdf ? <FileText size={16} /> : isExcel ? <FileSpreadsheet size={16} /> : <File size={16} />}
+                              </div>
+                              <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 truncate pr-2">
+                                {filename}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 hover:text-emerald-700 font-extrabold text-[10px] rounded-lg border border-gray-200/60 dark:border-slate-600 transition flex items-center gap-1 shadow-sm"
+                              >
+                                <Eye size={10} />
+                                <span>Ochish</span>
+                              </a>
+                              <a
+                                href={url}
+                                download
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] rounded-lg shadow-sm transition flex items-center gap-1"
+                              >
+                                <Download size={10} />
+                                <span>Yuklash</span>
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {images.map((url, i) => (
+                        <div key={i} className="space-y-1.5 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-gray-100 dark:border-slate-800">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Ilova rasm</span>
+                            <div className="flex gap-1.5 font-bold text-[10px]">
+                              <a href={url} target="_blank" rel="noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Kattalashtirish</a>
+                              <span className="text-gray-300">|</span>
+                              <a href={url} download target="_blank" rel="noreferrer" className="text-primary-650 dark:text-primary-400 hover:underline">Yuklash</a>
+                            </div>
+                          </div>
+                          <img src={url} alt="Loyiha hujjati" className="max-h-40 w-full object-cover rounded-xl border border-gray-200/40 dark:border-slate-700" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {detailTarget.status === 'PENDING' && (
+                <div className="p-4 bg-emerald-50/20 dark:bg-slate-800/30 rounded-2xl border border-emerald-500/10 dark:border-slate-700/50 space-y-2.5">
+                  <span className="text-emerald-800 dark:text-emerald-400 block uppercase tracking-wider text-[9px] font-black">Moderator Tekshiruvi Bosqichlari</span>
+                  <div className="space-y-1.5 text-slate-700 dark:text-slate-350 text-[11px] font-semibold">
+                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-white transition">
+                      <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5" />
+                      <span>Loyiha ma'lumotlari haqiqiyligi tekshirildi</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-white transition">
+                      <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5" />
+                      <span>Ilova qilingan barcha hujjatlar to'liq va yuklanadi</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-white transition">
+                      <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5" />
+                      <span>Telefon raqami va kontakt ma'lumotlari to'g'ri</span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Actions inside Modal */}

@@ -179,6 +179,8 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
                         regions: _regions,
                         onAssetTypeChanged: (val) => setState(() => _selectedAssetType = val),
                         onRegionChanged: (val) => setState(() => _selectedRegion = val),
+                        docUrls: _docUrls,
+                        onDocUrlsChanged: (urls) => setState(() => _docUrls = urls),
                       )
                     else
                       // Farmer Form (Beautified Card Flow)
@@ -390,8 +392,9 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
           'expectedReturnPct': double.parse(_returnPctController.text),
           'durationDays': int.parse(_durationController.text),
           'riskLevel': 'LOW',
-          'mediaUrls': const [
-            'https://images.unsplash.com/photo-1545468117-910a39527f51?q=80&w=600&auto=format&fit=crop'
+          'mediaUrls': [
+            'https://images.unsplash.com/photo-1545468117-910a39527f51?q=80&w=600&auto=format&fit=crop',
+            ..._docUrls
           ],
         });
       } else {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../../core/widgets/document_upload_picker.dart';
 
 class InvestorProposalForm extends StatelessWidget {
   final TextEditingController titleController;
@@ -12,6 +13,8 @@ class InvestorProposalForm extends StatelessWidget {
   final ValueChanged<String> onAssetTypeChanged;
   final ValueChanged<String> onRegionChanged;
   final List<String> regions;
+  final List<String> docUrls;
+  final ValueChanged<List<String>> onDocUrlsChanged;
 
   const InvestorProposalForm({
     super.key,
@@ -25,6 +28,8 @@ class InvestorProposalForm extends StatelessWidget {
     required this.onAssetTypeChanged,
     required this.onRegionChanged,
     required this.regions,
+    required this.docUrls,
+    required this.onDocUrlsChanged,
   });
 
   @override
@@ -212,6 +217,16 @@ class InvestorProposalForm extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
             ),
           ),
+        ),
+        const SizedBox(height: 16),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 6.0),
+          child: Text('Taklif hujjatlari (ixtiyoriy)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))),
+        ),
+        DocumentUploadPicker(
+          category: 'project',
+          urls: docUrls,
+          onChanged: onDocUrlsChanged,
         ),
         const SizedBox(height: 16),
 
