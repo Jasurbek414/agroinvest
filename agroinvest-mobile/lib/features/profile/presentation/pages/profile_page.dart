@@ -436,17 +436,20 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _checkAndUpdateApp() async {
     final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8080/api/v1';
     final uri = Uri.parse(apiUrl);
-    final String host = uri.host;
+    String host = uri.host;
     final String scheme = uri.scheme;
+
+    // Convert API host to Web frontend host where the APK is served
+    if (host == 'agroinvest-api.ecos.uz') {
+      host = 'agroinvest.ecos.uz';
+    }
+
     final downloadUrl = '$scheme://$host/agroinvest.apk';
 
     try {
       final launchUri = Uri.parse(downloadUrl);
-      if (await canLaunchUrl(launchUri)) {
-        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Launch failed';
-      }
+      // Bypass Android 11+ package visibility limitations by launching directly
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Xatolik: yangilanishni yuklab bo\'lmadi ($downloadUrl)')),
