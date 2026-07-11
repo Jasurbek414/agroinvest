@@ -25,6 +25,7 @@ const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const MarketPage = lazy(() => import('./pages/public/MarketPage'));
 const ServicesPage = lazy(() => import('./pages/public/ServicesPage'));
 const SettingsPage = lazy(() => import('./pages/public/SettingsPage'));
+const CoopMarketPage = lazy(() => import('./pages/public/CoopMarketPage'));
 
 const RouteFallback = () => (
   <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -88,6 +89,7 @@ function App() {
         <Route path="/about" element={<Layout><AboutPage /></Layout>} />
         <Route path="/market" element={<Layout><MarketPage /></Layout>} />
         <Route path="/services" element={<Layout><ServicesPage /></Layout>} />
+        <Route path="/coop-market" element={<Layout><CoopMarketPage /></Layout>} />
 
         {/* Investor protected views */}
         <Route

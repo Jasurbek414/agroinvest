@@ -22,6 +22,7 @@ import 'features/investments/presentation/pages/my_investments_page.dart';
 import 'features/wallet/presentation/pages/wallet_page.dart';
 import 'features/wallet/presentation/providers/wallet_provider.dart';
 import 'features/services/presentation/pages/services_page.dart';
+import 'features/coop/presentation/pages/coop_market_page.dart';
 import 'features/disputes/presentation/pages/disputes_page.dart';
 import 'features/disputes/presentation/providers/dispute_provider.dart';
 import 'features/notifications/presentation/pages/notifications_page.dart';
@@ -137,6 +138,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         ),
         GoRoute(path: '/session-expired', builder: (context, state) => const SessionExpiredPage()),
         GoRoute(path: '/services', builder: (context, state) => const ServicesPage()),
+        GoRoute(path: '/coop-market', builder: (context, state) => const CoopMarketPage()),
         GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
         GoRoute(path: '/kyc', builder: (context, state) => const KycPage()),
         GoRoute(path: '/disputes', builder: (context, state) => const DisputesPage()),

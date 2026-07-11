@@ -11,6 +11,8 @@ import '../../../../core/widgets/app_sidebar.dart';
 import '../widgets/profile_header_card.dart';
 import '../widgets/profile_kyc_banner.dart';
 import '../widgets/profile_menu_section.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const Map<String, String> _availableLanguages = {'uz': "O'zbek"};
 
@@ -395,6 +397,19 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
 
+          ProfileMenuSection(
+            title: 'Yangilanish',
+            tiles: [
+              ProfileMenuTile(
+                icon: Icons.system_update_rounded,
+                iconColor: AppColors.primary,
+                label: 'Oxirgi versiyani o\'rnatish',
+                subtitle: 'Yangi imkoniyatlarni yuklab olish',
+                onTap: _checkAndUpdateApp,
+              ),
+            ],
+          ),
+
           ElevatedButton.icon(
             onPressed: () => _confirmLogout(context, auth),
             icon: const Icon(Icons.logout_rounded, size: 18),
@@ -416,6 +431,27 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkAndUpdateApp() async {
+    final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8080/api/v1';
+    final uri = Uri.parse(apiUrl);
+    final String host = uri.host;
+    final String scheme = uri.scheme;
+    final downloadUrl = '$scheme://$host/agroinvest.apk';
+
+    try {
+      final launchUri = Uri.parse(downloadUrl);
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Launch failed';
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Xatolik: yangilanishni yuklab bo\'lmadi ($downloadUrl)')),
+      );
+    }
   }
 
   void _confirmLogout(BuildContext context, AuthProvider auth) {

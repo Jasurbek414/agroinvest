@@ -48,10 +48,18 @@ class AppSidebar extends StatelessWidget {
                 ),
                 SidebarMenuItem(
                   icon: Icons.trending_up_rounded,
-                  label: 'Loyihalar bozori',
+                  label: 'Loyiha bozori',
                   onTap: () {
                     Navigator.pop(context);
                     context.go('/projects');
+                  },
+                ),
+                SidebarMenuItem(
+                  icon: Icons.pie_chart_outline_rounded,
+                  label: 'Investitsiya bozori',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/coop-market');
                   },
                 ),
                 SidebarMenuItem(

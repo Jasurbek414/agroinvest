@@ -72,6 +72,7 @@ dependencies:
   # Pinned to 4.7.x (not the newest 4.10+) - this repo's Dart SDK floor
   # (>=3.3.0) is older than what later webview_flutter releases require.
   webview_flutter: ^4.7.0
+  url_launcher: ^6.3.0
   easy_localization: ^3.0.8
 
   # Persists the dark/light mode choice (theme_provider.dart) - was already a

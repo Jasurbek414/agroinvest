@@ -17,6 +17,7 @@ import PermissionsPanel from '../../components/superadmin/PermissionsPanel';
 import CategoriesPanel from '../../components/superadmin/CategoriesPanel';
 import BannersPanel from '../../components/superadmin/BannersPanel';
 import NewsPanel from '../../components/superadmin/NewsPanel';
+import CoopModerationPanel from '../../components/superadmin/CoopModerationPanel';
 import WithdrawalsTab from '../../components/admin/tabs/WithdrawalsTab';
 import DepositRequestsTab from '../../components/admin/tabs/DepositRequestsTab';
 import KycTab from '../../components/admin/tabs/KycTab';
@@ -116,6 +117,7 @@ const SuperAdminDashboard = () => {
         {activeTab === 'categories' && <CategoriesPanel />}
         {activeTab === 'banners' && <BannersPanel />}
         {activeTab === 'news' && <NewsPanel />}
+        {activeTab === 'coop' && <CoopModerationPanel />}
 
         {activeTab === 'settings' && (
           settingsError ? (

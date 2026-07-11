@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/v1/settings/app-version",
                                 "/api/v1/banners",
                                 "/api/v1/news",
+                                "/api/v1/coop-offers",
                                 "/api/v1/payments/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
