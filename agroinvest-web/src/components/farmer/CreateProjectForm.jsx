@@ -25,6 +25,7 @@ const CreateProjectForm = ({ onCreated }) => {
   const [durationDays, setDurationDays] = useState('90');
   const [riskLevel, setRiskLevel] = useState('MEDIUM');
   const [mediaUrls, setMediaUrls] = useState([]);
+  const [docUrls, setDocUrls] = useState([]);
   const [fundingMode, setFundingMode] = useState('INVESTOR_FUNDED');
   const [farmerContributionValue, setFarmerContributionValue] = useState('');
   const [farmerContributionNotes, setFarmerContributionNotes] = useState('');
@@ -91,7 +92,7 @@ const CreateProjectForm = ({ onCreated }) => {
         expectedReturnPct: parseFloat(expectedReturnPct),
         durationDays: parseInt(durationDays),
         riskLevel,
-        mediaUrls,
+        mediaUrls: [...mediaUrls, ...docUrls],
         fundingMode,
         farmerContributionValue: hasContribution ? parseFloat(farmerContributionValue) : 0,
         farmerContributionNotes: hasContribution ? farmerContributionNotes : null,
@@ -172,6 +173,17 @@ const CreateProjectForm = ({ onCreated }) => {
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Loyiha rasmlari</label>
           <ImageUploadPicker category="project" urls={mediaUrls} onChange={setMediaUrls} />
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Loyiha hujjatlari (PDF, Word, Excel)</label>
+          <ImageUploadPicker
+            category="project"
+            urls={docUrls}
+            onChange={setDocUrls}
+            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            maxImages={3}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

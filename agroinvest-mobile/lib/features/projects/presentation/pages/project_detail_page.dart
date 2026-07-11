@@ -15,6 +15,7 @@ import '../widgets/project_financials_section.dart';
 import '../widgets/project_header_card.dart';
 import '../widgets/project_investors_sheet.dart';
 import '../widgets/project_links_section.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProjectDetailPage extends StatefulWidget {
   final String projectId;
@@ -81,6 +82,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final assetType = p['assetType']?.toString() ?? 'OTHER';
     final mediaUrls = (p['mediaUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    
+    final isDoc = (String url) {
+      final lower = url.toLowerCase();
+      return lower.endsWith('.pdf') || lower.endsWith('.docx') || lower.endsWith('.doc') || lower.endsWith('.xls') || lower.endsWith('.xlsx') || lower.endsWith('.txt');
+    };
+    final images = mediaUrls.where((url) => !isDoc(url)).toList();
+    final docs = mediaUrls.where((url) => isDoc(url)).toList();
+
     final farmerId = p['farmerId']?.toString();
     final expensePolicy = p['expensePolicy']?.toString();
     final projectTitle = p['title']?.toString();
@@ -97,7 +106,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ProjectImageCarousel(
-                  imageUrls: mediaUrls,
+                  imageUrls: images,
                   assetType: assetType,
                   height: 220,
                   borderRadius: BorderRadius.zero,
@@ -140,6 +149,43 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         onDailyLog: () => context.push('/projects/${widget.projectId}/daily-log'),
                         onAddExpense: () => context.push('/projects/${widget.projectId}/expenses/add', extra: {'expensePolicy': expensePolicy}),
                       ),
+                      if (docs.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        const Text(
+                          'Loyiha hujjatlari (To\'liq ma\'lumot)',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                        ),
+                        const SizedBox(height: 8),
+                        ...docs.map((url) {
+                          final filename = url.split('/').last;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.description_rounded, color: AppColors.primary),
+                              title: Text(
+                                Uri.decodeComponent(filename),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              trailing: const Icon(Icons.download_rounded, color: AppColors.primary, size: 20),
+                              onTap: () async {
+                                try {
+                                  final launchUri = Uri.parse(url);
+                                  await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+                                } catch (_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Xatolik: hujjatni yuklab bo\'lmadi')),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        }),
+                      ],
                     ],
                   ),
                 ),

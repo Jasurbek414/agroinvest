@@ -12,6 +12,7 @@ import '../widgets/create_project/project_basic_info_section.dart';
 import '../widgets/create_project/report_frequency_and_targets_section.dart';
 import '../widgets/create_project/role_indicator_header.dart';
 import '../widgets/create_project/investor_proposal_form.dart';
+import '../../../../core/widgets/document_upload_picker.dart';
 
 class CreateProjectPage extends StatefulWidget {
   const CreateProjectPage({super.key});
@@ -24,6 +25,7 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
   final _formKey = GlobalKey<FormState>();
   final _projectRepository = ProjectRepository();
   List<String> _mediaUrls = [];
+  List<String> _docUrls = [];
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -212,14 +214,29 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
         _buildSectionCard(
           title: 'Asosiy ma\'lumotlar',
           icon: Icons.info_outline_rounded,
-          child: ProjectBasicInfoSection(
-            titleController: _titleController,
-            descriptionController: _descriptionController,
-            locationController: _locationController,
-            selectedRegion: _selectedRegion,
-            regions: _regions,
-            onRegionChanged: (val) => setState(() => _selectedRegion = val),
-            onMediaChanged: (urls) => setState(() => _mediaUrls = urls),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ProjectBasicInfoSection(
+                titleController: _titleController,
+                descriptionController: _descriptionController,
+                locationController: _locationController,
+                selectedRegion: _selectedRegion,
+                regions: _regions,
+                onRegionChanged: (val) => setState(() => _selectedRegion = val),
+                onMediaChanged: (urls) => setState(() => _mediaUrls = urls),
+              ),
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: Text('Loyiha hujjatlari', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+              DocumentUploadPicker(
+                category: 'project',
+                urls: _docUrls,
+                onChanged: (urls) => setState(() => _docUrls = urls),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -399,7 +416,7 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
           'expectedReturnPct': double.parse(_returnPctController.text),
           'durationDays': int.parse(_durationController.text),
           'riskLevel': _selectedRiskLevel,
-          'mediaUrls': _mediaUrls,
+          'mediaUrls': [..._mediaUrls, ..._docUrls],
         });
       }
 

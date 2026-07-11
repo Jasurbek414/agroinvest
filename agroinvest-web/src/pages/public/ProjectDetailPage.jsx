@@ -105,6 +105,13 @@ const ProjectDetailPage = () => {
   const percent = Math.min(100, Math.round((raisedAmount / targetAmount) * 100));
   const animalMeta = animalType ? getAnimalTypeMeta(animalType) : null;
 
+  const isDocument = (url) => {
+    const lower = (url || '').toLowerCase();
+    return lower.endsWith('.pdf') || lower.endsWith('.docx') || lower.endsWith('.doc') || lower.endsWith('.xls') || lower.endsWith('.xlsx') || lower.endsWith('.txt');
+  };
+  const images = (mediaUrls || []).filter(url => !isDocument(url));
+  const documents = (mediaUrls || []).filter(url => isDocument(url));
+
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
       <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -158,13 +165,43 @@ const ProjectDetailPage = () => {
               </div>
             )}
 
-            {mediaUrls && mediaUrls.length > 0 && (
+            {images.length > 0 && (
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-3">Foto / Video dalillar</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  {mediaUrls.map((url, i) => (
+                  {images.map((url, i) => (
                     <img key={i} src={url} alt={`${title} loyihasi rasmi ${i + 1}`} className="rounded-xl border border-gray-100 dark:border-slate-600 h-36 w-full object-cover" />
                   ))}
+                </div>
+              </div>
+            )}
+
+            {documents.length > 0 && (
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-3">Loyiha hujjatlari (To'liq ma'lumot)</h2>
+                <div className="space-y-2">
+                  {documents.map((url, i) => {
+                    const filename = url.split('/').pop() || `Loyiha_hujjat_${i + 1}`;
+                    return (
+                      <a
+                        key={i}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 dark:bg-slate-900 dark:hover:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-2xl transition group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">📄</span>
+                          <span className="text-xs font-bold text-gray-700 dark:text-slate-200 group-hover:text-primary-600 transition truncate max-w-[240px] md:max-w-md">
+                            {decodeURIComponent(filename)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-black bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 px-2.5 py-1 rounded-lg">
+                          Yuklab olish
+                        </span>
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
