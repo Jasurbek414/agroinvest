@@ -61,16 +61,16 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
     }
   }
 
-  String _getOfferTypeLabel(String type) {
+  String _getOfferTypeLabel(String? type) {
     switch (type) {
       case 'CONTRACT_SALE': return 'Tayyor shartnoma savdosi';
       case 'INVESTOR_OFFER': return 'Investor sarmoya taklifi';
       case 'BUSINESS_PLAN': return 'Biznes reja / Loyiha';
-      default: return type;
+      default: return type ?? 'Boshqa';
     }
   }
 
-  Color _getOfferTypeColor(String type) {
+  Color _getOfferTypeColor(String? type) {
     switch (type) {
       case 'CONTRACT_SALE': return const Color(0xFF3B82F6);
       case 'INVESTOR_OFFER': return const Color(0xFF10B981);
@@ -79,7 +79,7 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
     }
   }
 
-  IconData _getOfferTypeIcon(String type) {
+  IconData _getOfferTypeIcon(String? type) {
     switch (type) {
       case 'CONTRACT_SALE': return Icons.assignment_turned_in_rounded;
       case 'INVESTOR_OFFER': return Icons.monetization_on_rounded;
@@ -519,7 +519,9 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
                                             ),
                                           ),
                                           Text(
-                                            o['createdAt']?.toString().substring(0, 10) ?? '',
+                                            o['createdAt'] != null && o['createdAt'].toString().length >= 10
+                                                ? o['createdAt'].toString().substring(0, 10)
+                                                : o['createdAt']?.toString() ?? '',
                                             style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
                                           ),
                                         ],
