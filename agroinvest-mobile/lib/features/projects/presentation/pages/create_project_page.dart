@@ -136,7 +136,7 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
       body: (_loading || _loadingSettings)
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 90),
               physics: const BouncingScrollPhysics(),
               child: Form(
                 key: _formKey,

@@ -137,7 +137,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                                 },
                               ),
                             ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 90)),
                     ],
                   ),
                 ),
