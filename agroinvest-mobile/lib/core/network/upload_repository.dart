@@ -24,6 +24,14 @@ class UploadRepository {
         return MediaType('image', 'webp');
       case 'pdf':
         return MediaType('application', 'pdf');
+      case 'doc':
+        return MediaType('application', 'msword');
+      case 'docx':
+        return MediaType('application', 'vnd.openxmlformats-officedocument.wordprocessingml.document');
+      case 'xls':
+        return MediaType('application', 'vnd.ms-excel');
+      case 'xlsx':
+        return MediaType('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       default:
         return null;
     }

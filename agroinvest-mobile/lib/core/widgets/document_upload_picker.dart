@@ -48,7 +48,7 @@ class _DocumentUploadPickerState extends State<DocumentUploadPicker> {
       final updatedList = List<String>.from(widget.urls)..add(url);
       widget.onChanged(updatedList);
     } catch (e) {
-      setState(() => _error = 'Hujjatni yuklashda xatolik yuz berdi');
+      setState(() => _error = e.toString().replaceAll('ApiException: ', ''));
     } finally {
       setState(() => _uploading = false);
     }

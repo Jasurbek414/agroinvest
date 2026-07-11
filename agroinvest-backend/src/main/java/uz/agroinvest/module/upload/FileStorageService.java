@@ -30,12 +30,20 @@ public class FileStorageService {
     private static final long MAX_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
     // PDF added for vet-inspection conclusions and expense receipts, which are
     // routinely issued as documents rather than photos.
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "application/pdf");
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "application/pdf",
+            "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
     private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.of(
             "image/jpeg", ".jpg",
             "image/png", ".png",
             "image/webp", ".webp",
-            "application/pdf", ".pdf"
+            "application/pdf", ".pdf",
+            "application/msword", ".doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx",
+            "application/vnd.ms-excel", ".xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"
     );
     private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general", "vet", "expense", "deposit", "banner");
 
@@ -62,7 +70,7 @@ public class FileStorageService {
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat JPEG, PNG, WEBP rasm yoki PDF fayllari qabul qilinadi");
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat JPEG, PNG, WEBP rasm yoki PDF, Word, Excel hujjatlari qabul qilinadi");
         }
 
         String safeCategory = ALLOWED_CATEGORIES.contains(category == null ? "" : category.toLowerCase())
