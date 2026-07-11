@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import uz.agroinvest.common.enums.ReportType;
 import uz.agroinvest.module.report.entity.Report;
 
 import java.util.List;
@@ -19,7 +20,22 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
     Page<Report> findByProjectId(UUID projectId, Pageable pageable);
     List<Report> findByIsVerifiedFalse();
     Page<Report> findByIsVerifiedFalse(Pageable pageable);
+
+    // SuperAdmin overview tab: unverified-reports queue counter.
+    long countByIsVerifiedFalse();
     Optional<Report> findFirstByProjectIdOrderByCreatedAtDesc(UUID projectId);
+
+    // Daily-log duty check (dashboard + scheduler): latest DAILY log per project.
+    Optional<Report> findFirstByProjectIdAndReportTypeOrderByCreatedAtDesc(UUID projectId, ReportType reportType);
+
+    // Admin/SuperAdmin reports console: the FULL report history (verified and
+    // unverified alike), optionally narrowed by type/verification state.
+    @EntityGraph(attributePaths = {"project", "submittedBy"})
+    @Query("select r from Report r where (cast(:reportType as string) is null or r.reportType = :reportType) " +
+            "and (:verified is null or r.isVerified = :verified)")
+    Page<Report> findAllFiltered(@Param("reportType") ReportType reportType,
+                                 @Param("verified") Boolean verified,
+                                 Pageable pageable);
 
     // Investor dashboard: latest activity across all projects they invested in.
     @EntityGraph(attributePaths = {"project", "submittedBy"})

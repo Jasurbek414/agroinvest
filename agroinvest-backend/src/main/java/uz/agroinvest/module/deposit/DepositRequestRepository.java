@@ -17,4 +17,7 @@ public interface DepositRequestRepository extends JpaRepository<DepositRequest, 
     @Override
     @EntityGraph(attributePaths = {"user"})
     Page<DepositRequest> findAll(Pageable pageable);
+
+    // SuperAdmin overview tab: pending-deposits queue counter.
+    long countByStatus(uz.agroinvest.common.enums.DepositStatus status);
 }

@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uz.agroinvest.common.enums.ExpenseStatus;
 import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.common.enums.ProjectStatus;
+import uz.agroinvest.common.enums.ReportType;
 import uz.agroinvest.common.enums.VetInspectionStatus;
 import uz.agroinvest.common.exception.ApiException;
 import uz.agroinvest.common.exception.ErrorCode;
@@ -143,17 +144,21 @@ public class DashboardService {
                 .map(Project::getRaisedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Reporting duty: which ACTIVE projects are due (last report older than
-        // the project's own reportFrequencyDays)? One batched query for "latest
-        // report per project" instead of one findFirstByProjectId... call per
-        // project in the loop below.
+        // Reporting duty: an ACTIVE project owes a DAILY log every calendar day,
+        // so it is "due" whenever today's daily log has not been submitted yet.
+        // One batched query for "latest report per project" instead of one
+        // findFirstByProjectId... call per project in the loop below.
         List<UUID> projectIds = projects.stream().map(Project::getId).toList();
         Map<UUID, LocalDateTime> lastReportByProject = new HashMap<>();
+        Map<UUID, LocalDateTime> lastDailyLogByProject = new HashMap<>();
         if (!projectIds.isEmpty()) {
             for (Report r : reportRepository.findByProjectIdInOrderByProjectIdAndCreatedAtDesc(projectIds)) {
                 // Rows arrive grouped by project, newest first within each group -
                 // the first one seen per project id is its latest report.
                 lastReportByProject.putIfAbsent(r.getProject().getId(), r.getCreatedAt());
+                if (r.getReportType() == ReportType.DAILY) {
+                    lastDailyLogByProject.putIfAbsent(r.getProject().getId(), r.getCreatedAt());
+                }
             }
         }
 
@@ -166,10 +171,8 @@ public class DashboardService {
 
             boolean reportDue = false;
             if (p.getStatus() == ProjectStatus.ACTIVE) {
-                int freq = p.getReportFrequencyDays() != null ? p.getReportFrequencyDays() : 14;
-                LocalDateTime baseline = lastReportAt != null ? lastReportAt
-                        : (p.getStartDate() != null ? p.getStartDate().atStartOfDay() : p.getCreatedAt());
-                reportDue = baseline != null && baseline.toLocalDate().plusDays(freq).isBefore(LocalDate.now().plusDays(1));
+                LocalDateTime lastDailyAt = lastDailyLogByProject.get(p.getId());
+                reportDue = lastDailyAt == null || lastDailyAt.toLocalDate().isBefore(LocalDate.now());
                 if (reportDue) reportsDue++;
             }
 

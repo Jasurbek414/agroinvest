@@ -28,6 +28,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Backs the public landing page's trust stat tiles.
     long countByRole(UserRole role);
 
+    // SuperAdmin overview tab: blocked-account tile.
+    long countByIsBlockedTrue();
+
     // Backs the admin KYC/Accounts tabs' role filter + name/phone search - both
     // params are optional (null = "any"). Every bind parameter is explicitly cast to
     // string, including the bare "IS NULL" checks - Postgres cannot infer a type for

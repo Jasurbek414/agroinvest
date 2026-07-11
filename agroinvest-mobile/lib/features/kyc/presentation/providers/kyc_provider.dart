@@ -47,12 +47,20 @@ class KycProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> submit({required String passportNumber, required String pinfl, String? birthDate}) async {
-    if (_documentUrls.isEmpty) {
-      _error = 'Kamida bitta hujjat rasmi yuklang';
-      notifyListeners();
-      return false;
-    }
+  Future<bool> submit({
+    required String passportNumber,
+    required String pinfl,
+    String? birthDate,
+    required String selfieUrl,
+    required String passportPhotoUrl,
+    required String currentAddress,
+    required String registrationAddress,
+    String? additionalPhone,
+    required String fatherName,
+    required String occupation,
+    String? workExperience,
+    required String education,
+  }) async {
     _submitting = true;
     _error = null;
     notifyListeners();
@@ -61,6 +69,15 @@ class KycProvider extends ChangeNotifier {
         passportNumber: passportNumber,
         pinfl: pinfl,
         birthDate: birthDate,
+        selfieUrl: selfieUrl,
+        passportPhotoUrl: passportPhotoUrl,
+        currentAddress: currentAddress,
+        registrationAddress: registrationAddress,
+        additionalPhone: additionalPhone,
+        fatherName: fatherName,
+        occupation: occupation,
+        workExperience: workExperience,
+        education: education,
         documentUrls: _documentUrls,
       );
       await fetchMe();

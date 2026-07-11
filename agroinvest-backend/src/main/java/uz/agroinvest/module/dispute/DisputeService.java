@@ -49,22 +49,28 @@ public class DisputeService {
 
     @Transactional
     public DisputeDto fileDispute(CreateDisputeRequest request, UserPrincipal principal) {
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
-
         User filer = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
 
-        // A dispute can only be raised by someone with an actual stake in the project -
-        // its farmer, or an investor who has put money into it - not any authenticated user.
-        boolean isProjectFarmer = project.getFarmer().getId().equals(filer.getId());
-        boolean isProjectInvestor = investmentRepository.existsByProjectIdAndInvestorId(project.getId(), filer.getId());
-        if (!isProjectFarmer && !isProjectInvestor) {
-            throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Ushbu loyiha bo'yicha shikoyat ochish uchun unda ishtirokingiz bo'lishi kerak");
+        Project project = null;
+        if (request.getProjectId() != null) {
+            project = projectRepository.findById(request.getProjectId())
+                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+
+            // A dispute can only be raised by someone with an actual stake in the project -
+            // its farmer, or an investor who has put money into it - not any authenticated user.
+            boolean isProjectFarmer = project.getFarmer().getId().equals(filer.getId());
+            boolean isProjectInvestor = investmentRepository.existsByProjectIdAndInvestorId(project.getId(), filer.getId());
+            if (!isProjectFarmer && !isProjectInvestor) {
+                throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Ushbu loyiha bo'yicha shikoyat ochish uchun unda ishtirokingiz bo'lishi kerak");
+            }
         }
 
-        User against = userRepository.findById(request.getAgainstUserId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Shikoyat qilinayotgan foydalanuvchi topilmadi"));
+        User against = null;
+        if (request.getAgainstUserId() != null) {
+            against = userRepository.findById(request.getAgainstUserId())
+                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Shikoyat qilinayotgan foydalanuvchi topilmadi"));
+        }
 
         Dispute dispute = Dispute.builder()
                 .project(project)
@@ -154,12 +160,12 @@ public class DisputeService {
     private DisputeDto mapToDto(Dispute dispute) {
         return new DisputeDto(
                 dispute.getId(),
-                dispute.getProject().getId(),
-                dispute.getProject().getTitle(),
+                dispute.getProject() != null ? dispute.getProject().getId() : null,
+                dispute.getProject() != null ? dispute.getProject().getTitle() : "Platforma (Umumiy)",
                 dispute.getFiledBy().getId(),
                 dispute.getFiledBy().getFullName(),
-                dispute.getAgainstUser().getId(),
-                dispute.getAgainstUser().getFullName(),
+                dispute.getAgainstUser() != null ? dispute.getAgainstUser().getId() : null,
+                dispute.getAgainstUser() != null ? dispute.getAgainstUser().getFullName() : "Platforma",
                 dispute.getDisputeType(),
                 dispute.getDescription(),
                 dispute.getStatus(),

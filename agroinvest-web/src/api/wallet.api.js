@@ -12,6 +12,10 @@ export const requestWithdrawal = (amount, bankName, cardNumber) => {
   return api.post('/withdrawals', { amount, bankName, cardNumber });
 };
 
+export const getMyWithdrawals = (page = 0, size = 12) => {
+  return api.get('/withdrawals/my', { params: { page, size } });
+};
+
 export const requestDeposit = (amount, proofUrl) => {
   return api.post('/deposit-requests', { amount, proofUrl });
 };

@@ -6,8 +6,8 @@ class DisputeRepository {
   final _dio = DioClient().dio;
 
   Future<void> fileDispute({
-    required String projectId,
-    required String againstUserId,
+    String? projectId,
+    String? againstUserId,
     required String disputeType,
     required String description,
   }) async {

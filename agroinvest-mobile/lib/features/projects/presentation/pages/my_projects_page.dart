@@ -168,17 +168,37 @@ class _MyProjectsPageState extends State<MyProjectsPage> {
                                     ),
                                     if (status == 'ACTIVE') ...[
                                       const Divider(height: 24, color: AppColors.border),
-                                      ElevatedButton.icon(
-                                        onPressed: () => context.push('/projects/${p['id']}/report'),
-                                        icon: const Icon(Icons.upload_file_rounded, size: 16),
-                                        label: const Text('Hisobot yuborish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          padding: const EdgeInsets.symmetric(vertical: 10),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => context.push('/projects/${p['id']}/daily-log'),
+                                              icon: const Icon(Icons.today_rounded, size: 16),
+                                              label: const Text('Kunlik hisobot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppColors.primary,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => context.push('/projects/${p['id']}/report'),
+                                              icon: const Icon(Icons.upload_file_rounded, size: 16),
+                                              label: const Text('Hisobot yuborish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: AppColors.primary,
+                                                side: const BorderSide(color: AppColors.primary, width: 1.2),
+                                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ],

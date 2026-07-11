@@ -44,7 +44,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Loyiha tafsilotlari')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark, size: 24),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Loyiha tafsilotlari',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.textDark, letterSpacing: -0.5),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        shape: const Border(bottom: BorderSide(color: AppColors.border, width: 1)),
+      ),
       body: provider.loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : provider.error != null
@@ -75,6 +88,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     final isOwnerFarmer = auth.user != null && auth.user!['role'] == 'FARMER' && farmerId == auth.user!['id']?.toString();
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: SingleChildScrollView(

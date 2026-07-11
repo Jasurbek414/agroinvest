@@ -21,7 +21,7 @@
     <application
         android:label="AgroInvest"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true">
         <!-- Note: android:usesCleartextTraffic="true" is ONLY for development (HTTP).
              Remove before production and use HTTPS only! -->

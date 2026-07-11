@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import uz.agroinvest.common.enums.NotificationChannel;
 import uz.agroinvest.common.enums.ProjectStatus;
+import uz.agroinvest.common.enums.ReportType;
 import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.module.notification.NotificationService;
 import uz.agroinvest.module.project.ProjectRepository;
@@ -14,6 +15,7 @@ import uz.agroinvest.module.project.entity.Project;
 import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -68,6 +70,40 @@ public class ReportMonitoringScheduler {
 
         if (lateCount > 0) {
             logger.info("Late-report check: {} project(s) flagged as overdue", lateCount);
+        }
+    }
+
+    // Daily-log duty: every ACTIVE project owes a DAILY report each calendar
+    // day. Evening nudge straight to the farmer (in-app + push) while there is
+    // still time to submit - the 09:00 admin alert above only covers reports
+    // that are already days overdue.
+    @Scheduled(cron = "0 0 17 * * *") // 17:00 daily
+    public void remindFarmersOfDailyLog() {
+        List<Project> activeProjects = projectRepository.findByStatus(ProjectStatus.ACTIVE, Pageable.unpaged()).getContent();
+        int remindedCount = 0;
+
+        for (Project project : activeProjects) {
+            boolean submittedToday = reportRepository
+                    .findFirstByProjectIdAndReportTypeOrderByCreatedAtDesc(project.getId(), ReportType.DAILY)
+                    .map(r -> r.getCreatedAt().toLocalDate().isEqual(LocalDate.now()))
+                    .orElse(false);
+            if (submittedToday) continue;
+
+            User farmer = project.getFarmer();
+            String title = "Kunlik hisobot kutilmoqda";
+            String message = "\"" + project.getTitle() + "\" loyihasi bo'yicha bugungi kunlik hisobot hali topshirilmadi. "
+                    + "Bosh soni, o'lim, yem va vazn ko'rsatkichlarini kiriting - investorlar kuzatib bormoqda.";
+            try {
+                notificationService.createNotification(farmer, "DAILY_LOG_DUE", title, message, NotificationChannel.IN_APP);
+                notificationService.createNotification(farmer, "DAILY_LOG_DUE", title, message, NotificationChannel.PUSH);
+                remindedCount++;
+            } catch (Exception e) {
+                logger.error("Failed to send daily-log reminder to farmer {} for project {}", farmer.getId(), project.getId(), e);
+            }
+        }
+
+        if (remindedCount > 0) {
+            logger.info("Daily-log reminder: {} farmer(s) nudged about today's missing daily report", remindedCount);
         }
     }
 

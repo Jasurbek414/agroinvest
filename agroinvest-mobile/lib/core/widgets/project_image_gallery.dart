@@ -96,8 +96,45 @@ class _ProjectImageCarouselState extends State<ProjectImageCarousel> {
     return Container(
       height: widget.height,
       width: double.infinity,
-      color: meta.color.withOpacity(0.1),
-      child: Icon(meta.icon, size: 40, color: meta.color.withOpacity(0.6)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            meta.color.withOpacity(0.15),
+            meta.color.withOpacity(0.04),
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: meta.color.withOpacity(0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(meta.icon, size: 44, color: meta.color),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Loyihaga oid rasmlar yuklanmagan',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: meta.color.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

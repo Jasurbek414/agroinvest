@@ -28,3 +28,11 @@
     @apply dark:bg-slate-900 dark:text-slate-100;
   }
 }
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

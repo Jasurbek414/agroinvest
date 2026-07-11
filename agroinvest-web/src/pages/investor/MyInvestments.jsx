@@ -1,24 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, PiggyBank, Star } from 'lucide-react';
 import { getMyInvestments, cancelInvestment } from '../../api/investments.api';
 import { getMyDashboard } from '../../api/dashboard.api';
-import Badge from '../../components/ui/Badge';
-import EmptyState from '../../components/ui/EmptyState';
-import ErrorState from '../../components/ui/ErrorState';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import StatCard from '../../components/ui/StatCard';
 import { useToast } from '../../components/ui/ToastProvider';
-import { formatAmount, formatDate } from '../../utils/format';
 import ReviewFormModal from '../../components/reviews/ReviewFormModal';
+import FarmerProfileModal from '../../components/investor/FarmerProfileModal';
+import InvestorStatsBar from '../../components/investor/InvestorStatsBar';
+import InvestmentsListTab from '../../components/investor/InvestmentsListTab';
+import PortfolioTab from '../../components/investor/PortfolioTab';
+import ReportsTimelineTab from '../../components/investor/ReportsTimelineTab';
 
+const TABS = [
+  { key: 'list', label: 'Sarmoyalarim' },
+  { key: 'portfolio', label: 'Tahlillar' },
+  { key: 'reports', label: 'Oxirgi hisobotlar' },
+];
+
+// Thin orchestrator for the investor cabinet: owns the shared data
+// (investments page + dashboard aggregates) and the cross-tab modals;
+// each tab's rendering/fetch details live in components/investor/*.
 const MyInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [portfolio, setPortfolio] = useState(null);
+  const [activeTab, setActiveTab] = useState('list');
+
   const [cancelTarget, setCancelTarget] = useState(null);
   const [reviewTarget, setReviewTarget] = useState(null);
   const [reviewedIds, setReviewedIds] = useState(() => new Set());
-  const [portfolio, setPortfolio] = useState(null);
+  const [farmerProfileTarget, setFarmerProfileTarget] = useState(null);
+
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -31,7 +43,7 @@ const MyInvestments = () => {
       const res = await getMyDashboard();
       setPortfolio(res.data);
     } catch (err) {
-      // Non-critical - the investment list below still works without this header.
+      console.error(err);
     }
   };
 
@@ -41,8 +53,8 @@ const MyInvestments = () => {
     try {
       const response = await getMyInvestments();
       setInvestments(response.data.content || []);
-    } catch (err) {
-      setError("Investitsiyalarni yuklashda xatolik yuz berdi");
+    } catch {
+      setError('Investitsiyalarni yuklashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -55,95 +67,67 @@ const MyInvestments = () => {
       await cancelInvestment(investmentId);
       showToast('Sarmoya muvaffaqiyatli bekor qilindi');
       fetchInvestments();
+      fetchPortfolio();
     } catch (err) {
       showToast(err.error?.message || 'Bekor qilishda xatolik yuz berdi', 'error');
     }
   };
 
-  const isCancellable = (createdAtStr) => {
-    const createdDate = new Date(createdAtStr);
-    const differenceInMs = new Date() - createdDate;
-    const hours = differenceInMs / (1000 * 60 * 60);
-    return hours < 24;
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Sarmoyalarim</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Siz sarmoya kiritgan faol va yakunlangan qishloq xo'jaligi aktivlari</p>
-        </div>
+    <div className="min-h-screen bg-gray-50/40 dark:bg-slate-950 p-6 md:p-12 transition-all duration-300">
+      <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
 
-        {portfolio && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard label="Portfel qiymati" value={formatAmount(portfolio.portfolioValue)} icon={Wallet} />
-            <StatCard label="Jami daromad" value={formatAmount(portfolio.totalEarned)} icon={PiggyBank} />
-            <StatCard label="Kutilayotgan qaytim" value={formatAmount(portfolio.expectedPayout)} icon={TrendingUp} />
+        {/* Header title with tab switcher */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-950 dark:text-slate-100 tracking-tight">Investor Kabineti</h1>
+            <p className="text-xs sm:text-sm text-gray-550 dark:text-slate-400 mt-1">Sarmoyalaringiz, faol monitoringingiz va daromad tahlillari paneli</p>
           </div>
-        )}
 
-        {loading ? (
-          <p className="text-gray-500 dark:text-slate-400 animate-pulse text-center">Yuklanmoqda...</p>
-        ) : error ? (
-          <ErrorState message={error} onRetry={fetchInvestments} />
-        ) : investments.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
-            <EmptyState title="Sizda hali sarmoyalar mavjud emas" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {investments.map((inv) => (
-              <div
-                key={inv.id}
-                className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-gray-150/40 dark:border-slate-800/80 shadow-sm shrink-0">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${
+                  activeTab === tab.key ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
+                }`}
               >
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base mb-1">{inv.projectTitle}</h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-slate-500">
-                    <span>Sana: {formatDate(inv.createdAt)}</span>
-                    <span>Ulush: <strong className="text-primary-600 dark:text-primary-400 font-bold">{inv.sharePct.toFixed(2)}%</strong></span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between md:justify-end gap-6">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-400 dark:text-slate-500">Kiritilgan sarmoya</p>
-                    <p className="font-extrabold text-gray-900 dark:text-slate-100">{formatAmount(inv.amount)}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Badge status={inv.status} />
-
-                    {inv.status === 'CONFIRMED' && isCancellable(inv.createdAt) && (
-                      <button
-                        onClick={() => setCancelTarget(inv.id)}
-                        className="px-3 py-1.5 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-semibold rounded-lg transition"
-                      >
-                        Bekor qilish
-                      </button>
-                    )}
-
-                    {inv.status === 'PAID_OUT' && !reviewedIds.has(inv.id) && (
-                      <button
-                        onClick={() => setReviewTarget(inv)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-700 dark:text-amber-400 text-xs font-semibold rounded-lg transition"
-                      >
-                        <Star size={13} /> Sharh qoldirish
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                {tab.label}
+              </button>
             ))}
           </div>
+        </div>
+
+        <InvestorStatsBar portfolio={portfolio} />
+
+        {activeTab === 'list' && (
+          <InvestmentsListTab
+            investments={investments}
+            loading={loading}
+            error={error}
+            onRetry={fetchInvestments}
+            reviewedIds={reviewedIds}
+            onFarmerProfile={setFarmerProfileTarget}
+            onCancel={setCancelTarget}
+            onReview={setReviewTarget}
+          />
         )}
+
+        {activeTab === 'portfolio' && (
+          <PortfolioTab investments={investments} portfolio={portfolio} />
+        )}
+
+        {activeTab === 'reports' && (
+          <ReportsTimelineTab investments={investments} />
+        )}
+
       </div>
 
       <ConfirmDialog
         open={!!cancelTarget}
         title="Sarmoyani bekor qilish"
-        message="Haqiqatan ham ushbu sarmoyani bekor qilmoqchimisiz? Pul hamyoningizga qaytariladi."
+        message="Haqiqatan ham ushbu sarmoyani bekor qilmoqchimisiz? Kiritilgan pul mablag'lari hamyoningiz balansiga qaytariladi."
         confirmLabel="Bekor qilish"
         tone="danger"
         onCancel={() => setCancelTarget(null)}
@@ -158,6 +142,13 @@ const MyInvestments = () => {
             setReviewedIds((prev) => new Set(prev).add(reviewTarget.id));
             setReviewTarget(null);
           }}
+        />
+      )}
+
+      {farmerProfileTarget && (
+        <FarmerProfileModal
+          investment={farmerProfileTarget}
+          onClose={() => setFarmerProfileTarget(null)}
         />
       )}
     </div>

@@ -23,4 +23,7 @@ public interface WithdrawalRepository extends JpaRepository<WithdrawalRequest, U
     @Override
     @EntityGraph(attributePaths = {"user"})
     Page<WithdrawalRequest> findAll(Pageable pageable);
+
+    // SuperAdmin overview tab: pending-withdrawals queue counter.
+    long countByStatus(uz.agroinvest.common.enums.WithdrawalStatus status);
 }

@@ -24,4 +24,8 @@ public interface WalletRepository extends JpaRepository<Wallet, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select w from Wallet w where w.user.id = :userId")
     Optional<Wallet> findByUserIdForUpdate(@Param("userId") UUID userId);
+
+    // SuperAdmin overview tab: total money currently sitting in user wallets.
+    @Query("select coalesce(sum(w.balance), 0) from Wallet w")
+    java.math.BigDecimal sumBalances();
 }

@@ -16,6 +16,10 @@ const SETTING_LABELS = {
   max_otp_attempts: 'OTP urinishlar soni',
   jwt_access_expiry_seconds: 'JWT access token muddati (sekund)',
   jwt_refresh_expiry_days: 'JWT refresh token muddati (kun)',
+  app_version_code: 'Mobil ilova versiya kodi (versionCode)',
+  app_version_name: 'Mobil ilova versiya nomi (versionName)',
+  app_download_url: 'Mobil ilova yuklab olish manzili (APK URL)',
+  app_force_update: 'Mobil ilovani majburiy yangilash (true/false)',
 };
 
 const isNumeric = (value) => value !== '' && !Number.isNaN(Number(value));

@@ -25,7 +25,7 @@ public class Dispute {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,7 +33,7 @@ public class Dispute {
     private User filedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "against_user", nullable = false)
+    @JoinColumn(name = "against_user", nullable = true)
     private User againstUser;
 
     @Column(name = "dispute_type")

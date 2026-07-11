@@ -49,23 +49,97 @@ const KycDocumentModal = ({ user, onClose }) => {
         ) : error ? (
           <ErrorState message={error} />
         ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-5 text-sm">
+            {/* Selfie and Passport Photos */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Pasport raqami</p>
-                <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.passportNumber || '—'}</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Selfie (Rasm)</p>
+                {detail?.selfieUrl ? (
+                  <a href={detail.selfieUrl} target="_blank" rel="noreferrer">
+                    <img src={detail.selfieUrl} alt="Selfie" className="w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-slate-700 hover:opacity-90 transition" />
+                  </a>
+                ) : (
+                  <p className="text-gray-400 text-xs italic">Yuklanmagan</p>
+                )}
               </div>
               <div>
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">JSHSHIR</p>
-                <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.pinfl || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Tug'ilgan sana</p>
-                <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.birthDate || '—'}</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Pasport Rasmi</p>
+                {detail?.passportPhotoUrl ? (
+                  <a href={detail.passportPhotoUrl} target="_blank" rel="noreferrer">
+                    <img src={detail.passportPhotoUrl} alt="Pasport" className="w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-slate-700 hover:opacity-90 transition" />
+                  </a>
+                ) : (
+                  <p className="text-gray-400 text-xs italic">Yuklanmagan</p>
+                )}
               </div>
             </div>
+
+            {/* Passport Data */}
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-3">
+              <h4 className="text-xs font-bold text-primary-600 uppercase tracking-wider">Pasport ma'lumotlari</h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Pasport raqami</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.passportNumber || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">JSHSHIR</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.pinfl || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Tug'ilgan sana</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.birthDate || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Otasing ismi/familiyasi</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.fatherName || '—'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Info */}
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-3">
+              <h4 className="text-xs font-bold text-primary-600 uppercase tracking-wider">Manzillar & Kontakt</h4>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Ro'yxatdan o'tgan manzil</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100 text-xs">{detail?.registrationAddress || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Hozirgi yashash manzili</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100 text-xs">{detail?.currentAddress || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Qo'shimcha telefon raqami</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.additionalPhone || '—'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Work & Education */}
+            <div className="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-3">
+              <h4 className="text-xs font-bold text-primary-600 uppercase tracking-wider">Faoliyat & Ma'lumot</h4>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Hozirgi kasbi/ish turi</p>
+                    <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.occupation || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Ma'lumoti</p>
+                    <p className="font-semibold text-gray-900 dark:text-slate-100">{detail?.education || '—'}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Ish tajribasi</p>
+                  <p className="font-semibold text-gray-900 dark:text-slate-100 text-xs whitespace-pre-line">{detail?.workExperience || '—'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Documents */}
             <div>
-              <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Yuklangan hujjatlar</p>
+              <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Qo'shimcha yuklangan hujjatlar</p>
               <MediaThumbnails urls={detail?.documentUrls || []} emptyLabel="Hujjat yuklanmagan" />
             </div>
           </div>

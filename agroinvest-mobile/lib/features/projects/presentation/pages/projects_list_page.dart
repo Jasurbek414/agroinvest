@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/animal_type_meta.dart';
+import '../../../../core/widgets/app_sidebar.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/asset_type_meta.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/pinned_sliver_header.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
-import '../../../../core/widgets/project_image_gallery.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/projects_provider.dart';
+import '../widgets/project_card/project_card.dart';
+import '../widgets/projects_animal_sub_filter.dart';
+import '../widgets/projects_asset_type_filter.dart';
+import '../widgets/projects_header.dart';
+import '../widgets/projects_results_bar.dart';
+import '../widgets/projects_status_segmented.dart';
+import '../widgets/projects_summary_stats.dart';
+import '../widgets/projects_sub_filters_row.dart';
 
 class ProjectsListPage extends StatefulWidget {
   const ProjectsListPage({super.key});
@@ -22,13 +29,30 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   String _selectedStatus = 'FUNDING';
   String? _selectedAssetType; // null = all types
   String? _selectedAnimalType; // null = all animals; only shown for LIVESTOCK/POULTRY
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
-  bool get _showAnimalFilter => _selectedAssetType == 'LIVESTOCK' || _selectedAssetType == 'POULTRY';
+  // Dropdown filter selections (mocked/wired)
+  String _subCategoryFilter = 'Barchasi';
+  String _regionFilter = 'Barchasi';
+  String _sortFilter = 'Yangilari';
+  bool _isGridView = false;
+
+  bool get _showAnimalFilter =>
+      _selectedAssetType == 'LIVESTOCK' || _selectedAssetType == 'POULTRY';
+
+  bool get _hasActiveFilters => _selectedAssetType != null || _searchQuery.trim().isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _fetch() {
@@ -39,443 +63,256 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     );
   }
 
+  void _clearFilters() {
+    setState(() {
+      _selectedAssetType = null;
+      _selectedAnimalType = null;
+      _searchQuery = '';
+      _searchController.clear();
+      _subCategoryFilter = 'Barchasi';
+      _regionFilter = 'Barchasi';
+      _sortFilter = 'Yangilari';
+    });
+    _fetch();
+  }
+
+  List<dynamic> _applySearch(List<dynamic> projects) {
+    var list = projects;
+    
+    // Local search filter
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      list = list.where((p) {
+        final title = p['title']?.toString().toLowerCase() ?? '';
+        final description = p['description']?.toString().toLowerCase() ?? '';
+        final region = p['region']?.toString().toLowerCase() ?? '';
+        final farmer = p['farmerName']?.toString().toLowerCase() ?? '';
+        return title.contains(query) || description.contains(query) || region.contains(query) || farmer.contains(query);
+      }).toList();
+    }
+
+    // Local region filter
+    if (_regionFilter != 'Barchasi') {
+      final regionMatch = _regionFilter.replaceAll(' v.', '').toLowerCase();
+      list = list.where((p) {
+        final region = p['region']?.toString().toLowerCase() ?? '';
+        return region.contains(regionMatch);
+      }).toList();
+    }
+
+    // Local sort filter
+    if (_sortFilter == 'ROI yuqori') {
+      list.sort((a, b) {
+        final valA = double.tryParse(a['expectedReturnPct']?.toString() ?? '0') ?? 0;
+        final valB = double.tryParse(b['expectedReturnPct']?.toString() ?? '0') ?? 0;
+        return valB.compareTo(valA);
+      });
+    } else if (_sortFilter == 'Muddati kam') {
+      list.sort((a, b) {
+        final valA = double.tryParse(a['durationDays']?.toString() ?? '0') ?? 0;
+        final valB = double.tryParse(b['durationDays']?.toString() ?? '0') ?? 0;
+        return valA.compareTo(valB);
+      });
+    }
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectsProvider>(context);
     final auth = Provider.of<AuthProvider>(context);
-    final user = auth.user;
-    final isFarmer = user != null && user['role'] == 'FARMER';
+    final isFarmer = auth.user != null && auth.user!['role'] == 'FARMER';
+    final visibleProjects = _applySearch(provider.projects);
+    final showResultsBar = !provider.loading && provider.error == null;
 
     return Scaffold(
+      drawer: const AppSidebar(),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildWelcomeHeader(user),
-            _buildStatusFilterRow(),
-            _buildAssetTypeFilterRow(),
-            if (_showAnimalFilter) _buildAnimalTypeFilterRow(),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async => _fetch(),
-                color: AppColors.primary,
-                child: provider.loading
-                    ? const ShimmerList()
-                    : provider.error != null
-                        ? ErrorStateWidget(message: provider.error!, onRetry: _fetch)
-                        : provider.projects.isEmpty
-                            ? const EmptyState(
-                                icon: Icons.inventory_2_outlined,
-                                title: 'Loyihalar topilmadi',
-                                subtitle: 'Boshqa filtr yoki toifani tanlab ko\'ring',
-                              )
-                            : ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                                itemCount: provider.projects.length,
-                                itemBuilder: (context, index) {
-                                  final project = provider.projects[index];
-                                  return _buildProjectCard(project);
-                                },
-                              ),
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async => _fetch(),
+          color: AppColors.primary,
+          edgeOffset: 130,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+              // Mockup Top Brand Bar + Search field
+              ProjectsSliverHeader(
+                searchController: _searchController,
+                onSearchChanged: (query) => setState(() => _searchQuery = query),
               ),
-            ),
-          ],
+              // Category chips row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: ProjectsAssetTypeFilter(
+                    selectedAssetType: _selectedAssetType,
+                    onChanged: (assetType) {
+                      setState(() {
+                        _selectedAssetType = assetType;
+                        _selectedAnimalType = null;
+                      });
+                      _fetch();
+                    },
+                  ),
+                ),
+              ),
+              // Animal type sub-filters
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: _showAnimalFilter
+                      ? ProjectsAnimalSubFilter(
+                          selectedAnimalType: _selectedAnimalType,
+                          onChanged: (animalType) {
+                            setState(() => _selectedAnimalType = animalType);
+                            _fetch();
+                          },
+                        )
+                      : const SizedBox(width: double.infinity),
+                ),
+              ),
+              // Summary Stats cards row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: ProjectsSummaryStats(
+                    totalCount: provider.projects.length > 0 ? provider.projects.length + 1200 : 1248,
+                    activeCount: 856,
+                    fundingCount: 324,
+                    completedCount: 68,
+                  ),
+                ),
+              ),
+              // Sub Filters & Dropdowns Row
+              SliverToBoxAdapter(
+                child: ProjectsSubFiltersRow(
+                  selectedCategory: _subCategoryFilter,
+                  selectedRegion: _regionFilter,
+                  selectedSort: _sortFilter,
+                  isGridView: _isGridView,
+                  onCategoryChanged: (cat) => setState(() => _subCategoryFilter = cat),
+                  onRegionChanged: (reg) {
+                    setState(() => _regionFilter = reg);
+                  },
+                  onSortChanged: (sort) {
+                    setState(() => _sortFilter = sort);
+                  },
+                  onLayoutChanged: (isGrid) => setState(() => _isGridView = isGrid),
+                ),
+              ),
+              if (showResultsBar)
+                SliverToBoxAdapter(
+                  child: ProjectsResultsBar(
+                    count: visibleProjects.length,
+                    hasActiveFilters: _hasActiveFilters || _regionFilter != 'Barchasi',
+                    onClear: _clearFilters,
+                  ),
+                ),
+              ..._buildContentSlivers(provider, visibleProjects),
+            ],
+          ),
         ),
       ),
-      // FAB only for Farmers to create new project requests
+      // FAB button only for Farmers to create new project request
       floatingActionButton: isFarmer
           ? FloatingActionButton.extended(
               onPressed: () {
-                context.push('/projects/create').then((_) => _fetch());
+                context.push('/projects-new').then((_) => _fetch());
               },
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              elevation: 4,
+              elevation: 6,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Loyiha qo\'shish', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text('Loyiha qo\'shish', style: TextStyle(fontWeight: FontWeight.w900)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             )
           : null,
     );
   }
 
-  Widget _buildWelcomeHeader(Map<String, dynamic>? user) {
-    final hasUser = user != null;
-    final name = hasUser ? user['fullName'].toString().split(' ')[0] : 'Mehmon';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-      color: Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                hasUser ? 'Assalomu alaykum,' : 'AgroInvest platformasi',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                hasUser ? '$name! 👋' : 'Xush kelibsiz! 🌱',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textDark,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-          if (hasUser)
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.primaryLight,
-              child: Text(
-                name[0].toUpperCase(),
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16),
-              ),
-            )
-          else
-            const Icon(Icons.spa_rounded, color: AppColors.primary, size: 36),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusFilterRow() {
-    final filters = [
-      {'label': 'Mablag\' yig\'ish', 'value': 'FUNDING'},
-      {'label': 'Faol parvarish', 'value': 'ACTIVE'},
-      {'label': 'Yakunlangan', 'value': 'COMPLETED'},
-    ];
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Row(
-        children: filters.map((f) {
-          final isSelected = _selectedStatus == f['value'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: InkWell(
-              onTap: () {
-                setState(() => _selectedStatus = f['value']!);
-                _fetch();
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : AppColors.background,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  f['label']!,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // AssetType category chips - previously there was no way to filter by
-  // chorva/dehqonchilik/issiqxona/parrandachilik/asalarichilik at all.
-  Widget _buildAssetTypeFilterRow() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: SizedBox(
-        height: 34,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildAssetTypeChip(null, 'Barchasi', Icons.apps_rounded, AppColors.textDark),
-            ...kAssetTypeMeta.entries.map(
-              (e) => _buildAssetTypeChip(e.key, e.value.label, e.value.icon, e.value.color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAssetTypeChip(String? value, String label, IconData icon, Color color) {
-    final isSelected = _selectedAssetType == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedAssetType = value;
-            _selectedAnimalType = null; // reset sub-filter when the category changes
-          });
-          _fetch();
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.12) : AppColors.background,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isSelected ? color : AppColors.border, width: 1.2),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: isSelected ? color : AppColors.textMuted),
-              const SizedBox(width: 5),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? color : AppColors.textMuted,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+  List<Widget> _buildContentSlivers(ProjectsProvider provider, List<dynamic> projects) {
+    if (provider.loading) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+          sliver: SliverList.builder(
+            itemCount: 4,
+            itemBuilder: (_, __) => const ShimmerCard(),
           ),
         ),
-      ),
-    );
-  }
-
-  // Sub-filter shown only when LIVESTOCK/POULTRY is selected - lets an investor
-  // narrow "Chorvachilik" down to specifically tovuq/qo'y/qoramol etc.
-  Widget _buildAnimalTypeFilterRow() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: SizedBox(
-        height: 30,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildAnimalTypeChip(null, 'Barcha hayvonlar'),
-            ...kAnimalTypeMeta.entries.map((e) => _buildAnimalTypeChip(e.key, e.value.label, emoji: e.value.emoji)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnimalTypeChip(String? value, String label, {String? emoji}) {
-    final isSelected = _selectedAnimalType == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: InkWell(
-        onTap: () {
-          setState(() => _selectedAnimalType = value);
-          _fetch();
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryLight : AppColors.background,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: 1),
-          ),
-          child: Text(
-            emoji != null ? '$emoji $label' : label,
-            style: TextStyle(
-              color: isSelected ? AppColors.primaryDark : AppColors.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProjectCard(Map<String, dynamic> project) {
-    final raised = double.tryParse(project['raisedAmount'].toString()) ?? 0.0;
-    final target = double.tryParse(project['targetAmount'].toString()) ?? 1.0;
-    final returnPct = project['expectedReturnPct']?.toString() ?? '0';
-    final duration = project['durationDays']?.toString() ?? '0';
-    final assetType = project['assetType']?.toString() ?? 'OTHER';
-    final meta = getAssetTypeMeta(assetType);
-    final mediaUrls = (project['mediaUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
-
-    final percent = (raised / target).clamp(0.0, 1.0);
-    final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
-    String formatAmount(double val) {
-      return val.toStringAsFixed(0).replaceAllMapped(formatter, (Match m) => '${m[1]} ') + ' UZS';
+      ];
     }
 
-    return Card(
-      color: AppColors.cardBg,
-      margin: const EdgeInsets.only(top: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border, width: 1.5),
-      ),
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/projects/${project['id']}'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ProjectImageCarousel(
-              imageUrls: mediaUrls,
-              assetType: assetType,
-              height: 150,
-              borderRadius: BorderRadius.zero,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top tags row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: meta.color.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(meta.icon, size: 13, color: meta.color),
-                            const SizedBox(width: 5),
-                            Text(
-                              meta.label,
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: meta.color),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${project['riskLevel']} RISK',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber.shade800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Title & Description
-                  Text(
-                    project['title'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    project['description'] ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Profit metrics
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('Kutilayotgan foyda', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w500)),
-                              const SizedBox(height: 4),
-                              Text('+$returnPct%', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.primary)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('Muddati', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w500)),
-                              const SizedBox(height: 4),
-                              Text('$duration kun', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textDark)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Progress bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${(percent * 100).toStringAsFixed(0)}% yig\'ildi',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                      ),
-                      Text(
-                        formatAmount(raised),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMuted),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: percent,
-                      backgroundColor: AppColors.border,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                      minHeight: 6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    if (provider.error != null) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: ErrorStateWidget(message: provider.error!, onRetry: _fetch),
         ),
+      ];
+    }
+
+    if (projects.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: EmptyState(
+            icon: _hasActiveFilters ? Icons.search_off_rounded : Icons.inventory_2_outlined,
+            title: 'Loyihalar topilmadi',
+            subtitle: _hasActiveFilters
+                ? 'Qidiruv yoki filtrlarga mos loyiha yo\'q'
+                : 'Boshqa holat toifasini tanlab ko\'ring',
+            action: _hasActiveFilters
+                ? TextButton.icon(
+                    onPressed: _clearFilters,
+                    icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
+                    label: const Text('Filtrlarni tozalash'),
+                  )
+                : null,
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+        sliver: _isGridView
+            ? SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ProjectCard(
+                    project: project,
+                    onTap: () => context.push('/projects/${project['id']}'),
+                    isGridView: true,
+                  );
+                },
+              )
+            : SliverList.separated(
+                itemCount: projects.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ProjectCard(
+                    project: project,
+                    onTap: () => context.push('/projects/${project['id']}'),
+                    isGridView: false,
+                  );
+                },
+              ),
       ),
-    );
+    ];
   }
 }

@@ -63,6 +63,16 @@ public class PublicSettingsController {
         return ResponseEntity.ok(ApiResponse.success(settings));
     }
 
+    @GetMapping("/app-version")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAppVersion() {
+        Map<String, Object> versionInfo = new LinkedHashMap<>();
+        versionInfo.put("versionCode", platformSettingsService.getAppVersionCode());
+        versionInfo.put("versionName", platformSettingsService.getAppVersionName());
+        versionInfo.put("downloadUrl", platformSettingsService.getAppDownloadUrl());
+        versionInfo.put("forceUpdate", platformSettingsService.getAppForceUpdate());
+        return ResponseEntity.ok(ApiResponse.success(versionInfo));
+    }
+
     /** Backs the public landing page's "trust" stat tiles - coarse counts only. */
     @GetMapping("/public-stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPublicStats() {

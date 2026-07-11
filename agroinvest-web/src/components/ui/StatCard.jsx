@@ -17,7 +17,7 @@ const StatCard = ({ label, value, icon: Icon, trend, trendLabel, className = '' 
         </span>
       )}
     </div>
-    <p className="text-2xl font-black text-gray-900 dark:text-slate-100 truncate">{value}</p>
+    <p className="text-lg xs:text-xl sm:text-2xl font-black text-gray-900 dark:text-slate-100 truncate">{value}</p>
     {trend && trendLabel && (
       <p className={`mt-1 text-xs font-semibold ${TREND_CLASSES[trend] || 'text-gray-400 dark:text-slate-500'}`}>
         {trend === 'up' ? '↑' : trend === 'down' ? '↓' : ''} {trendLabel}

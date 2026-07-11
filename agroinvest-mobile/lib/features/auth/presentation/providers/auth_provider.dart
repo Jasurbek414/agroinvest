@@ -61,35 +61,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> sendOtpCode(String phoneNumber, String purpose) async {
-    _loading = true;
-    _error = null;
-    _errorCode = null;
-    notifyListeners();
-    try {
-      await _repository.sendOtp(phoneNumber, purpose);
-    } catch (e) {
-      _setError(e);
-    } finally {
-      _loading = false;
-      notifyListeners();
-    }
+    // Simply delegate without modifying global state or notifying listeners,
+    // keeping local forms isolated from GoRouter refresh evaluations.
+    await _repository.sendOtp(phoneNumber, purpose);
   }
 
-  Future<bool> verifyOtpCode(String phoneNumber, String purpose, String code) async {
-    _loading = true;
-    _error = null;
-    _errorCode = null;
-    notifyListeners();
-    try {
-      await _repository.verifyOtp(phoneNumber, purpose, code);
-      return true;
-    } catch (e) {
-      _setError(e);
-      return false;
-    } finally {
-      _loading = false;
-      notifyListeners();
-    }
+  Future<void> verifyOtpCode(String phoneNumber, String purpose, String code) async {
+    await _repository.verifyOtp(phoneNumber, purpose, code);
   }
 
   Future<bool> registerUser({

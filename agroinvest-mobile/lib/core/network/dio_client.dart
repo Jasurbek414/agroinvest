@@ -46,10 +46,21 @@ class DioClient {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          // ignore: avoid_print
+          print('AGRO_HTTP >> ${options.method} ${options.baseUrl}${options.path} body=${options.data}');
           return handler.next(options);
         },
 
+        onResponse: (response, handler) {
+          // ignore: avoid_print
+          print('AGRO_HTTP << ${response.statusCode} ${response.requestOptions.path} data=${response.data}');
+          return handler.next(response);
+        },
+
         onError: (DioException e, handler) async {
+          // ignore: avoid_print
+          print('AGRO_HTTP xx ${e.response?.statusCode} ${e.requestOptions.path} type=${e.type} msg=${e.message} data=${e.response?.data}');
+          // Only attempt refresh for 401 errors (not for the refresh endpoint itself)
           // Only attempt refresh for 401 errors (not for the refresh endpoint itself)
           if (e.response?.statusCode == 401 &&
               !(e.requestOptions.path.contains('/auth/refresh'))) {

@@ -23,6 +23,7 @@ public class InvestmentDto {
     private BigDecimal amount;
     private BigDecimal sharePct;
     private String contractUrl;
+    private LocalDateTime contractSignedAt;
     private InvestmentStatus status;
     private LocalDateTime createdAt;
 }

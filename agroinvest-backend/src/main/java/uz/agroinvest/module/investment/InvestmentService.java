@@ -310,6 +310,20 @@ public class InvestmentService {
         return investmentRepository.findByProjectId(projectId).stream().map(this::mapToDto).toList();
     }
 
+    @Transactional
+    public InvestmentDto signInvestment(UUID investmentId, UUID userId) {
+        Investment investment = investmentRepository.findById(investmentId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Sarmoya topilmadi"));
+        
+        if (!investment.getInvestor().getId().equals(userId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Ruxsat etilmagan amal");
+        }
+        
+        investment.setContractSignedAt(LocalDateTime.now());
+        Investment saved = investmentRepository.save(investment);
+        return mapToDto(saved);
+    }
+
     private InvestmentDto mapToDto(Investment investment) {
         return new InvestmentDto(
                 investment.getId(),
@@ -320,6 +334,7 @@ public class InvestmentService {
                 investment.getAmount(),
                 investment.getSharePct(),
                 investment.getContractUrl(),
+                investment.getContractSignedAt(),
                 investment.getStatus(),
                 investment.getCreatedAt()
         );

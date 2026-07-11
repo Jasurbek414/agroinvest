@@ -28,6 +28,7 @@ import 'features/notifications/presentation/pages/notifications_page.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'features/kyc/presentation/pages/kyc_page.dart';
 import 'features/kyc/presentation/providers/kyc_provider.dart';
+import 'core/widgets/app_sidebar.dart';
 import 'features/reports/presentation/pages/submit_report_page.dart';
 import 'features/reports/presentation/pages/daily_log_page.dart';
 import 'features/reports/presentation/pages/report_timeline_page.dart';
@@ -37,6 +38,11 @@ import 'features/vet/presentation/pages/project_vet_page.dart';
 import 'features/vet/presentation/pages/add_vet_inspection_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/profile/presentation/pages/edit_profile_page.dart';
+import 'features/profile/presentation/pages/contracts_page.dart';
+import 'features/profile/presentation/pages/portfolio_analytics_page.dart';
+import 'features/profile/presentation/pages/notification_settings_page.dart';
+import 'features/profile/presentation/pages/help_support_page.dart';
+import 'features/profile/presentation/pages/about_platform_page.dart';
 import 'features/reviews/presentation/pages/farmer_reviews_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -50,9 +56,13 @@ const List<String> _protectedPaths = [
   '/notifications',
   '/kyc',
   '/disputes',
-  '/projects/create',
+  '/projects-new',
   '/projects/my',
   '/profile/edit',
+  '/profile/contracts',
+  '/profile/analytics',
+  '/profile/notification-settings',
+  '/profile/help',
 ];
 
 // Sub-routes of a project (/projects/:id/<suffix>) that require login -
@@ -126,13 +136,17 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
           },
         ),
         GoRoute(path: '/session-expired', builder: (context, state) => const SessionExpiredPage()),
-        GoRoute(path: '/investments', builder: (context, state) => const MyInvestmentsPage()),
+        GoRoute(path: '/services', builder: (context, state) => const ServicesPage()),
         GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
         GoRoute(path: '/kyc', builder: (context, state) => const KycPage()),
         GoRoute(path: '/disputes', builder: (context, state) => const DisputesPage()),
-        GoRoute(path: '/projects/create', builder: (context, state) => const CreateProjectPage()),
         GoRoute(path: '/projects/my', builder: (context, state) => const MyProjectsPage()),
         GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfilePage()),
+        GoRoute(path: '/profile/contracts', builder: (context, state) => const ContractsPage()),
+        GoRoute(path: '/profile/analytics', builder: (context, state) => const PortfolioAnalyticsPage()),
+        GoRoute(path: '/profile/notification-settings', builder: (context, state) => const NotificationSettingsPage()),
+        GoRoute(path: '/profile/help', builder: (context, state) => const HelpSupportPage()),
+        GoRoute(path: '/profile/about', builder: (context, state) => const AboutPlatformPage()),
         GoRoute(
           path: '/farmers/:id/reviews',
           builder: (context, state) {
@@ -216,7 +230,10 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
               GoRoute(path: '/projects', builder: (context, state) => const ProjectsListPage()),
             ]),
             StatefulShellBranch(routes: [
-              GoRoute(path: '/services', builder: (context, state) => const ServicesPage()),
+              GoRoute(path: '/projects-new', builder: (context, state) => const CreateProjectPage()),
+            ]),
+            StatefulShellBranch(routes: [
+              GoRoute(path: '/investments', builder: (context, state) => const MyInvestmentsPage()),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
@@ -373,7 +390,10 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      extendBody: true,
       body: Column(
         children: [
           if (_isOffline)
@@ -399,43 +419,92 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
           Expanded(child: widget.navigationShell),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: widget.navigationShell.currentIndex,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMuted,
-        backgroundColor: Colors.white,
-        elevation: 8,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          widget.navigationShell.goBranch(
-            index,
-            initialLocation: index == widget.navigationShell.currentIndex,
-          );
-          if (index == 0 && user != null) {
-            Provider.of<DashboardProvider>(context, listen: false).fetchDashboard();
-          }
-          if (index == 3 && user != null) {
-            Provider.of<NotificationProvider>(context, listen: false).fetchUnreadCount();
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Bosh sahifa',
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            width: 1.5,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_rounded),
-            label: 'Loyihalar',
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BottomNavigationBar(
+            currentIndex: widget.navigationShell.currentIndex,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            elevation: 0,
+            type: BottomNavigationBarType.fixed,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: -0.2),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: -0.2),
+            onTap: (index) {
+              widget.navigationShell.goBranch(
+                index,
+                initialLocation: index == widget.navigationShell.currentIndex,
+              );
+              if (index == 0 && user != null) {
+                Provider.of<DashboardProvider>(context, listen: false).fetchDashboard();
+              }
+              if (index == 3 && user != null) {
+                Provider.of<InvestmentProvider>(context, listen: false).fetchMyInvestments();
+              }
+              if (index == 4 && user != null) {
+                Provider.of<NotificationProvider>(context, listen: false).fetchUnreadCount();
+              }
+            },
+            items: [
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home_rounded, size: 24),
+                label: 'Bosh sahifa',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.business_center_outlined),
+                activeIcon: Icon(Icons.business_center_rounded, size: 24),
+                label: 'Loyihalar',
+              ),
+              BottomNavigationBarItem(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                ),
+                activeIcon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryDark,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                ),
+                label: 'Yangi loyiha',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.trending_up_rounded),
+                activeIcon: Icon(Icons.trending_up_rounded, size: 24),
+                label: 'Investitsiyalar',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline_rounded),
+                activeIcon: Icon(Icons.person_rounded, size: 24),
+                label: 'Profil',
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_rounded),
-            label: 'Market',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profil',
-          ),
-        ],
+        ),
       ),
     );
   }

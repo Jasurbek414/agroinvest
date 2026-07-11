@@ -4,6 +4,7 @@ import PublicStatsBar from '../../components/landing/PublicStatsBar';
 import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import FeaturedProjectsSection from '../../components/landing/FeaturedProjectsSection';
 import TrustSection from '../../components/landing/TrustSection';
+import AppDownloadSection from '../../components/landing/AppDownloadSection';
 import LandingFooter from '../../components/landing/LandingFooter';
 
 const LandingPage = () => {
@@ -14,6 +15,7 @@ const LandingPage = () => {
       <HowItWorksSection />
       <FeaturedProjectsSection />
       <TrustSection />
+      <AppDownloadSection />
       <LandingFooter />
     </div>
   );

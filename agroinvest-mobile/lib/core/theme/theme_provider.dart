@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists the user's dark/light/system choice (PLATFORM_ROADMAP.md Phase 3
-/// "Mobil dark mode"). Mirrors the web app's theme.store.js pattern: default
-/// to system preference, remember an explicit override across app restarts.
+/// "Mobil dark mode"). Defaults to LIGHT, not system: dark coverage is still
+/// partial (most screens hardcode light colors), so following a dark system
+/// setting by default renders a jarring half-dark app. "Tizim bo'yicha" stays
+/// available as an explicit opt-in and is remembered across restarts.
 class ThemeProvider extends ChangeNotifier {
   static const _prefsKey = 'theme_mode';
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
   bool get isDark => _themeMode == ThemeMode.dark;
 
@@ -16,10 +18,10 @@ class ThemeProvider extends ChangeNotifier {
     final saved = prefs.getString(_prefsKey);
     if (saved == 'dark') {
       _themeMode = ThemeMode.dark;
-    } else if (saved == 'light') {
-      _themeMode = ThemeMode.light;
-    } else {
+    } else if (saved == 'system') {
       _themeMode = ThemeMode.system;
+    } else {
+      _themeMode = ThemeMode.light;
     }
     notifyListeners();
   }

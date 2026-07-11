@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { getNavLinks } from './navLinks';
@@ -9,7 +9,11 @@ import { getNavLinks } from './navLinks';
 // of this platform's traffic) had no way to navigate beyond the current page.
 const MobileDrawer = ({ open, onClose }) => {
   const { user } = useAuthStore();
+  const location = useLocation();
+  
   const links = user ? getNavLinks(user.role) : [];
+  const isDashboard = location.pathname.endsWith('/dashboard');
+  const currentUrl = location.pathname + (location.search || (isDashboard ? '?tab=withdrawals' : ''));
 
   return (
     <div className={`md:hidden fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
@@ -33,24 +37,36 @@ const MobileDrawer = ({ open, onClose }) => {
           </button>
         </div>
         <nav className="p-3 space-y-1">
-          {links.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/projects'}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                }`
-              }
-            >
-              <Icon size={18} />
-              {label}
-            </NavLink>
-          ))}
+          {(() => {
+            let lastSection = null;
+            return links.map(({ to, label, icon: Icon, section }) => {
+              const isLinkActive = currentUrl === to;
+              const showHeader = section && section !== lastSection;
+              lastSection = section;
+
+              return (
+                <React.Fragment key={to}>
+                  {showHeader && (
+                    <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                      {section}
+                    </div>
+                  )}
+                  <Link
+                    to={to}
+                    onClick={onClose}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                      isLinkActive
+                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
+                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {label}
+                  </Link>
+                </React.Fragment>
+              );
+            });
+          })()}
         </nav>
       </div>
     </div>

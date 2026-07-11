@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
@@ -35,22 +35,29 @@ const _resendCooldownSeconds = 60;
 const _otpLength = 4;
 
 class _OtpPageState extends State<OtpPage> {
-  final _otpController = TextEditingController();
+  // Hand-rolled 4-box input (one TextEditingController + FocusNode per digit)
+  // instead of the pin_code_fields package: that package was the source of a
+  // real Flutter framework-level crash on some devices ('_elements.contains
+  // (element)' / LateInitializationError on internal _children) triggered
+  // during this exact registration flow. Those are debug-only assert()
+  // checks, but the underlying element-tree inconsistency they were guarding
+  // against was very likely still happening (silently) in release builds -
+  // plausibly explaining the "page appears twice" / stale-state symptoms
+  // reported earlier. Plain TextFields + FocusNodes, matching the pattern
+  // already used and working on the web OTPInput, avoid that surface area
+  // entirely.
+  final List<TextEditingController> _digitControllers = List.generate(_otpLength, (_) => TextEditingController());
+  final List<FocusNode> _digitFocusNodes = List.generate(_otpLength, (_) => FocusNode());
   Timer? _resendTimer;
   int _secondsLeft = _resendCooldownSeconds;
   bool _isVerifying = false;
   String? _infoMessage;
+  String? _errorMessage;
 
-  // pin_code_fields' onCompleted can fire more than once for the same fully-
-  // typed code (e.g. once from the keystroke, once from a rebuild while
-  // _isVerifying flips), and the manual "Tasdiqlash" button can also land
-  // right on top of an auto-fired attempt. Since the backend deletes the OTP
-  // from Redis the moment it's verified, a second identical request for a
-  // code that already succeeded comes back as "expired" even though nothing
-  // was actually wrong - this tracks the last code we've already submitted so
-  // a duplicate firing of the same value is a no-op instead of a second
-  // network call. Cleared automatically once the field is edited again
-  // (see _onOtpChanged), so a genuine retry is never blocked.
+  // Same dedup purpose as the web OTPInput's firedForRef: guards against a
+  // duplicate verify request for the same already-submitted code (whatever
+  // the trigger), which the backend would otherwise report as "expired" even
+  // though the code was correct and already used.
   String? _lastAttemptedCode;
 
   @override
@@ -58,23 +65,55 @@ class _OtpPageState extends State<OtpPage> {
     super.initState();
     _infoMessage = widget.infoMessage;
     _startResendCooldown(widget.initialCooldownSeconds ?? _resendCooldownSeconds);
-    _otpController.addListener(_onOtpChanged);
-    // Don't inherit a stale error from whatever flow ran before this screen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).clearError();
+        FocusScope.of(context).requestFocus(_digitFocusNodes.first);
+      }
     });
   }
 
   @override
   void dispose() {
     _resendTimer?.cancel();
-    _otpController.removeListener(_onOtpChanged);
-    _otpController.dispose();
+    for (final c in _digitControllers) {
+      c.dispose();
+    }
+    for (final f in _digitFocusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
-  void _onOtpChanged() {
-    if (_otpController.text.length < _otpLength) {
+  String get _enteredCode => _digitControllers.map((c) => c.text).join();
+
+  void _clearDigits() {
+    for (final c in _digitControllers) {
+      c.clear();
+    }
+    _lastAttemptedCode = null;
+    if (mounted) {
+      FocusScope.of(context).requestFocus(_digitFocusNodes.first);
+    }
+  }
+
+  void _onDigitChanged(int index, String value) {
+    if (value.isNotEmpty) {
+      if (index < _otpLength - 1) {
+        _digitFocusNodes[index + 1].requestFocus();
+      } else {
+        _digitFocusNodes[index].unfocus();
+      }
+    } else if (index > 0) {
+      // Backspace cleared this box - jump back so the next keystroke lands
+      // on the previous digit, without any raw key-event listening.
+      _digitFocusNodes[index - 1].requestFocus();
+    }
+
+    final code = List.generate(_otpLength, (i) => i == index ? value : _digitControllers[i].text).join();
+    if (code.length == _otpLength) {
+      _verify(code);
+    } else {
       _lastAttemptedCode = null;
     }
   }
@@ -98,19 +137,27 @@ class _OtpPageState extends State<OtpPage> {
 
   void _resend() async {
     final provider = Provider.of<AuthProvider>(context, listen: false);
-    await provider.sendOtpCode(widget.phoneNumber, widget.purpose);
-    if (!mounted) return;
-
-    if (provider.error == null) {
+    setState(() {
+      _errorMessage = null;
+    });
+    try {
+      await provider.sendOtpCode(widget.phoneNumber, widget.purpose);
+      if (!mounted) return;
       setState(() => _infoMessage = null);
       _startResendCooldown(_resendCooldownSeconds);
-    } else if (provider.errorCode == 'OTP_SEND_TOO_SOON') {
-      // Local timer drifted from the server's cooldown - resync the countdown
-      // to what the backend reported instead of showing a scary error.
-      final remaining = _parseWaitSeconds(provider.error) ?? _resendCooldownSeconds;
-      setState(() => _infoMessage = provider.error);
-      provider.clearError();
-      _startResendCooldown(remaining);
+    } catch (e) {
+      if (!mounted) return;
+      final errMsg = e.toString();
+      final tooSoon = errMsg.contains('OTP_SEND_TOO_SOON') || errMsg.contains('soniya kuting');
+      if (tooSoon) {
+        final remaining = _parseWaitSeconds(errMsg) ?? _resendCooldownSeconds;
+        setState(() => _infoMessage = errMsg);
+        _startResendCooldown(remaining);
+      } else {
+        setState(() {
+          _errorMessage = errMsg;
+        });
+      }
     }
   }
 
@@ -182,8 +229,8 @@ class _OtpPageState extends State<OtpPage> {
                 const SizedBox(height: 16),
               ],
 
-              // Error display
-              if (authProvider.error != null) ...[
+               // Error display
+               if (_errorMessage != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -192,7 +239,7 @@ class _OtpPageState extends State<OtpPage> {
                     border: Border.all(color: AppColors.danger.withOpacity(0.3)),
                   ),
                   child: Text(
-                    authProvider.error!,
+                    _errorMessage!,
                     style: const TextStyle(color: AppColors.danger, fontSize: 13),
                     textAlign: TextAlign.center,
                   ),
@@ -200,33 +247,52 @@ class _OtpPageState extends State<OtpPage> {
                 const SizedBox(height: 24),
               ],
 
-              // OTP pin fields using pin_code_fields
-              PinCodeTextField(
-                appContext: context,
-                length: _otpLength,
-                controller: _otpController,
-                keyboardType: TextInputType.number,
-                animationType: AnimationType.fade,
-                pinTheme: PinTheme(
-                  shape: PinCodeFieldShape.box,
-                  borderRadius: BorderRadius.circular(12),
-                  fieldHeight: 56,
-                  fieldWidth: 56,
-                  activeColor: AppColors.primary,
-                  inactiveColor: AppColors.border,
-                  selectedColor: AppColors.primary,
-                  activeFillColor: Colors.white,
-                  inactiveFillColor: Colors.white,
-                  selectedFillColor: Colors.white,
-                ),
-                enableActiveFill: true,
-                onChanged: (value) {},
-                onCompleted: _verify,
+              // 4-box OTP input
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_otpLength, (index) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: index < _otpLength - 1 ? 12 : 0),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: TextField(
+                        controller: _digitControllers[index],
+                        focusNode: _digitFocusNodes[index],
+                        enabled: !_isVerifying,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: InputDecoration(
+                          counterText: '',
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.zero,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                          ),
+                        ),
+                        onChanged: (value) => _onDigitChanged(index, value),
+                      ),
+                    ),
+                  );
+                }),
               ),
               const SizedBox(height: 24),
 
               ElevatedButton(
-                onPressed: _isVerifying ? null : () => _verify(_otpController.text),
+                onPressed: _isVerifying ? null : () => _verify(_enteredCode),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -268,34 +334,31 @@ class _OtpPageState extends State<OtpPage> {
     );
   }
 
-  void _verify(String code) async {
+   void _verify(String code) async {
     if (code.length != _otpLength || _isVerifying || code == _lastAttemptedCode) return;
 
     _lastAttemptedCode = code;
     setState(() {
       _isVerifying = true;
+      _errorMessage = null;
     });
 
-    final success = await Provider.of<AuthProvider>(context, listen: false).verifyOtpCode(
-      widget.phoneNumber,
-      widget.purpose,
-      code,
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      if (context.canPop()) {
-        context.pop(true); // Pop back returning true (verified)
+    try {
+      await Provider.of<AuthProvider>(context, listen: false).verifyOtpCode(
+        widget.phoneNumber,
+        widget.purpose,
+        code,
+      );
+      if (context.mounted) {
+        GoRouter.of(context).pop(true);
       }
-    } else {
-      // A wrong/expired code (or a transient network failure) previously left
-      // the pin boxes full with no clean way to retry - clear them so the
-      // next attempt starts fresh instead of editing on top of a stale code.
-      // Clearing also resets _lastAttemptedCode via the controller listener.
-      _otpController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      _clearDigits();
       setState(() {
         _isVerifying = false;
+        _lastAttemptedCode = null;
+        _errorMessage = e.toString();
       });
     }
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale, Receipt, HeartPulse, Landmark } from 'lucide-react';
+import { LayoutDashboard, Wallet, ShieldCheck, FolderKanban, ClipboardList, Scale, Receipt, HeartPulse, Landmark } from 'lucide-react';
 import AdminStatsAndCharts from '../../components/admin/AdminStatsAndCharts';
 import WithdrawalsTab from '../../components/admin/tabs/WithdrawalsTab';
 import DepositRequestsTab from '../../components/admin/tabs/DepositRequestsTab';
@@ -12,6 +12,7 @@ import ExpensesTab from '../../components/admin/tabs/ExpensesTab';
 import VetInspectionsTab from '../../components/admin/tabs/VetInspectionsTab';
 
 const TABS = [
+  { key: 'overview', label: "Umumiy ko'rinish", icon: LayoutDashboard },
   { key: 'withdrawals', label: "Yechish so'rovlari", icon: Wallet },
   { key: 'deposits', label: "To'lov so'rovlari", icon: Landmark },
   { key: 'kyc', label: 'KYC Vetting', icon: ShieldCheck },
@@ -24,7 +25,7 @@ const TABS = [
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'withdrawals';
+  const activeTab = searchParams.get('tab') || 'overview';
   const setActiveTab = (tabKey) => setSearchParams({ tab: tabKey });
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshAll = () => setRefreshKey((k) => k + 1);
@@ -37,37 +38,22 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Tizim Administratori</h1>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Platformadagi faoliyat, moliyaviy so'rovlar va tasdiqlashlarni boshqaring</p>
           </div>
+        </div>
 
-          <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex-wrap">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                  activeTab === tab.key
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
-                }`}
-              >
-                <tab.icon size={14} />
-                {tab.label}
-              </button>
-            ))}
+        {activeTab === 'overview' && <AdminStatsAndCharts refreshKey={refreshKey} />}
+
+        {activeTab !== 'overview' && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+            {activeTab === 'withdrawals' && <WithdrawalsTab onActionDone={refreshAll} />}
+            {activeTab === 'deposits' && <DepositRequestsTab onActionDone={refreshAll} />}
+            {activeTab === 'kyc' && <KycTab onActionDone={refreshAll} />}
+            {activeTab === 'projects' && <ProjectsTab onActionDone={refreshAll} />}
+            {activeTab === 'reports' && <ReportsTab />}
+            {activeTab === 'expenses' && <ExpensesTab onActionDone={refreshAll} />}
+            {activeTab === 'vetInspections' && <VetInspectionsTab onActionDone={refreshAll} />}
+            {activeTab === 'disputes' && <DisputesTab />}
           </div>
-        </div>
-
-        <AdminStatsAndCharts refreshKey={refreshKey} />
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-          {activeTab === 'withdrawals' && <WithdrawalsTab onActionDone={refreshAll} />}
-          {activeTab === 'deposits' && <DepositRequestsTab onActionDone={refreshAll} />}
-          {activeTab === 'kyc' && <KycTab onActionDone={refreshAll} />}
-          {activeTab === 'projects' && <ProjectsTab onActionDone={refreshAll} />}
-          {activeTab === 'reports' && <ReportsTab />}
-          {activeTab === 'expenses' && <ExpensesTab onActionDone={refreshAll} />}
-          {activeTab === 'vetInspections' && <VetInspectionsTab onActionDone={refreshAll} />}
-          {activeTab === 'disputes' && <DisputesTab />}
-        </div>
+        )}
       </div>
     </div>
   );

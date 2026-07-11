@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { getMyProjects } from '../../api/projects.api';
 import { getMyDashboard } from '../../api/dashboard.api';
 import ProjectListTab from '../../components/farmer/ProjectListTab';
@@ -7,15 +8,30 @@ import ReportUploadModal from '../../components/reports/ReportUploadModal';
 import ExpenseFormModal from '../../components/farmer/ExpenseFormModal';
 import VetUploadModal from '../../components/farmer/VetUploadModal';
 import FarmerStatsBar from '../../components/farmer/FarmerStatsBar';
+import ReportsDueBanner from '../../components/farmer/ReportsDueBanner';
+import SupportersTab from '../../components/farmer/SupportersTab';
+import FinanceTab from '../../components/farmer/FinanceTab';
+import ReviewsTab from '../../components/farmer/ReviewsTab';
 
+const TABS = [
+  { key: 'list', label: 'Loyihalarim' },
+  { key: 'supporters', label: 'Sarmoyadorlarim' },
+  { key: 'finance', label: 'Moliya' },
+  { key: 'reviews', label: 'Reyting' },
+];
+
+// Thin orchestrator for the farmer cabinet: owns the shared data (projects
+// page + dashboard aggregates) and the action modals; each tab's rendering
+// and per-tab fetches live in components/farmer/*.
 const FarmerDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create'
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [activeTab, setActiveTab] = useState('list');
+  const [stats, setStats] = useState(null);
+
+  const [selectedProjectId, setSelectedProjectId] = useState(null); // report modal
   const [expenseTarget, setExpenseTarget] = useState(null); // { projectId, expensePolicy }
   const [vetTargetProjectId, setVetTargetProjectId] = useState(null);
-  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchFarmerProjects();
@@ -39,7 +55,6 @@ const FarmerDashboard = () => {
       const res = await getMyDashboard();
       setStats(res.data);
     } catch (err) {
-      // Non-critical - the project list below still works without the stats bar.
       console.error(err);
     }
   };
@@ -50,36 +65,45 @@ const FarmerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-900 p-6 md:p-12">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="min-h-screen bg-gray-50/40 dark:bg-slate-950 p-6 md:p-12 transition-all duration-300">
+      <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-350">
+
+        {/* Title and top tab switcher */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fermer ish stoli (Farmer Dashboard)</h1>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Loyihalaringiz holati va yangi hisobotlar taqdim etish paneli</p>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-950 dark:text-slate-100 tracking-tight">Fermer Ish Stoli</h1>
+            <p className="text-xs sm:text-sm text-gray-550 dark:text-slate-400 mt-1">Loyihalaringiz ko'rsatkichlari, sarmoyadorlar nazorati va moliyaviy hisobotlar paneli</p>
           </div>
-          <div className="flex bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
-                activeTab === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
-              }`}
-            >
-              Loyihalarim
-            </button>
+
+          <div className="flex flex-wrap bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-gray-150/40 dark:border-slate-800/80 shadow-sm shrink-0">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition duration-200 ${
+                  activeTab === tab.key ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
             <button
               onClick={() => setActiveTab('create')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition duration-200 flex items-center gap-1 ${
                 activeTab === 'create' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400'
               }`}
             >
-              + Loyiha qo'shish
+              <Plus size={14} />
+              <span>Yangi Loyiha</span>
             </button>
           </div>
         </div>
 
         <FarmerStatsBar stats={stats} />
 
-        {activeTab === 'list' ? (
+        <ReportsDueBanner stats={stats} onReportClick={setSelectedProjectId} />
+
+        {activeTab === 'list' && (
           <ProjectListTab
             projects={projects}
             loading={loading}
@@ -88,7 +112,15 @@ const FarmerDashboard = () => {
             onExpenseClick={(projectId, expensePolicy) => setExpenseTarget({ projectId, expensePolicy })}
             onVetClick={setVetTargetProjectId}
           />
-        ) : (
+        )}
+
+        {activeTab === 'supporters' && <SupportersTab projects={projects} />}
+
+        {activeTab === 'finance' && <FinanceTab projects={projects} stats={stats} />}
+
+        {activeTab === 'reviews' && <ReviewsTab />}
+
+        {activeTab === 'create' && (
           <CreateProjectForm
             onCreated={() => {
               setActiveTab('list');
@@ -96,13 +128,15 @@ const FarmerDashboard = () => {
             }}
           />
         )}
+
       </div>
 
+      {/* Modals for actions */}
       {selectedProjectId && (
         <ReportUploadModal
           projectId={selectedProjectId}
           onClose={() => setSelectedProjectId(null)}
-          onSubmitted={() => { setSelectedProjectId(null); refreshAll(); }}
+          onSubmitted={refreshAll}
         />
       )}
 
@@ -111,7 +145,7 @@ const FarmerDashboard = () => {
           projectId={expenseTarget.projectId}
           expensePolicy={expenseTarget.expensePolicy}
           onClose={() => setExpenseTarget(null)}
-          onSubmitted={() => { setExpenseTarget(null); refreshAll(); }}
+          onSubmitted={refreshAll}
         />
       )}
 
@@ -119,9 +153,10 @@ const FarmerDashboard = () => {
         <VetUploadModal
           projectId={vetTargetProjectId}
           onClose={() => setVetTargetProjectId(null)}
-          onSubmitted={() => { setVetTargetProjectId(null); refreshAll(); }}
+          onSubmitted={refreshAll}
         />
       )}
+
     </div>
   );
 };

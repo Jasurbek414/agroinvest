@@ -53,6 +53,30 @@ public class PlatformSettingsService {
         return (int) getLong("report_frequency_days", 14);
     }
 
+    public int getAppVersionCode() {
+        return (int) getLong("app_version_code", 1);
+    }
+
+    public String getAppVersionName() {
+        return getString("app_version_name", "1.0.0");
+    }
+
+    public String getAppDownloadUrl() {
+        return getString("app_download_url", "/agroinvest.apk");
+    }
+
+    public boolean getAppForceUpdate() {
+        return repository.findBySettingKey("app_force_update")
+                .map(s -> "true".equalsIgnoreCase(s.getSettingValue()))
+                .orElse(false);
+    }
+
+    public String getString(String key, String fallback) {
+        return repository.findBySettingKey(key)
+                .map(s -> s.getSettingValue())
+                .orElse(fallback);
+    }
+
     private BigDecimal getDecimal(String key, BigDecimal fallback) {
         return repository.findBySettingKey(key)
                 .map(s -> {

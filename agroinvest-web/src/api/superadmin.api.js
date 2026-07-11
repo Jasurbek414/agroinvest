@@ -18,9 +18,47 @@ export const blockAccount = (id, block, reason) => {
   return api.patch(`/superadmin/accounts/${id}/block`, {}, { params });
 };
 
-export const getAuditLogs = (page = 0, size = 20, { action } = {}) => {
+export const resetStaffPassword = (id, newPassword) => {
+  return api.patch(`/superadmin/accounts/${id}/password`, {}, { params: { newPassword } });
+};
+
+export const changeStaffRole = (id, role) => {
+  return api.patch(`/superadmin/accounts/${id}/role`, {}, { params: { role } });
+};
+
+export const getPlatformOverview = () => api.get('/superadmin/overview');
+
+export const broadcastNotification = ({ title, message, role, channel }) => {
+  const params = { title, message };
+  if (role) params.role = role;
+  if (channel) params.channel = channel;
+  return api.post('/superadmin/broadcast', {}, { params });
+};
+
+export const getPlatformTransactions = (page = 0, size = 20, { type, status, from, to } = {}) => {
+  const params = { page, size, sort: 'createdAt,desc' };
+  if (type) params.type = type;
+  if (status) params.status = status;
+  if (from) params.from = from;
+  if (to) params.to = to;
+  return api.get('/superadmin/transactions', { params });
+};
+
+export const exportPlatformTransactionsCsv = ({ type, status, from, to } = {}) => {
+  const params = {};
+  if (type) params.type = type;
+  if (status) params.status = status;
+  if (from) params.from = from;
+  if (to) params.to = to;
+  return api.get('/superadmin/transactions/export', { params, responseType: 'blob' });
+};
+
+export const getAuditLogs = (page = 0, size = 20, { action, entityType, from, to } = {}) => {
   const params = { page, size };
   if (action) params.action = action;
+  if (entityType) params.entityType = entityType;
+  if (from) params.from = from;
+  if (to) params.to = to;
   return api.get('/superadmin/audit-logs', { params });
 };
 

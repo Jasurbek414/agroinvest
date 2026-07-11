@@ -4,6 +4,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/format.dart';
 import '../../../../core/widgets/stat_tile.dart';
+import 'dashboard_banners_slider.dart';
+import 'dashboard_quick_actions.dart';
 
 /// KPI tiles + own-projects feed for the FARMER home tab.
 class FarmerDashboard extends StatelessWidget {
@@ -42,42 +44,63 @@ class FarmerDashboard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: 1.45,
-          children: [
-            StatTile(
-              icon: Icons.agriculture_rounded,
-              color: AppColors.primary,
-              label: 'Faol loyihalar',
-              value: '${data['activeProjects'] ?? 0} ta',
-              sub: '${data['fundingProjects'] ?? 0} ta yig\'ilmoqda',
-              onTap: () => context.push('/projects/my'),
-            ),
-            StatTile(
-              icon: Icons.payments_rounded,
-              color: AppColors.info,
-              label: "Yig'ilgan mablag'",
-              value: formatMoneySum(data['totalRaised']),
-            ),
-            StatTile(
-              icon: Icons.receipt_long_rounded,
-              color: AppColors.accent,
-              label: 'Kutilayotgan harajatlar',
-              value: '${data['pendingExpenses'] ?? 0} ta',
-            ),
-            StatTile(
-              icon: Icons.health_and_safety_rounded,
-              color: const Color(0xFF8B5CF6),
-              label: 'Oxirgi vet ko\'rik',
-              value: data['lastVetInspectionAt'] != null ? formatDate(data['lastVetInspectionAt']) : '—',
-            ),
-          ],
+        const DashboardBannersSlider(role: 'FARMER'),
+        const SizedBox(height: AppSpacing.lg),
+        // Content-hugging rows instead of a fixed-ratio GridView - see
+        // InvestorDashboard for the rationale.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatTile(
+                  icon: Icons.agriculture_rounded,
+                  color: AppColors.primary,
+                  label: 'Faol loyihalar',
+                  value: '${data['activeProjects'] ?? 0} ta',
+                  sub: '${data['fundingProjects'] ?? 0} ta yig\'ilmoqda',
+                  onTap: () => context.push('/projects/my'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: StatTile(
+                  icon: Icons.payments_rounded,
+                  color: AppColors.info,
+                  label: "Yig'ilgan mablag'",
+                  value: "${formatMoneyCompact(data['totalRaised'])} so'm",
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatTile(
+                  icon: Icons.receipt_long_rounded,
+                  color: AppColors.accent,
+                  label: 'Kutilayotgan harajatlar',
+                  value: '${data['pendingExpenses'] ?? 0} ta',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: StatTile(
+                  icon: Icons.health_and_safety_rounded,
+                  color: const Color(0xFF8B5CF6),
+                  label: 'Oxirgi vet ko\'rik',
+                  value: data['lastVetInspectionAt'] != null ? formatDate(data['lastVetInspectionAt']) : '—',
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const DashboardQuickActions(),
         const SizedBox(height: AppSpacing.xl),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

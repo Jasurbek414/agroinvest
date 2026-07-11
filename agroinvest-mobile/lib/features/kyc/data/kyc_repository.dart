@@ -18,6 +18,15 @@ class KycRepository {
     required String passportNumber,
     required String pinfl,
     String? birthDate,
+    required String selfieUrl,
+    required String passportPhotoUrl,
+    required String currentAddress,
+    required String registrationAddress,
+    String? additionalPhone,
+    required String fatherName,
+    required String occupation,
+    String? workExperience,
+    required String education,
     required List<String> documentUrls,
   }) async {
     try {
@@ -25,6 +34,15 @@ class KycRepository {
         'passportNumber': passportNumber,
         'pinfl': pinfl,
         'birthDate': birthDate,
+        'selfieUrl': selfieUrl,
+        'passportPhotoUrl': passportPhotoUrl,
+        'currentAddress': currentAddress,
+        'registrationAddress': registrationAddress,
+        'additionalPhone': additionalPhone,
+        'fatherName': fatherName,
+        'occupation': occupation,
+        'workExperience': workExperience,
+        'education': education,
         'documentUrls': documentUrls,
       });
     } on DioException catch (e) {

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/phone_verification_step.dart';
 import '../widgets/profile_details_step.dart';
+import '../widgets/otp_verification_step.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,15 +21,13 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  bool _isPhoneSubmitted = false;
   bool _isPhoneVerified = false;
+  String? _otpInfoMessage;
+  int? _otpCooldownSeconds;
   String _selectedRole = 'INVESTOR';
   bool _obscurePassword = true;
   bool _isSendingOtp = false;
-  // Separate, narrowly-scoped guard against the OTP screen being pushed twice -
-  // kept independent of _isSendingOtp (which only covers the send-code network
-  // call) so the invariant "at most one /otp route is ever open" holds even if
-  // _isSendingOtp's timing changes under future edits.
-  bool _otpPageOpen = false;
 
   @override
   void initState() {
@@ -36,7 +35,9 @@ class _RegisterPageState extends State<RegisterPage> {
     // A stale error from some other flow (login, wallet OTP, expired session)
     // must not greet the user on a fresh registration attempt.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Provider.of<AuthProvider>(context, listen: false).clearError();
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).clearError();
+      }
     });
   }
 
@@ -65,7 +66,9 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  _isPhoneVerified ? 'Shaxsiy ma\'lumotlar' : 'Ro\'yxatdan o\'tish',
+                  _isPhoneVerified
+                      ? 'Shaxsiy ma\'lumotlar'
+                      : (_isPhoneSubmitted ? 'SMS tasdiqlash' : 'Ro\'yxatdan o\'tish'),
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
@@ -77,7 +80,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 Text(
                   _isPhoneVerified
                       ? 'Tizimda ishlash uchun ma\'lumotlarni to\'ldiring'
-                      : 'Telefon raqamingizni SMS orqali tasdiqlang',
+                      : (_isPhoneSubmitted
+                          ? 'Telefoningizga yuborilgan kodni kiriting'
+                          : 'Telefon raqamingizni SMS orqali tasdiqlang'),
                   style: const TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 36),
@@ -110,11 +115,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 20),
                 ],
 
-                if (!_isPhoneVerified)
+                if (!_isPhoneSubmitted)
                   PhoneVerificationStep(
                     phoneController: _phoneController,
                     loading: authProvider.loading || _isSendingOtp,
                     onSendOtp: _sendOtp,
+                  )
+                else if (!_isPhoneVerified)
+                  OtpVerificationStep(
+                    phoneNumber: _phoneController.text,
+                    purpose: 'REGISTER',
+                    initialInfoMessage: _otpInfoMessage,
+                    initialCooldownSeconds: _otpCooldownSeconds,
+                    onVerified: () {
+                      setState(() {
+                        _isPhoneVerified = true;
+                      });
+                    },
+                    onCancel: () {
+                      setState(() {
+                        _isPhoneSubmitted = false;
+                        _otpInfoMessage = null;
+                        _otpCooldownSeconds = null;
+                      });
+                    },
                   )
                 else
                   ProfileDetailsStep(
@@ -136,51 +160,44 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  void _sendOtp() async {
-    if (_isSendingOtp || _otpPageOpen) return;
+   void _sendOtp() async {
+    if (_isSendingOtp) return;
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isSendingOtp = true;
       });
 
-      final provider = Provider.of<AuthProvider>(context, listen: false);
-      await provider.sendOtpCode(_phoneController.text, 'REGISTER');
-
-      if (!mounted) return;
-
-      // OTP_SEND_TOO_SOON means a still-valid code was already sent moments ago
-      // (previous attempt, app restart...). Blocking here would dead-end the user
-      // even though the code is sitting in their SMS inbox - so proceed to the
-      // entry screen and surface the cooldown as an info note instead.
-      final tooSoon = provider.errorCode == 'OTP_SEND_TOO_SOON';
-      if (provider.error == null || tooSoon) {
-        final infoMessage = tooSoon ? provider.error : null;
-        final cooldownSeconds = tooSoon ? _parseWaitSeconds(provider.error) : null;
-        if (tooSoon) provider.clearError();
-
-        _otpPageOpen = true;
-        final verified = await context.push<bool>(
-          '/otp',
-          extra: {
-            'phoneNumber': _phoneController.text,
-            'purpose': 'REGISTER',
-            if (infoMessage != null) 'info': infoMessage,
-            if (cooldownSeconds != null) 'cooldownSeconds': cooldownSeconds,
-          },
-        );
-        _otpPageOpen = false;
-
-        if (verified == true && mounted) {
+      try {
+        final provider = Provider.of<AuthProvider>(context, listen: false);
+        await provider.sendOtpCode(_phoneController.text, 'REGISTER');
+        if (!mounted) return;
+        setState(() {
+          _isPhoneSubmitted = true;
+          _otpInfoMessage = null;
+          _otpCooldownSeconds = null;
+        });
+      } catch (e) {
+        if (mounted) {
+          final errMsg = e.toString();
+          final tooSoon = errMsg.contains('OTP_SEND_TOO_SOON') || errMsg.contains('soniya kuting');
+          if (tooSoon) {
+            setState(() {
+              _isPhoneSubmitted = true;
+              _otpInfoMessage = errMsg;
+              _otpCooldownSeconds = _parseWaitSeconds(errMsg);
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(errMsg), backgroundColor: AppColors.danger),
+            );
+          }
+        }
+      } finally {
+        if (mounted) {
           setState(() {
-            _isPhoneVerified = true;
+            _isSendingOtp = false;
           });
         }
-      }
-
-      if (mounted) {
-        setState(() {
-          _isSendingOtp = false;
-        });
       }
     }
   }
@@ -214,6 +231,7 @@ class _RegisterPageState extends State<RegisterPage> {
         // leaving the user stuck on a form that can never succeed.
         setState(() {
           _isPhoneVerified = false;
+          _isPhoneSubmitted = false;
         });
       }
     }

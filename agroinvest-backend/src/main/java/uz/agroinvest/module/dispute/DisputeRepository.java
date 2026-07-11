@@ -23,4 +23,7 @@ public interface DisputeRepository extends JpaRepository<Dispute, UUID> {
 
     @EntityGraph(attributePaths = {"project", "filedBy", "againstUser"})
     Page<Dispute> findByFiledById(UUID filedById, Pageable pageable);
+
+    // SuperAdmin overview tab: open/investigating disputes queue counter.
+    long countByStatusIn(List<uz.agroinvest.common.enums.DisputeStatus> statuses);
 }

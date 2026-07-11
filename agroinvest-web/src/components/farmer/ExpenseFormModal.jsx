@@ -2,16 +2,7 @@ import React, { useState } from 'react';
 import { submitExpense } from '../../api/expenses.api';
 import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
-
-const CATEGORIES = [
-  { value: 'FEED', label: 'Yem-xashak' },
-  { value: 'MEDICINE', label: 'Dori-darmon' },
-  { value: 'VET_SERVICE', label: 'Veterinar xizmati' },
-  { value: 'TRANSPORT', label: 'Transport' },
-  { value: 'LABOR', label: 'Ish haqi' },
-  { value: 'EQUIPMENT', label: 'Jihozlar' },
-  { value: 'OTHER', label: 'Boshqa' },
-];
+import { EXPENSE_CATEGORIES as CATEGORIES } from '../../utils/expenseCategory';
 
 // expensePolicy: INVESTOR_BUDGET | FARMER_REIMBURSED | MIXED - only MIXED shows
 // the payer chooser; otherwise the server derives payerSource from the policy.

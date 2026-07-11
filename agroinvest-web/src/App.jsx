@@ -21,6 +21,10 @@ const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const VerifierDashboard = lazy(() => import('./pages/verifier/VerifierDashboard'));
 const KycPage = lazy(() => import('./pages/profile/KycPage'));
 const DisputesPage = lazy(() => import('./pages/disputes/DisputesPage'));
+const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const MarketPage = lazy(() => import('./pages/public/MarketPage'));
+const ServicesPage = lazy(() => import('./pages/public/ServicesPage'));
+const SettingsPage = lazy(() => import('./pages/public/SettingsPage'));
 
 const RouteFallback = () => (
   <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -81,6 +85,9 @@ function App() {
         {/* Public project viewing (with navbar layout) */}
         <Route path="/projects" element={<Layout><ProjectsPage /></Layout>} />
         <Route path="/projects/:id" element={<Layout><ProjectDetailPage /></Layout>} />
+        <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+        <Route path="/market" element={<Layout><MarketPage /></Layout>} />
+        <Route path="/services" element={<Layout><ServicesPage /></Layout>} />
 
         {/* Investor protected views */}
         <Route
@@ -91,14 +98,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Wallet is shared: investors top-up/invest from it, farmers receive
+            payouts into it - both need deposit/withdraw/history screens. */}
         <Route
-          path="/investor/wallet"
+          path="/wallet"
           element={
-            <ProtectedRoute allowedRoles={['INVESTOR']}>
+            <ProtectedRoute allowedRoles={['INVESTOR', 'FARMER']}>
               <Layout><WalletPage /></Layout>
             </ProtectedRoute>
           }
         />
+        {/* Old bookmark-compat path from when the wallet was investor-only */}
+        <Route path="/investor/wallet" element={<Navigate to="/wallet" replace />} />
 
         {/* Role-specific dashboards (Farmer/Admin/SuperAdmin) */}
         <Route
@@ -148,6 +159,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout><DisputesPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout><SettingsPage /></Layout>
             </ProtectedRoute>
           }
         />

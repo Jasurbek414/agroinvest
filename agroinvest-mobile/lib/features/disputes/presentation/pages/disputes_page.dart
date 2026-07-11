@@ -54,19 +54,31 @@ class _DisputesPageState extends State<DisputesPage> {
   Future<void> _loadProjectOptions() async {
     setState(() => _loadingProjects = true);
     try {
+      final List<dynamic> options = [
+        {'id': 'GENERAL', 'title': "Platforma bo'yicha umumiy taklif / shikoyat"}
+      ];
+
       if (_isInvestor) {
         final investments = await _investmentRepository.getMyInvestments();
         final seen = <String, dynamic>{};
         for (final inv in investments) {
           seen[inv['projectId']] = {'id': inv['projectId'], 'title': inv['projectTitle']};
         }
-        _projectOptions = seen.values.toList();
+        options.addAll(seen.values);
       } else {
         final projects = await _projectRepository.getMyProjects();
-        _projectOptions = projects.map((p) => {'id': p['id'], 'title': p['title']}).toList();
+        options.addAll(projects.map((p) => {'id': p['id'], 'title': p['title']}));
       }
-    } catch (_) {
-      _projectOptions = [];
+      _projectOptions = options;
+    } catch (e) {
+      _projectOptions = [
+        {'id': 'GENERAL', 'title': "Platforma bo'yicha umumiy taklif / shikoyat"}
+      ];
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Loyihalarni yuklashda xatolik: $e"), backgroundColor: AppColors.danger),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loadingProjects = false);
     }
@@ -78,7 +90,12 @@ class _DisputesPageState extends State<DisputesPage> {
       _against = null;
       _investorOptions = [];
     });
-    if (projectId == null) return;
+    if (projectId == null || projectId == 'GENERAL') {
+      if (projectId == 'GENERAL') {
+        setState(() => _against = {'id': null, 'name': 'Platforma'});
+      }
+      return;
+    }
 
     try {
       if (_isInvestor) {
@@ -92,13 +109,18 @@ class _DisputesPageState extends State<DisputesPage> {
               .toList();
         });
       }
-    } catch (_) {
-      // leave picker empty on failure - user can retry by reselecting
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Loyiha tafsilotlarini yuklashda xatolik: $e"), backgroundColor: AppColors.danger),
+        );
+      }
     }
   }
 
   Future<void> _submit() async {
-    if (_selectedProjectId == null || _against == null || _descriptionController.text.trim().isEmpty) {
+    final isGeneral = _selectedProjectId == 'GENERAL';
+    if (_selectedProjectId == null || (!isGeneral && _against == null) || _descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Barcha maydonlarni to'ldiring"), backgroundColor: AppColors.danger),
       );
@@ -107,8 +129,8 @@ class _DisputesPageState extends State<DisputesPage> {
 
     final provider = Provider.of<DisputeProvider>(context, listen: false);
     final success = await provider.fileDispute(
-      projectId: _selectedProjectId!,
-      againstUserId: _against!['id'],
+      projectId: isGeneral ? null : _selectedProjectId,
+      againstUserId: isGeneral ? null : _against!['id'],
       disputeType: _disputeType,
       description: _descriptionController.text.trim(),
     );
@@ -116,7 +138,7 @@ class _DisputesPageState extends State<DisputesPage> {
     if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Shikoyatingiz qabul qilindi'), backgroundColor: AppColors.primary),
+        const SnackBar(content: Text('Murojaatingiz qabul qilindi'), backgroundColor: AppColors.primary),
       );
       _descriptionController.clear();
       setState(() {
@@ -133,14 +155,19 @@ class _DisputesPageState extends State<DisputesPage> {
   @override
   Widget build(BuildContext context) {
     final disputeProvider = Provider.of<DisputeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : AppColors.border;
+    final textColor = isDark ? Colors.white : AppColors.textDark;
+    final subTextColor = isDark ? const Color(0xFF94A3B8) : AppColors.textMuted;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Shikoyatlar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        backgroundColor: Colors.white,
+        title: const Text('Shikoyatlar & Takliflar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        backgroundColor: cardBg,
         elevation: 0,
-        foregroundColor: AppColors.textDark,
+        foregroundColor: textColor,
         centerTitle: true,
       ),
       body: ListView(
@@ -149,40 +176,65 @@ class _DisputesPageState extends State<DisputesPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border, width: 1.5),
+              border: Border.all(color: borderColor, width: 1.5),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Yangi shikoyat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textDark)),
+                Row(
+                  children: [
+                    const Icon(Icons.gavel_rounded, color: AppColors.danger, size: 22),
+                    const SizedBox(width: 8),
+                    Text('Yangi shikoyat / taklif', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 if (_loadingProjects)
                   const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                else if (_projectOptions.isEmpty)
-                  Text(
-                    _isInvestor
-                        ? "Shikoyat ochish uchun avval biror loyihaga sarmoya kiritgan bo'lishingiz kerak."
-                        : "Shikoyat ochish uchun avval tasdiqlangan loyihangiz bo'lishi kerak.",
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                  )
                 else ...[
                   DropdownButtonFormField<String>(
                     value: _selectedProjectId,
-                    decoration: const InputDecoration(labelText: 'Loyiha', border: OutlineInputBorder()),
+                    dropdownColor: cardBg,
+                    style: TextStyle(color: textColor, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Loyiha',
+                      labelStyle: TextStyle(color: subTextColor, fontSize: 13),
+                      prefixIcon: const Icon(Icons.business_center_outlined, color: AppColors.primary, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                     items: _projectOptions
-                        .map<DropdownMenuItem<String>>((p) => DropdownMenuItem(value: p['id'] as String, child: Text(p['title'] ?? '')))
+                        .map<DropdownMenuItem<String>>((p) => DropdownMenuItem(
+                              value: p['id'] as String,
+                              child: Text(
+                                p['title'] ?? '',
+                                style: TextStyle(color: textColor, fontSize: 13),
+                              ),
+                            ))
                         .toList(),
                     onChanged: _onProjectSelected,
                   ),
-                  if (!_isInvestor && _selectedProjectId != null) ...[
+                  if (!_isInvestor && _selectedProjectId != null && _selectedProjectId != 'GENERAL') ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: _against?['id'],
-                      decoration: const InputDecoration(labelText: 'Shikoyat qilinayotgan investor', border: OutlineInputBorder()),
+                      dropdownColor: cardBg,
+                      style: TextStyle(color: textColor, fontSize: 13),
+                      decoration: InputDecoration(
+                        labelText: 'Shikoyat qilinayotgan investor',
+                        labelStyle: TextStyle(color: subTextColor, fontSize: 13),
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                       items: _investorOptions
-                          .map<DropdownMenuItem<String>>((o) => DropdownMenuItem(value: o['id'] as String, child: Text(o['name'] ?? '')))
+                          .map<DropdownMenuItem<String>>((o) => DropdownMenuItem(
+                                value: o['id'] as String,
+                                child: Text(
+                                  o['name'] ?? '',
+                                  style: TextStyle(color: textColor, fontSize: 13),
+                                ),
+                              ))
                           .toList(),
                       onChanged: (id) {
                         final found = _investorOptions.firstWhere((o) => o['id'] == id, orElse: () => {});
@@ -190,16 +242,47 @@ class _DisputesPageState extends State<DisputesPage> {
                       },
                     ),
                   ],
-                  if (_isInvestor && _against != null) ...[
-                    const SizedBox(height: 8),
-                    Text('Shikoyat qilinadigan fermer: ${_against!['name']}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  if (_isInvestor && _against != null && _selectedProjectId != 'GENERAL') ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withOpacity(isDark ? 0.08 : 0.4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person_rounded, color: AppColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Shikoyat qilinadigan fermer: ${_against!['name']}',
+                              style: TextStyle(fontSize: 12, color: isDark ? AppColors.primaryLight : AppColors.primaryDark, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: _disputeType,
-                    decoration: const InputDecoration(labelText: 'Shikoyat turi', border: OutlineInputBorder()),
+                    dropdownColor: cardBg,
+                    style: TextStyle(color: textColor, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Murojaat turi',
+                      labelStyle: TextStyle(color: subTextColor, fontSize: 13),
+                      prefixIcon: const Icon(Icons.category_outlined, color: AppColors.primary, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                     items: _disputeTypes.entries
-                        .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                              value: e.key,
+                              child: Text(
+                                e.value,
+                                style: TextStyle(color: textColor, fontSize: 13),
+                              ),
+                            ))
                         .toList(),
                     onChanged: (v) => setState(() => _disputeType = v ?? _disputeType),
                   ),
@@ -207,7 +290,13 @@ class _DisputesPageState extends State<DisputesPage> {
                   TextField(
                     controller: _descriptionController,
                     maxLines: 4,
-                    decoration: const InputDecoration(labelText: 'Tafsilotlar', border: OutlineInputBorder(), alignLabelWithHint: true),
+                    style: TextStyle(color: textColor, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Tafsilotlar',
+                      labelStyle: TextStyle(color: subTextColor, fontSize: 13),
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -216,32 +305,32 @@ class _DisputesPageState extends State<DisputesPage> {
                       backgroundColor: AppColors.danger,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(disputeProvider.submitting ? 'Yuborilmoqda...' : 'Shikoyatni yuborish', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(disputeProvider.submitting ? 'Yuborilmoqda...' : 'Yuborish', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Mening shikoyatlarim', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textDark)),
+          Text('Mening shikoyat va takliflarim', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
           const SizedBox(height: 12),
           if (disputeProvider.loading)
             const Column(children: [ShimmerCard(), ShimmerCard()])
           else if (disputeProvider.disputes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text("Shikoyatlar topilmadi", style: TextStyle(color: AppColors.textMuted))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text("Shikoyat va takliflar topilmadi", style: TextStyle(color: subTextColor))),
             )
           else
             ...disputeProvider.disputes.map((d) => Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1.5),
+                    border: Border.all(color: borderColor, width: 1.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,22 +338,42 @@ class _DisputesPageState extends State<DisputesPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(child: Text(d['projectTitle'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark))),
+                          Expanded(
+                            child: Text(
+                              d['projectTitle'] ?? 'Platforma (Umumiy)',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                            ),
+                          ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                            child: Text(d['status'] ?? '', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight.withOpacity(isDark ? 0.08 : 0.4),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              d['status'] ?? 'OPEN',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? AppColors.primaryLight : AppColors.primary),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(d['description'] ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                      const SizedBox(height: 8),
+                      Text(
+                        d['description'] ?? '',
+                        style: TextStyle(fontSize: 13, color: subTextColor),
+                      ),
                       if (d['resolution'] != null) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-                          child: Text('Yechim: ${d['resolution']}', style: const TextStyle(fontSize: 12, color: AppColors.primaryDark)),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight.withOpacity(isDark ? 0.08 : 0.4),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Yechim: ${d['resolution']}',
+                            style: TextStyle(fontSize: 12, color: isDark ? AppColors.primaryLight : AppColors.primaryDark),
+                          ),
                         ),
                       ],
                     ],

@@ -5,6 +5,8 @@ import '../../../../core/constants/asset_type_meta.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/format.dart';
 import '../../../../core/widgets/stat_tile.dart';
+import 'dashboard_banners_slider.dart';
+import 'dashboard_quick_actions.dart';
 
 /// KPI tiles + portfolio breakdown + recent reports feed for the INVESTOR home tab.
 class InvestorDashboard extends StatelessWidget {
@@ -20,43 +22,65 @@ class InvestorDashboard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: 1.45,
-          children: [
-            StatTile(
-              icon: Icons.account_balance_wallet_rounded,
-              color: AppColors.primary,
-              label: 'Portfel qiymati',
-              value: formatMoneySum(data['portfolioValue']),
-              onTap: () => context.push('/investments'),
-            ),
-            StatTile(
-              icon: Icons.trending_up_rounded,
-              color: AppColors.info,
-              label: 'Kutilayotgan qaytim',
-              value: formatMoneySum(data['expectedPayout']),
-              sub: 'kafolatlanmagan',
-            ),
-            StatTile(
-              icon: Icons.savings_rounded,
-              color: AppColors.accent,
-              label: 'Jami daromad',
-              value: formatMoneySum(data['totalEarned']),
-            ),
-            StatTile(
-              icon: Icons.workspaces_rounded,
-              color: const Color(0xFF8B5CF6),
-              label: 'Faol investitsiyalar',
-              value: '${data['activeInvestments'] ?? 0} ta',
-              onTap: () => context.push('/investments'),
-            ),
-          ],
+        const DashboardBannersSlider(role: 'INVESTOR'),
+        const SizedBox(height: AppSpacing.lg),
+        // Content-hugging rows instead of a fixed-ratio GridView: cards size
+        // to their text (no dead space on large system fonts), IntrinsicHeight
+        // keeps each pair equal-height.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatTile(
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: AppColors.primary,
+                  label: 'Portfel qiymati',
+                  value: "${formatMoneyCompact(data['portfolioValue'])} so'm",
+                  onTap: () => context.push('/investments'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: StatTile(
+                  icon: Icons.trending_up_rounded,
+                  color: AppColors.info,
+                  label: 'Kutilayotgan qaytim',
+                  value: "${formatMoneyCompact(data['expectedPayout'])} so'm",
+                  sub: 'kafolatlanmagan',
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatTile(
+                  icon: Icons.savings_rounded,
+                  color: AppColors.accent,
+                  label: 'Jami daromad',
+                  value: "${formatMoneyCompact(data['totalEarned'])} so'm",
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: StatTile(
+                  icon: Icons.workspaces_rounded,
+                  color: const Color(0xFF8B5CF6),
+                  label: 'Faol investitsiyalar',
+                  value: '${data['activeInvestments'] ?? 0} ta',
+                  onTap: () => context.push('/investments'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const DashboardQuickActions(),
         if (breakdown.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.xl),
           const Text('Portfel taqsimoti', style: AppTypography.sectionTitle),

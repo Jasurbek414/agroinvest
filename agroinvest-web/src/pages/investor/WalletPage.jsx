@@ -6,6 +6,7 @@ import TopUpForm from '../../components/wallet/TopUpForm';
 import WithdrawalForm from '../../components/wallet/WithdrawalForm';
 import TransactionHistoryList from '../../components/wallet/TransactionHistoryList';
 import MyDepositRequestsList from '../../components/wallet/MyDepositRequestsList';
+import MyWithdrawalsList from '../../components/wallet/MyWithdrawalsList';
 import { formatAmount } from '../../utils/format';
 
 const WalletPage = () => {
@@ -15,6 +16,7 @@ const WalletPage = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('topup'); // 'topup' | 'withdraw'
   const [depositRefreshKey, setDepositRefreshKey] = useState(0);
+  const [withdrawalRefreshKey, setWithdrawalRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchWalletAndTransactions();
@@ -88,7 +90,7 @@ const WalletPage = () => {
               {activeTab === 'topup' ? (
                 <TopUpForm onRequested={() => { fetchWalletAndTransactions(); setDepositRefreshKey((k) => k + 1); }} />
               ) : (
-                <WithdrawalForm balance={wallet?.balance} onRequested={fetchWalletAndTransactions} />
+                <WithdrawalForm balance={wallet?.balance} onRequested={() => { fetchWalletAndTransactions(); setWithdrawalRefreshKey((k) => k + 1); }} />
               )}
             </Card>
 
@@ -99,6 +101,17 @@ const WalletPage = () => {
                 </div>
                 <div className="px-6">
                   <MyDepositRequestsList refreshKey={depositRefreshKey} />
+                </div>
+              </Card>
+            )}
+
+            {activeTab === 'withdraw' && (
+              <Card padded={false} className="overflow-hidden">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-700">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Mening yechish so'rovlarim</h2>
+                </div>
+                <div className="px-6">
+                  <MyWithdrawalsList refreshKey={withdrawalRefreshKey} />
                 </div>
               </Card>
             )}

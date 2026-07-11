@@ -19,6 +19,10 @@ import java.util.UUID;
 public class TransactionDto {
     private UUID id;
     private UUID userId;
+    // Populated only by the SuperAdmin platform-wide listing, where rows belong to
+    // many different users; the per-user wallet history leaves these null.
+    private String userName;
+    private String userPhone;
     private UUID projectId;
     private String projectTitle;
     private UUID investmentId;

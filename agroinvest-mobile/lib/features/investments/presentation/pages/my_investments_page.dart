@@ -1,31 +1,17 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/widgets/app_sidebar.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
-import '../../../../core/widgets/status_badge.dart';
 import '../../../reviews/data/review_repository.dart';
 import '../providers/investment_provider.dart';
-
-const _portfolioStatusColors = {
-  'RESERVED': AppColors.accent,
-  'CONFIRMED': AppColors.primary,
-  'ACTIVE': AppColors.primaryDark,
-  'PAID_OUT': AppColors.info,
-  'REFUNDED': Colors.purple,
-  'CANCELLED': AppColors.danger,
-};
-
-const _portfolioStatusLabels = {
-  'RESERVED': 'Zahiralangan',
-  'CONFIRMED': 'Tasdiqlangan',
-  'ACTIVE': 'Faol',
-  'PAID_OUT': "To'langan",
-  'REFUNDED': 'Qaytarilgan',
-  'CANCELLED': 'Bekor qilingan',
-};
+import '../widgets/portfolio_summary_card.dart';
+import '../widgets/investment_filter_tabs.dart';
+import '../widgets/investment_card.dart';
+import '../../../../core/network/dio_client.dart';
 
 class MyInvestmentsPage extends StatefulWidget {
   const MyInvestmentsPage({super.key});
@@ -36,6 +22,8 @@ class MyInvestmentsPage extends StatefulWidget {
 
 class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
   final _reviewRepository = ReviewRepository();
+  final _dio = DioClient().dio;
+  String _selectedFilter = 'ALL';
 
   @override
   void initState() {
@@ -45,209 +33,331 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
     });
   }
 
+  List<dynamic> _filterInvestments(List<dynamic> list) {
+    if (_selectedFilter == 'ALL') return list;
+    if (_selectedFilter == 'ACTIVE') {
+      return list.where((inv) => inv['status'] == 'ACTIVE').toList();
+    }
+    if (_selectedFilter == 'PENDING') {
+      return list.where((inv) => inv['status'] == 'CONFIRMED' || inv['status'] == 'RESERVED').toList();
+    }
+    if (_selectedFilter == 'COMPLETED') {
+      return list.where((inv) => inv['status'] == 'PAID_OUT' || inv['status'] == 'REFUNDED').toList();
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<InvestmentProvider>(context);
+    final visibleInvestments = _filterInvestments(provider.investments);
 
     final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
     String formatAmount(double val) {
-      return val.toStringAsFixed(0).replaceAllMapped(formatter, (Match m) => '${m[1]} ') + ' UZS';
+      return val.toStringAsFixed(0).replaceAllMapped(formatter, (Match m) => '${m[1]} ') + ' so\'m';
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      drawer: const AppSidebar(),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Investitsiyalarim', style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: AppColors.textDark, size: 24),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: const Text(
+          'Investitsiyalarim',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.textDark, letterSpacing: -0.5),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.textDark,
+        centerTitle: false,
+        shape: const Border(bottom: BorderSide(color: AppColors.border, width: 1)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.storefront_rounded, color: Color(0xFF16A34A), size: 24),
+            onPressed: () => context.push('/services'),
+            tooltip: 'Market',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: provider.loading
           ? const ShimmerList()
           : provider.error != null
               ? ErrorStateWidget(message: provider.error!, onRetry: () => provider.fetchMyInvestments())
-              : provider.investments.isEmpty
-                  ? const EmptyState(icon: Icons.trending_up_rounded, title: 'Sarmoyalar topilmadi')
-                  : RefreshIndicator(
-                      onRefresh: () => provider.fetchMyInvestments(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: provider.investments.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _buildPortfolioSummary(provider.investments, formatAmount);
-                          }
-                          final inv = provider.investments[index - 1];
-                          final amount = double.tryParse(inv['amount']?.toString() ?? '0') ?? 0.0;
-                          final status = inv['status']?.toString() ?? 'PENDING';
-                          final projectTitle = inv['projectTitle']?.toString() ?? 'Agro loyiha';
-                          final share = double.tryParse(inv['sharePct']?.toString() ?? '0') ?? 0.0;
-
-                          return Card(
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: const BorderSide(color: AppColors.border),
-                            ),
-                            elevation: 0,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          projectTitle,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                                        ),
-                                      ),
-                                      StatusBadge(status: status),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text('Kiritilgan sarmoya', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                                          const SizedBox(height: 2),
-                                          Text(formatAmount(amount), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-                                        ],
-                                      ),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          const Text('Loyiha ulushi', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                                          const SizedBox(height: 2),
-                                          Text('${share.toStringAsFixed(4)}%', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  if (status == 'RESERVED' || status == 'CONFIRMED') ...[
-                                    const Divider(height: 24, color: AppColors.border),
-                                    ElevatedButton(
-                                      onPressed: () => _confirmCancel(context, provider, inv['id']),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.danger.withOpacity(0.1),
-                                        foregroundColor: AppColors.danger,
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                      child: const Text('Sarmoyani bekor qilish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                    ),
-                                  ],
-                                  if (status == 'PAID_OUT') ...[
-                                    const Divider(height: 24, color: AppColors.border),
-                                    OutlinedButton.icon(
-                                      onPressed: () => _showReviewSheet(inv['id'], projectTitle),
-                                      icon: const Icon(Icons.star_outline_rounded, size: 16),
-                                      label: const Text("Fermerga sharh qoldirish", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppColors.primary,
-                                        side: const BorderSide(color: AppColors.primary, width: 1.5),
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+              : RefreshIndicator(
+                  onRefresh: () => provider.fetchMyInvestments(),
+                  color: AppColors.primary,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      // Portfolio Premium Gradient Summary Card (Modular Component)
+                      SliverToBoxAdapter(
+                        child: PortfolioSummaryCard(
+                          investments: provider.investments,
+                          formatAmount: formatAmount,
+                        ),
+                      ),
+                      // Horizontal Filter Tabs Segment (Modular Component)
+                      SliverToBoxAdapter(
+                        child: InvestmentFilterTabs(
+                          selectedFilter: _selectedFilter,
+                          onFilterChanged: (filterType) => setState(() => _selectedFilter = filterType),
+                        ),
+                      ),
+                      // Investment Cards List (Modular Component)
+                      visibleInvestments.isEmpty
+                          ? const SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: EmptyState(
+                                icon: Icons.trending_up_rounded,
+                                title: 'Sarmoyalar topilmadi',
+                                subtitle: 'Tanlangan filtr bo\'yicha sarmoyalar mavjud emas',
+                              ),
+                            )
+                          : SliverPadding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              sliver: SliverList.separated(
+                                itemCount: visibleInvestments.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final inv = visibleInvestments[index];
+                                  return InvestmentCard(
+                                    investment: inv,
+                                    formatAmount: formatAmount,
+                                    onCancel: () => _confirmCancel(context, provider, inv['id']),
+                                    onAddReview: () => _showReviewSheet(inv['id'], inv['projectTitle']?.toString() ?? 'Agro loyiha'),
+                                    onViewContract: () => _viewAgreementDetails(inv),
+                                  );
+                                },
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                    ],
+                  ),
+                ),
     );
   }
 
-  // Portfolio overview card: total invested + a status breakdown pie chart -
-  // previously this page was a bare list with no aggregate view of the
-  // investor's overall position across every project.
-  Widget _buildPortfolioSummary(List<dynamic> investments, String Function(double) formatAmount) {
-    double total = 0;
-    final Map<String, int> statusCounts = {};
-    for (final inv in investments) {
-      total += double.tryParse(inv['amount']?.toString() ?? '0') ?? 0.0;
-      final status = inv['status']?.toString() ?? 'UNKNOWN';
-      statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+  void _viewAgreementDetails(Map<String, dynamic> inv) {
+    final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    String formatAmountLocal(double val) {
+      return val.toStringAsFixed(0).replaceAllMapped(formatter, (Match m) => '${m[1]} ') + ' UZS';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 1.5),
+    showModalBottomSheet(
+      context: context,
+      // Shell-branch tab: without the root navigator the sheet renders under
+      // the floating bottom nav bar.
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Portfolio', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
-          const SizedBox(height: 4),
-          Text(formatAmount(total), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textDark)),
-          Text('${investments.length} ta sarmoya', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 130,
-            child: Row(
+      builder: (context) {
+        final amountVal = double.tryParse(inv['amount']?.toString() ?? '0') ?? 0.0;
+        final share = double.tryParse(inv['sharePct']?.toString() ?? '0') ?? 0.0;
+        final formattedAmount = formatAmountLocal(amountVal);
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.8,
+          maxChildSize: 0.95,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
               children: [
-                Expanded(
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 26,
-                      sections: statusCounts.entries.map((e) {
-                        final color = _portfolioStatusColors[e.key] ?? AppColors.textMuted;
-                        return PieChartSectionData(
-                          color: color,
-                          value: e.value.toDouble(),
-                          title: '${e.value}',
-                          radius: 30,
-                          titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                        );
-                      }).toList(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Sarmoya Shartnomasi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+                const Text(
+                  'INVESTITSIYA KELISHUVI',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.primaryDark),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Shartnoma ID: ${inv['id']}\nLoyiha: ${inv['projectTitle']}\nSana: ${inv['createdAt']?.toString().split('T').first ?? ''}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  '1. SHARTNOMA MAVZUSI',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ushbu shartnomaga muvofiq, Investor loyihani rivojlantirish uchun jami $formattedAmount miqdorida sarmoya kiritadi. Loyiha muvaffaqiyatli yakunlangandan so‘ng, investor loyihaning jami ulushidan ${share.toStringAsFixed(4)}% daromad olish huquqiga ega bo‘ladi.',
+                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '2. TOMONLARNING HUQUQ VA MAJBURIYATLARI',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Fermer olingan mablag‘larni faqatgina belgilangan harajatlar smetasi bo‘yicha ishlatishga, hisobotlarni va veterinar nazorati hujjatlarini o‘z vaqtida taqdim etishga majburdir. Investor loyiha holatini masofaviy kuzatish huquqiga ega.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '3. FORS-MAJOR VA NIZOLAR',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Tabiiy ofatlar va kutilmagan hayvon kasalliklari fors-major hisoblanadi. Kelib chiqqan har qanday nizo birinchi navbatda platforma administratorlari yordamida muzokaralar yo‘li bilan, aks holda qonun hujjatlariga muvofiq sudda ko‘rib chiqiladi.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+                ),
+                const SizedBox(height: 32),
+                if (inv['contractSignedAt'] != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified_rounded, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tasdiqlangan imzo',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Imzolangan sana: ${inv['contractSignedAt'].toString().replaceAll('T', ' ').split('.').first}',
+                                style: const TextStyle(fontSize: 11, color: AppColors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: statusCounts.entries.map((e) {
-                      final color = _portfolioStatusColors[e.key] ?? AppColors.textMuted;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Row(
-                          children: [
-                            Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${_portfolioStatusLabels[e.key] ?? e.key} (${e.value})',
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.textDark, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                ] else ...[
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _signContract(inv['id']);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Tasdiqlash va imzolash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
+                ],
+                const SizedBox(height: 24),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _signContract(String investmentId) async {
+    final otpController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Shartnomani imzolash', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ushbu shartnomani imzolash uchun telefoningizga yuborilgan tasdiqlash kodini kiriting (Sinov kodi: 1234):',
+                  style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: otpController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'SMS kod',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.sms_outlined),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Kodni kiriting';
+                    if (val.trim() != '1234') return 'Kod noto\'g\'ri';
+                    return null;
+                  },
                 ),
               ],
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Orqaga'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context, true);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Tasdiqlash'),
+            ),
+          ],
+        );
+      },
     );
+
+    if (confirmed != true) return;
+
+    try {
+      await _dio.post('/investments/$investmentId/sign');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Shartnoma muvaffaqiyatli imzolandi!'), backgroundColor: AppColors.primary),
+      );
+      Provider.of<InvestmentProvider>(context, listen: false).fetchMyInvestments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Imzolashda xatolik: $e'), backgroundColor: AppColors.danger),
+      );
+    }
   }
 
   void _showReviewSheet(String investmentId, String projectTitle) {
@@ -256,6 +366,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -275,21 +386,17 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Fermerga sharh qoldirish', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const Text('Fermerga sharh qoldirish', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(height: 4),
-                  Text(projectTitle, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  Text(projectTitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (i) {
                       final starIndex = i + 1;
-                      return IconButton(
-                        onPressed: () => setSheetState(() => selectedRating = starIndex),
-                        icon: Icon(
-                          starIndex <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: Colors.amber,
-                          size: 34,
-                        ),
+                      return WidgetTargetStar(
+                        isSelected: starIndex <= selectedRating,
+                        onTap: () => setSheetState(() => selectedRating = starIndex),
                       );
                     }),
                   ),
@@ -297,18 +404,18 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                   TextFormField(
                     controller: commentController,
                     maxLines: 3,
-                    style: const TextStyle(color: AppColors.textDark),
+                    style: const TextStyle(color: AppColors.textDark, fontSize: 13),
                     decoration: InputDecoration(
                       labelText: 'Izoh (ixtiyoriy)',
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: const Color(0xFFF8FAFC),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.2),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
                       ),
                     ),
                   ),
@@ -337,10 +444,10 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Yuborish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    child: const Text('Yuborish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -385,6 +492,29 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
           ],
         );
       },
+    );
+  }
+}
+
+class WidgetTargetStar extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const WidgetTargetStar({
+    super.key,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+        color: Colors.amber,
+        size: 32,
+      ),
     );
   }
 }

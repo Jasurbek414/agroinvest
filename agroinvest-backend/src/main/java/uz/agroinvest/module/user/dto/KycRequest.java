@@ -15,5 +15,30 @@ public class KycRequest {
 
     private String birthDate;
 
+    @NotBlank(message = "O'zining rasmi majburiy")
+    private String selfieUrl;
+
+    @NotBlank(message = "Pasport rasmi majburiy")
+    private String passportPhotoUrl;
+
+    @NotBlank(message = "Aniq manzil majburiy")
+    private String currentAddress;
+
+    @NotBlank(message = "Pasport bo'yicha ro'yxatdan o'tgan manzil majburiy")
+    private String registrationAddress;
+
+    private String additionalPhone;
+
+    @NotBlank(message = "Otangizning ismi va familiyasi majburiy")
+    private String fatherName;
+
+    @NotBlank(message = "Hozirgi ish joyi yoki faoliyat turi majburiy")
+    private String occupation;
+
+    private String workExperience;
+
+    @NotBlank(message = "Ma'lumotingiz haqida ma'lumot majburiy")
+    private String education;
+
     private List<String> documentUrls;
 }

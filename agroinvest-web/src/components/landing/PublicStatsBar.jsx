@@ -18,7 +18,7 @@ const PublicStatsBar = () => {
 
   return (
     <section className="max-w-6xl mx-auto px-6 -mt-10 relative z-10">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Investorlar" value={stats ? stats.totalInvestors : '—'} icon={Users} />
         <StatCard label="Fermerlar" value={stats ? stats.totalFarmers : '—'} icon={Sprout} />
         <StatCard label="Moliyalashtirilgan loyihalar" value={stats ? stats.totalFundedProjects : '—'} icon={FolderCheck} />

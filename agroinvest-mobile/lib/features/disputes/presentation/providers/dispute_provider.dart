@@ -35,8 +35,8 @@ class DisputeProvider extends ChangeNotifier {
   }
 
   Future<bool> fileDispute({
-    required String projectId,
-    required String againstUserId,
+    String? projectId,
+    String? againstUserId,
     required String disputeType,
     required String description,
   }) async {

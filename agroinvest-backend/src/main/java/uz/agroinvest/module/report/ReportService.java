@@ -180,6 +180,11 @@ public class ReportService {
         return reportRepository.findByIsVerifiedFalse(pageable).map(this::mapToDto);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ReportDto> getAllReports(ReportType reportType, Boolean verified, Pageable pageable) {
+        return reportRepository.findAllFiltered(reportType, verified, pageable).map(this::mapToDto);
+    }
+
     private ReportDto mapToDto(Report report) {
         return new ReportDto(
                 report.getId(),

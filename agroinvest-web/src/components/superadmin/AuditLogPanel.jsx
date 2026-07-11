@@ -21,7 +21,22 @@ const ACTION_OPTIONS = [
   { value: 'BLOCK_USER', label: 'Foydalanuvchi bloklandi' },
   { value: 'UNBLOCK_USER', label: 'Foydalanuvchi blokdan chiqarildi' },
   { value: 'UPDATE_KYC_STATUS', label: 'KYC holati yangilandi' },
+  { value: 'BROADCAST_NOTIFICATION', label: 'Ommaviy xabarnoma' },
+  { value: 'RESET_STAFF_PASSWORD', label: 'Xodim paroli tiklandi' },
+  { value: 'CHANGE_STAFF_ROLE', label: 'Xodim roli o\'zgartirildi' },
 ];
+
+const ENTITY_OPTIONS = [
+  { value: '', label: 'Barcha obyektlar' },
+  { value: 'User', label: 'Foydalanuvchi' },
+  { value: 'PlatformSettings', label: 'Sozlamalar' },
+  { value: 'Notification', label: 'Xabarnoma' },
+  { value: 'Project', label: 'Loyiha' },
+  { value: 'WithdrawalRequest', label: "Yechish so'rovi" },
+  { value: 'Dispute', label: 'Nizo' },
+];
+
+const filterInputClasses = 'px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500';
 
 // Previously received a static `auditLogs` prop from the parent with no filter
 // or pagination controls despite the backend already supporting both.
@@ -31,12 +46,20 @@ const AuditLogPanel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [action, setAction] = useState('');
+  const [entityType, setEntityType] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   const fetchLogs = async (page = 0) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAuditLogs(page, 20, { action: action || undefined });
+      const res = await getAuditLogs(page, 20, {
+        action: action || undefined,
+        entityType: entityType || undefined,
+        from: from || undefined,
+        to: to || undefined,
+      });
       setLogs(res.data.content || []);
       setPageInfo({ pageNumber: res.data.pageNumber, totalPages: res.data.totalPages });
     } catch (err) {
@@ -46,19 +69,23 @@ const AuditLogPanel = () => {
     }
   };
 
-  useEffect(() => { fetchLogs(0); }, [action]);
+  useEffect(() => { fetchLogs(0); }, [action, entityType, from, to]);
 
   return (
     <Card padded={false} className="overflow-hidden h-fit">
-      <div className="p-6 border-b border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="p-6 border-b border-gray-100 dark:border-slate-700 space-y-3">
         <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Tizim audit jurnali</h2>
-        <select
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
-        >
-          {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={action} onChange={(e) => setAction(e.target.value)} className={filterInputClasses}>
+            {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select value={entityType} onChange={(e) => setEntityType(e.target.value)} className={filterInputClasses}>
+            {ENTITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={filterInputClasses} title="Boshlanish sanasi" />
+          <span className="text-xs text-gray-400 dark:text-slate-500 font-semibold">—</span>
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={filterInputClasses} title="Tugash sanasi" />
+        </div>
       </div>
 
       {loading ? (
@@ -80,6 +107,11 @@ const AuditLogPanel = () => {
               <p className="text-gray-700 dark:text-slate-300">
                 Entity: <strong className="text-gray-900 dark:text-slate-100">{log.entityType} ({log.entityId})</strong>
               </p>
+              {log.userName && (
+                <p className="text-gray-500 dark:text-slate-400 mt-0.5">
+                  Bajaruvchi: <strong className="text-gray-700 dark:text-slate-300">{log.userName}</strong>
+                </p>
+              )}
               <AuditLogDiff oldValue={log.oldValue} newValue={log.newValue} />
             </div>
           ))}

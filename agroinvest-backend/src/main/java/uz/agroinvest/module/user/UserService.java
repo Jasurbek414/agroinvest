@@ -137,6 +137,15 @@ public class UserService {
                     .passportNumber(kyc.getPassportNumber())
                     .pinfl(kyc.getPinfl())
                     .birthDate(kyc.getBirthDate())
+                    .selfieUrl(kyc.getSelfieUrl())
+                    .passportPhotoUrl(kyc.getPassportPhotoUrl())
+                    .currentAddress(kyc.getCurrentAddress())
+                    .registrationAddress(kyc.getRegistrationAddress())
+                    .additionalPhone(kyc.getAdditionalPhone())
+                    .fatherName(kyc.getFatherName())
+                    .occupation(kyc.getOccupation())
+                    .workExperience(kyc.getWorkExperience())
+                    .education(kyc.getEducation())
                     .documentUrls(kyc.getDocumentUrls())
                     .build();
         } catch (Exception e) {

@@ -11,10 +11,8 @@ import java.util.UUID;
 @Setter
 public class CreateDisputeRequest {
 
-    @NotNull(message = "Loyiha tanlanishi shart")
     private UUID projectId;
 
-    @NotNull(message = "Shikoyat qilinayotgan foydalanuvchi tanlanishi shart")
     private UUID againstUserId;
 
     @NotBlank(message = "Shikoyat turi bo'sh bo'lmasligi kerak")

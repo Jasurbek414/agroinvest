@@ -11,3 +11,7 @@ export const getPublicSettings = () => {
 export const getPublicStats = () => {
   return api.get('/settings/public-stats');
 };
+
+export const getAppVersion = () => {
+  return api.get('/settings/app-version');
+};

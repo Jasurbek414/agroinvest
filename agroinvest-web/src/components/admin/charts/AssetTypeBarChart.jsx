@@ -7,12 +7,12 @@ import EmptyState from '../../ui/EmptyState';
 // One bar per AssetType, colored with the same fixed hues used for the icon
 // tint everywhere else (ProjectsTab rows, mobile app) - color follows the
 // category identity, never a cycled/generated palette.
-const AssetTypeBarChart = ({ data }) => {
+const AssetTypeBarChart = ({ data, unitLabel = 'ta loyiha', emptyTitle = "Hali loyihalar yo'q" }) => {
   const isDark = useThemeStore((s) => s.theme === 'dark');
   const entries = Object.entries(data || {}).filter(([, count]) => count > 0);
 
   if (entries.length === 0) {
-    return <EmptyState title="Hali loyihalar yo'q" />;
+    return <EmptyState title={emptyTitle} />;
   }
 
   const chartData = entries.map(([assetType, count]) => {
@@ -38,7 +38,7 @@ const AssetTypeBarChart = ({ data }) => {
             fontSize: 12,
           }}
           labelStyle={{ color: isDark ? '#e2e8f0' : '#0f172a', fontWeight: 700 }}
-          formatter={(value) => [`${value} ta loyiha`, '']}
+          formatter={(value) => [`${value} ${unitLabel}`, '']}
         />
         <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
           {chartData.map((entry) => (

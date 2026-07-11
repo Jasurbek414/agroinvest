@@ -82,4 +82,12 @@ public class InvestmentController {
         
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
+
+    @PostMapping("/{id}/sign")
+    public ResponseEntity<ApiResponse<InvestmentDto>> signContract(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(investmentService.signInvestment(id, principal.getId())));
+    }
 }

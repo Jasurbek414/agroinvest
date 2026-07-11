@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import uz.agroinvest.common.enums.ReportType;
 import uz.agroinvest.common.response.ApiResponse;
 import uz.agroinvest.common.response.PageResponse;
 import uz.agroinvest.module.report.dto.CreateReportRequest;
@@ -62,6 +63,19 @@ public class ReportController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'MODERATOR')")
     public ResponseEntity<ApiResponse<PageResponse<ReportDto>>> getUnverifiedReports(Pageable pageable) {
         Page<ReportDto> page = reportService.getUnverifiedReports(pageable);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
+    }
+
+    // Full report history for the admin/superadmin console - verified reports
+    // must stay visible after review, not vanish from the unverified queue.
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'MODERATOR')")
+    public ResponseEntity<ApiResponse<PageResponse<ReportDto>>> getAllReports(
+            @RequestParam(required = false) ReportType reportType,
+            @RequestParam(required = false) Boolean verified,
+            Pageable pageable
+    ) {
+        Page<ReportDto> page = reportService.getAllReports(reportType, verified, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 }

@@ -1,26 +1,33 @@
-import { Sprout, LayoutDashboard, Wallet, MessageSquareWarning, FileCheck2, ShieldCheck, Crown, FolderKanban, ClipboardList, Receipt, HeartPulse, Scale, Landmark, KeyRound, FolderTree, Users, Megaphone } from 'lucide-react';
+import { Sprout, LayoutDashboard, Wallet, MessageSquareWarning, FileCheck2, ShieldCheck, Crown, FolderKanban, ClipboardList, Receipt, HeartPulse, Scale, Landmark, KeyRound, FolderTree, Users, Megaphone, ArrowLeftRight, Send, ShoppingBag, Info } from 'lucide-react';
 
 // Central role -> nav-link map used by both the desktop Sidebar and the mobile
 // drawer, so the two never drift out of sync with each other.
 const NAV_LINKS_BY_ROLE = {
   INVESTOR: [
-    { to: '/projects', label: 'Loyihalar', icon: Sprout },
+    { to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout },
     { to: '/investor/investments', label: 'Sarmoyalarim', icon: LayoutDashboard },
-    { to: '/investor/wallet', label: 'Hamyon', icon: Wallet },
+    { to: '/market', label: 'Market / Bozor', icon: ShoppingBag },
+    { to: '/wallet', label: 'Hamyon', icon: Wallet },
     { to: '/disputes', label: 'Shikoyatlar', icon: MessageSquareWarning },
-    { to: '/profile/kyc', label: 'KYC', icon: FileCheck2 },
+    { to: '/services', label: 'Qo\'shimcha xizmatlar', icon: Crown },
+    { to: '/about', label: 'Platforma haqida', icon: Info },
+    { to: '/settings', label: 'Profil sozlamalari', icon: KeyRound },
   ],
   FARMER: [
-    { to: '/projects', label: 'Loyihalar', icon: Sprout },
-    { to: '/farmer/dashboard', label: 'Fermer paneli', icon: LayoutDashboard },
+    { to: '/farmer/dashboard', label: 'Mening loyihalarim', icon: LayoutDashboard },
+    { to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout },
+    { to: '/market', label: 'Market / Bozor', icon: ShoppingBag },
+    { to: '/wallet', label: 'Hamyon', icon: Wallet },
     { to: '/disputes', label: 'Shikoyatlar', icon: MessageSquareWarning },
-    { to: '/profile/kyc', label: 'KYC', icon: FileCheck2 },
+    { to: '/services', label: 'Qo\'shimcha xizmatlar', icon: Crown },
+    { to: '/about', label: 'Platforma haqida', icon: Info },
+    { to: '/settings', label: 'Profil sozlamalari', icon: KeyRound },
   ],
   VERIFIER: [
     { to: '/verifier/dashboard', label: 'Dala hisobotlari', icon: HeartPulse },
   ],
   ADMIN: [
-    { to: '/projects', label: 'Loyihalar', icon: Sprout },
+    { to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout },
     { to: '/admin/dashboard?tab=withdrawals', label: "Yechish so'rovlari", icon: Wallet },
     { to: '/admin/dashboard?tab=deposits', label: "To'lov so'rovlari", icon: Landmark },
     { to: '/admin/dashboard?tab=kyc', label: 'KYC Vetting', icon: ShieldCheck },
@@ -31,7 +38,7 @@ const NAV_LINKS_BY_ROLE = {
     { to: '/admin/dashboard?tab=disputes', label: 'Shikoyatlar', icon: Scale },
   ],
   MODERATOR: [
-    { to: '/projects', label: 'Loyihalar', icon: Sprout },
+    { to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout },
     { to: '/admin/dashboard?tab=withdrawals', label: "Yechish so'rovlari", icon: Wallet },
     { to: '/admin/dashboard?tab=deposits', label: "To'lov so'rovlari", icon: Landmark },
     { to: '/admin/dashboard?tab=kyc', label: 'KYC Vetting', icon: ShieldCheck },
@@ -41,22 +48,27 @@ const NAV_LINKS_BY_ROLE = {
     { to: '/admin/dashboard?tab=vetInspections', label: 'Veterinar nazorati', icon: HeartPulse },
     { to: '/admin/dashboard?tab=disputes', label: 'Shikoyatlar', icon: Scale },
   ],
+  // SuperAdmin links carry an optional `section` label; Sidebar/MobileDrawer render
+  // a small group header whenever it changes, so the long list stays scannable.
   SUPERADMIN: [
-    { to: '/projects', label: 'Loyihalar', icon: Sprout },
-    { to: '/superadmin/dashboard?tab=withdrawals', label: "Yechish so'rovlari", icon: Wallet },
-    { to: '/superadmin/dashboard?tab=deposits', label: "To'lov so'rovlari", icon: Landmark },
-    { to: '/superadmin/dashboard?tab=kyc', label: 'KYC Vetting', icon: ShieldCheck },
-    { to: '/superadmin/dashboard?tab=projects', label: 'Kutilayotgan loyihalar', icon: FolderKanban },
-    { to: '/superadmin/dashboard?tab=reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList },
-    { to: '/superadmin/dashboard?tab=expenses', label: 'Harajatlar', icon: Receipt },
-    { to: '/superadmin/dashboard?tab=vetInspections', label: 'Veterinar nazorati', icon: HeartPulse },
-    { to: '/superadmin/dashboard?tab=disputes', label: 'Shikoyatlar', icon: Scale },
-    { to: '/superadmin/dashboard?tab=permissions', label: 'Ruxsatlar', icon: KeyRound },
-    { to: '/superadmin/dashboard?tab=categories', label: 'Kategoriyalar', icon: FolderTree },
-    { to: '/superadmin/dashboard?tab=banners', label: 'Reklamalar', icon: Megaphone },
-    { to: '/superadmin/dashboard?tab=accounts', label: 'Hisoblar', icon: Users },
-    { to: '/superadmin/dashboard?tab=settings', label: 'Tizim sozlamalari', icon: Crown },
+    { to: '/superadmin/dashboard?tab=overview', label: "Umumiy ko'rinish", icon: LayoutDashboard, section: 'Boshqaruv' },
+    { to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout, section: 'Boshqaruv' },
+    { to: '/superadmin/dashboard?tab=withdrawals', label: "Yechish so'rovlari", icon: Wallet, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=deposits', label: "To'lov so'rovlari", icon: Landmark, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=kyc', label: 'KYC Vetting', icon: ShieldCheck, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=projects', label: 'Kutilayotgan loyihalar', icon: FolderKanban, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=expenses', label: 'Harajatlar', icon: Receipt, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=vetInspections', label: 'Veterinar nazorati', icon: HeartPulse, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=disputes', label: 'Shikoyatlar', icon: Scale, section: 'Operatsion navbatlar' },
+    { to: '/superadmin/dashboard?tab=transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight, section: 'Moliya' },
+    { to: '/superadmin/dashboard?tab=broadcast', label: 'Xabarnoma yuborish', icon: Send, section: 'Kontent' },
+    { to: '/superadmin/dashboard?tab=categories', label: 'Kategoriyalar', icon: FolderTree, section: 'Kontent' },
+    { to: '/superadmin/dashboard?tab=banners', label: 'Reklamalar', icon: Megaphone, section: 'Kontent' },
+    { to: '/superadmin/dashboard?tab=accounts', label: 'Hisoblar', icon: Users, section: 'Tizim' },
+    { to: '/superadmin/dashboard?tab=permissions', label: 'Ruxsatlar', icon: KeyRound, section: 'Tizim' },
+    { to: '/superadmin/dashboard?tab=settings', label: 'Tizim sozlamalari', icon: Crown, section: 'Tizim' },
   ],
 };
 
-export const getNavLinks = (role) => NAV_LINKS_BY_ROLE[role] || [{ to: '/projects', label: 'Loyihalar', icon: Sprout }];
+export const getNavLinks = (role) => NAV_LINKS_BY_ROLE[role] || [{ to: '/projects', label: 'Investitsiyalar bozori', icon: Sprout }];

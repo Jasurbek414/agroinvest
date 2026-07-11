@@ -14,6 +14,7 @@ function resolveInitialTheme() {
 
 export const useThemeStore = create((set, get) => ({
   theme: 'light',
+  sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
 
   // Reads the saved/OS preference and stamps the <html> class - call once at app
   // startup so the very first paint already matches the user's chosen theme.
@@ -28,5 +29,11 @@ export const useThemeStore = create((set, get) => ({
     localStorage.setItem(STORAGE_KEY, next);
     applyThemeClass(next);
     set({ theme: next });
+  },
+
+  toggleSidebar: () => {
+    const next = !get().sidebarCollapsed;
+    localStorage.setItem('sidebarCollapsed', String(next));
+    set({ sidebarCollapsed: next });
   },
 }));
