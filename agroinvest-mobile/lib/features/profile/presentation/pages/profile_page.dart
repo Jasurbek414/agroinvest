@@ -444,7 +444,7 @@ class _ProfilePageState extends State<ProfilePage> {
       host = 'agroinvest.ecos.uz';
     }
 
-    final downloadUrl = '$scheme://$host/agroinvest.apk';
+    final downloadUrl = '$scheme://$host/agroinvest.apk?t=${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       final launchUri = Uri.parse(downloadUrl);
