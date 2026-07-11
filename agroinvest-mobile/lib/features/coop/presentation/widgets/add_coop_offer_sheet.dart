@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:agroinvest_mobile/core/constants/app_colors.dart';
+import 'package:agroinvest_mobile/core/widgets/document_upload_picker.dart';
 
 class AddCoopOfferSheet extends StatefulWidget {
   final Future<void> Function(Map<String, dynamic> payload) onSubmit;
@@ -26,6 +27,7 @@ class _AddCoopOfferSheetState extends State<AddCoopOfferSheet> {
 
   String _formType = 'BUSINESS_PLAN';
   bool _submitting = false;
+  List<String> _docUrls = [];
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +202,16 @@ class _AddCoopOfferSheetState extends State<AddCoopOfferSheet> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 6.0),
+              child: Text('Loyiha hujjatlari (ixtiyoriy)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))),
+            ),
+            DocumentUploadPicker(
+              category: 'coop',
+              urls: _docUrls,
+              onChanged: (urls) => setState(() => _docUrls = urls),
+            ),
             const SizedBox(height: 24),
 
             // Submit button
@@ -257,10 +269,14 @@ class _AddCoopOfferSheetState extends State<AddCoopOfferSheet> {
           'Tafsilotlar: ${_descController.text}';
     }
 
+    final documentsString = _docUrls.isNotEmpty 
+        ? '\n\nHujjatlar:\n' + _docUrls.join('\n') 
+        : '';
+
     try {
       final payload = {
         'title': _titleController.text,
-        'description': finalDescription,
+        'description': finalDescription + documentsString,
         'type': _formType,
         'amount': double.tryParse(_amountController.text) ?? 0.0,
         'contactPhone': _phoneController.text,

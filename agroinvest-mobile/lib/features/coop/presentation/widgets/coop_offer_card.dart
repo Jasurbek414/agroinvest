@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:agroinvest_mobile/core/utils/format.dart';
+import 'package:agroinvest_mobile/core/constants/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CoopOfferCard extends StatelessWidget {
@@ -13,6 +14,30 @@ class CoopOfferCard extends StatelessWidget {
     required this.isExpanded,
     required this.onTap,
   });
+
+  List<String> _extractDocUrls(String? text) {
+    if (text == null) return [];
+    final regExp = RegExp(r'(https?://[^\s]+)');
+    final matches = regExp.allMatches(text);
+    final urls = <String>[];
+    for (final match in matches) {
+      final url = match.group(0);
+      if (url != null) {
+        final cleanUrl = url.replaceAll(RegExp(r'[.,;)]+$'), '');
+        final lower = cleanUrl.toLowerCase();
+        if (
+          lower.endsWith('.pdf') || 
+          lower.endsWith('.doc') || 
+          lower.endsWith('.docx') || 
+          lower.endsWith('.xls') || 
+          lower.endsWith('.xlsx')
+        ) {
+          urls.add(cleanUrl);
+        }
+      }
+    }
+    return urls;
+  }
 
   String _getOfferTypeLabel(String? type) {
     switch (type) {
@@ -146,6 +171,42 @@ class CoopOfferCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (isExpanded) ...[
+                  const SizedBox(height: 12),
+                  ..._extractDocUrls(offer['description']?.toString()).map((url) {
+                    final filename = url.split('/').last;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.description_rounded, color: AppColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              Uri.decodeComponent(filename),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.download_rounded, color: AppColors.primary, size: 16),
+                            onPressed: () async {
+                              final launchUri = Uri.parse(url);
+                              await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
                 const SizedBox(height: 6),
 
                 // Expand/Collapse Label

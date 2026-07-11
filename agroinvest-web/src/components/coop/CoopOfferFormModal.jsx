@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { createCoopOffer } from '../../api/coop.api';
+import { uploadFile } from '../../api/uploads.api';
 import { useToast } from '../../components/ui/ToastProvider';
-import { X, Check } from 'lucide-react';
+import { X, Check, Paperclip, Trash2 } from 'lucide-react';
 
 const CoopOfferFormModal = ({ onClose, onSaved }) => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [docUrls, setDocUrls] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -13,6 +16,25 @@ const CoopOfferFormModal = ({ onClose, onSaved }) => {
     amount: '',
     contactPhone: '',
   });
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await uploadFile(file, 'coop');
+      setDocUrls(prev => [...prev, res.data.url]);
+      showToast("Hujjat muvaffaqiyatli yuklandi!", "success");
+    } catch (err) {
+      showToast("Faylni yuklashda xatolik yuz berdi.", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeDoc = (index) => {
+    setDocUrls(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,9 +50,10 @@ const CoopOfferFormModal = ({ onClose, onSaved }) => {
 
     setLoading(true);
     try {
+      const docSuffix = docUrls.length > 0 ? `\n\nHujjatlar:\n${docUrls.join('\n')}` : '';
       await createCoopOffer({
         title: formData.title.trim(),
-        description: formData.description.trim(),
+        description: formData.description.trim() + docSuffix,
         type: formData.type,
         amount: parseFloat(formData.amount),
         contactPhone: formData.contactPhone.trim(),
@@ -108,6 +131,44 @@ const CoopOfferFormModal = ({ onClose, onSaved }) => {
               placeholder="Biznesning asosiy maqsadi, joylashuvi, foyda taqsimoti, risklar va kutilayotgan daromad haqida batafsil ma'lumot kiriting..."
               className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/20 dark:bg-slate-955 text-xs font-semibold focus:ring-1 focus:ring-primary-500 resize-y"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-700 dark:text-slate-350">Loyiha hujjatlari (ixtiyoriy)</label>
+            <div className="space-y-2">
+              {docUrls.map((url, index) => {
+                const parts = url.split('/');
+                const name = decodeURIComponent(parts[parts.length - 1] || 'hujjat');
+                return (
+                  <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-gray-150/40 dark:border-slate-850">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip size={14} className="text-gray-400 shrink-0" />
+                      <span className="text-[11px] font-semibold text-gray-800 dark:text-slate-200 truncate">{name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeDoc(index)}
+                      className="text-rose-500 hover:text-rose-600 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <label className="flex items-center justify-center border border-dashed border-gray-300 hover:border-primary-500 dark:border-slate-750 dark:hover:border-primary-500 p-3 rounded-xl cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition">
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={uploading}
+              />
+              <span className="text-[11px] font-semibold text-primary-650 dark:text-primary-400">
+                {uploading ? "Fayl yuklanmoqda..." : "+ Hujjat biriktirish (PDF, Word, Excel)"}
+              </span>
+            </label>
           </div>
 
           <button
