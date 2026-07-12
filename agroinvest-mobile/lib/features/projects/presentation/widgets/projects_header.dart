@@ -9,11 +9,15 @@ import 'projects_search_field.dart';
 class ProjectsSliverHeader extends StatelessWidget {
   final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
+  final VoidCallback? onFilterTap;
+  final int activeFiltersCount;
 
   const ProjectsSliverHeader({
     super.key,
     required this.searchController,
     required this.onSearchChanged,
+    this.onFilterTap,
+    this.activeFiltersCount = 0,
   });
 
   @override
@@ -185,6 +189,8 @@ class ProjectsSliverHeader extends StatelessWidget {
             ProjectsSearchField(
               controller: searchController,
               onChanged: onSearchChanged,
+              onFilterTap: onFilterTap,
+              activeFiltersCount: activeFiltersCount,
             ),
           ],
         ),

@@ -43,6 +43,127 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
   bool get _hasActiveFilters => _selectedAssetType != null || _searchQuery.trim().isNotEmpty;
 
+  int get _activeFiltersCount {
+    int count = 0;
+    if (_selectedAssetType != null) count++;
+    if (_selectedAnimalType != null) count++;
+    if (_regionFilter != 'Barchasi') count++;
+    if (_sortFilter != 'Yangilari') count++;
+    if (_searchQuery.trim().isNotEmpty) count++;
+    return count;
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Barcha filtrlar',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setModalState(() {
+                              _regionFilter = 'Barchasi';
+                              _sortFilter = 'Yangilari';
+                              _subCategoryFilter = 'Barchasi';
+                            });
+                            setState(() {});
+                            _fetch();
+                          },
+                          child: const Text('Tozalash', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 10),
+                    const Text('Saralash', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: ['Yangilari', 'ROI yuqori', 'Muddati kam'].map((sort) {
+                        final isSel = _sortFilter == sort;
+                        return ChoiceChip(
+                          label: Text(sort),
+                          selected: isSel,
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() => _sortFilter = sort);
+                              setState(() {});
+                              _fetch();
+                            }
+                          },
+                          selectedColor: AppColors.primaryLight,
+                          labelStyle: TextStyle(
+                            color: isSel ? AppColors.primary : AppColors.textDark,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Hudud', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _regionFilter,
+                          isExpanded: true,
+                          items: ['Barchasi', 'Toshkent v.', 'Samarqand v.', 'Farg\'ona v.', 'Andijon v.', 'Buxoro v.', 'Namangan v.', 'Qashqadaryo v.']
+                              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setModalState(() => _regionFilter = val);
+                              setState(() {});
+                              _fetch();
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Qo\'llash', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -142,6 +263,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               ProjectsSliverHeader(
                 searchController: _searchController,
                 onSearchChanged: (query) => setState(() => _searchQuery = query),
+                onFilterTap: _showFilterBottomSheet,
+                activeFiltersCount: _activeFiltersCount,
               ),
               // Category chips row
               SliverToBoxAdapter(
