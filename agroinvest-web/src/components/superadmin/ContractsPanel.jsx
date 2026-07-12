@@ -7,6 +7,7 @@ import DataTable from '../ui/DataTable';
 import { useToast } from '../ui/ToastProvider';
 import { formatAmount, formatDate } from '../../utils/format';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useAuthStore } from '../../store/auth.store';
 
 const STATUS_LABELS = {
   PENDING: 'Kutilmoqda',
@@ -31,6 +32,7 @@ const FILTER_STATUSES = [
 ];
 
 const ContractsPanel = () => {
+  const { accessToken } = useAuthStore();
   const [rows, setRows] = useState([]);
   const [pageInfo, setPageInfo] = useState({ pageNumber: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -155,7 +157,7 @@ const ContractsPanel = () => {
         <div className="flex items-center gap-2">
           {/* View PDF */}
           <a
-            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${r.id}/agreement`}
+            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${r.id}/agreement?token=${accessToken}`}
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-600 dark:text-slate-300 hover:bg-gray-50 hover:text-primary-600 dark:hover:text-primary-400 transition shadow-sm"
@@ -166,7 +168,7 @@ const ContractsPanel = () => {
 
           {/* Download Word Document */}
           <a
-            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${r.id}/agreement/word`}
+            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${r.id}/agreement/word?token=${accessToken}`}
             className="p-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-600 dark:text-slate-300 hover:bg-gray-50 hover:text-emerald-600 dark:hover:text-emerald-400 transition shadow-sm"
             title="Word faylini yuklab olish"
           >

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getProjects, changeProjectStatus } from '../../../api/projects.api';
 import { getProjectInvestments } from '../../../api/investments.api';
+import { useAuthStore } from '../../../store/auth.store';
 import { formatAmount } from '../../../utils/format';
 import { ASSET_TYPE_META, getAssetTypeMeta } from '../../../utils/assetType';
 import { 
@@ -671,6 +672,7 @@ const ProjectsTab = ({ onActionDone }) => {
 };
 
 const ProjectInvestmentsTab = ({ projectId }) => {
+  const { accessToken } = useAuthStore();
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState(null);
@@ -753,7 +755,7 @@ const ProjectInvestmentsTab = ({ projectId }) => {
           
           <div className="flex items-center gap-2">
             <a 
-              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${inv.id}/agreement`} 
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${inv.id}/agreement?token=${accessToken}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-[10px] font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 transition"
