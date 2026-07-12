@@ -68,9 +68,20 @@ public class FcmPushService {
                     .setBody(body)
                     .build();
 
+            com.google.firebase.messaging.AndroidNotification androidNotification =
+                    com.google.firebase.messaging.AndroidNotification.builder()
+                            .setColor("#0e5c42")
+                            .build();
+
+            com.google.firebase.messaging.AndroidConfig androidConfig =
+                    com.google.firebase.messaging.AndroidConfig.builder()
+                            .setNotification(androidNotification)
+                            .build();
+
             Message message = Message.builder()
                     .setToken(fcmToken)
                     .setNotification(notification)
+                    .setAndroidConfig(androidConfig)
                     .build();
 
             String response = FirebaseMessaging.getInstance().send(message);
