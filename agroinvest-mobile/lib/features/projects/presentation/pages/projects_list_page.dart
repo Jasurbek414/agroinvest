@@ -220,16 +220,19 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       ),
       // FAB button only for Farmers to create new project request
       floatingActionButton: isFarmer
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                context.push('/projects-new').then((_) => _fetch());
-              },
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 6,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Loyiha qo\'shish', style: TextStyle(fontWeight: FontWeight.w900)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  context.push('/projects-new').then((_) => _fetch());
+                },
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 6,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Loyiha qo\'shish', style: TextStyle(fontWeight: FontWeight.w900)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             )
           : null,
     );
