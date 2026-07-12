@@ -188,10 +188,12 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
               ),
               const SizedBox(height: 16),
 
-              const Text('Dalil rasmlari', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)),
+              const Text('Dalil rasmlari va videolari', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)),
               const SizedBox(height: 8),
               ImageUploadPicker(
                 category: 'report',
+                maxImages: 30,
+                allowVideo: true,
                 onChanged: (urls) => setState(() => _mediaUrls = urls),
               ),
               const SizedBox(height: 16),

@@ -215,11 +215,12 @@ class _DailyLogPageState extends State<DailyLogPage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                const Text('Foto (ixtiyoriy)', style: AppTypography.label),
+                const Text('Foto va video (ixtiyoriy)', style: AppTypography.label),
                 const SizedBox(height: AppSpacing.sm),
                 ImageUploadPicker(
                   category: 'report',
-                  maxImages: 3,
+                  maxImages: 10,
+                  allowVideo: true,
                   onChanged: (urls) => _mediaUrls = urls,
                 ),
                 const SizedBox(height: AppSpacing.lg),

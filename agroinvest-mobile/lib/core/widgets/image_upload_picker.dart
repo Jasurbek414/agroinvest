@@ -3,21 +3,20 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../network/upload_repository.dart';
 
-/// Reusable multi-image picker: lets the user pick photos from the gallery, uploads
-/// each to real object storage, and reports the resulting public URLs back to the
-/// parent form. Used by CreateProjectPage and SubmitReportPage, both of which
-/// previously submitted a hardcoded mock image URL / empty media list instead of
-/// whatever the farmer actually photographed.
+/// Reusable multi-media picker: lets the user pick photos and videos from the gallery/camera,
+/// uploads each to real object storage, and reports the resulting public URLs back.
 class ImageUploadPicker extends StatefulWidget {
   final String category;
   final ValueChanged<List<String>> onChanged;
   final int maxImages;
+  final bool allowVideo;
 
   const ImageUploadPicker({
     super.key,
     required this.category,
     required this.onChanged,
-    this.maxImages = 5,
+    this.maxImages = 20,
+    this.allowVideo = false,
   });
 
   @override
@@ -31,34 +30,10 @@ class _ImageUploadPickerState extends State<ImageUploadPicker> {
   bool _uploading = false;
   String? _error;
 
-  Future<void> _pickAndUpload() async {
+  Future<void> _pickAndUpload(bool isVideo) async {
     if (_urls.length >= widget.maxImages) return;
-    final source = await _chooseSource();
-    if (source == null) return;
-    final image = await _picker.pickImage(source: source, imageQuality: 85);
-    if (image == null) return;
-
-    setState(() {
-      _uploading = true;
-      _error = null;
-    });
-    try {
-      final url = await _uploadRepository.uploadImage(image.path, category: widget.category);
-      setState(() => _urls.add(url));
-      widget.onChanged(List.unmodifiable(_urls));
-    } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _uploading = false);
-    }
-  }
-
-  // Previously this always pulled from the gallery only - for KYC and farm
-  // progress reports a live camera photo is meaningfully harder to fake than a
-  // gallery pick, so both call sites (and CreateProjectPage) now get a choice
-  // for free from this one fix.
-  Future<ImageSource?> _chooseSource() {
-    return showModalBottomSheet<ImageSource>(
+    
+    final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -68,13 +43,69 @@ class _ImageUploadPickerState extends State<ImageUploadPicker> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_rounded, color: AppColors.primary),
-              title: const Text('Kameradan suratga olish', style: TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(isVideo ? 'Kameradan video olish' : 'Kameradan suratga olish', style: const TextStyle(fontWeight: FontWeight.w600)),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
-              title: const Text('Galereyadan tanlash', style: TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(isVideo ? 'Galereyadan video tanlash' : 'Galereyadan rasm tanlash', style: const TextStyle(fontWeight: FontWeight.w600)),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    
+    if (source == null) return;
+    
+    XFile? file;
+    if (isVideo) {
+      file = await _picker.pickVideo(source: source);
+    } else {
+      file = await _picker.pickImage(source: source, imageQuality: 85);
+    }
+    if (file == null) return;
+
+    setState(() {
+      _uploading = true;
+      _error = null;
+    });
+    try {
+      final url = await _uploadRepository.uploadFile(file.path, category: widget.category);
+      setState(() => _urls.add(url));
+      widget.onChanged(List.unmodifiable(_urls));
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _uploading = false);
+    }
+  }
+
+  void _showTypeSelection() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image_outlined, color: AppColors.primary),
+              title: const Text('Rasm yuklash', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUpload(false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.video_collection_outlined, color: AppColors.primary),
+              title: const Text('Video yuklash', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUpload(true);
+              },
             ),
             const SizedBox(height: 8),
           ],
@@ -111,11 +142,26 @@ class _ImageUploadPickerState extends State<ImageUploadPicker> {
   }
 
   Widget _buildThumbnail(int index, String url) {
+    final isVideo = url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.3gp') || url.endsWith('.webm');
     return Stack(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.network(url, width: 84, height: 84, fit: BoxFit.cover),
+          child: isVideo 
+              ? Container(
+                  width: 84,
+                  height: 84,
+                  color: Colors.black87,
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 28),
+                      SizedBox(height: 4),
+                      Text('Video', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                )
+              : Image.network(url, width: 84, height: 84, fit: BoxFit.cover),
         ),
         Positioned(
           top: -6,
@@ -131,7 +177,9 @@ class _ImageUploadPickerState extends State<ImageUploadPicker> {
 
   Widget _buildAddTile() {
     return InkWell(
-      onTap: _uploading ? null : _pickAndUpload,
+      onTap: _uploading 
+          ? null 
+          : (widget.allowVideo ? _showTypeSelection : () => _pickAndUpload(false)),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 84,
@@ -143,7 +191,7 @@ class _ImageUploadPickerState extends State<ImageUploadPicker> {
         ),
         child: _uploading
             ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)))
-            : const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted, size: 24),
+            : Icon(widget.allowVideo ? Icons.add_to_photos_outlined : Icons.add_a_photo_outlined, color: AppColors.textMuted, size: 24),
       ),
     );
   }

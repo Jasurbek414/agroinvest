@@ -27,23 +27,28 @@ public class FileStorageService {
 
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
-    private static final long MAX_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
+    private static final long MAX_SIZE_BYTES = 100L * 1024 * 1024; // 100MB
     // PDF added for vet-inspection conclusions and expense receipts, which are
     // routinely issued as documents rather than photos.
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "application/pdf",
             "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "video/mp4", "video/quicktime", "video/3gpp", "video/webm"
     );
-    private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.of(
-            "image/jpeg", ".jpg",
-            "image/png", ".png",
-            "image/webp", ".webp",
-            "application/pdf", ".pdf",
-            "application/msword", ".doc",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx",
-            "application/vnd.ms-excel", ".xls",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"
+    private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.ofEntries(
+            Map.entry("image/jpeg", ".jpg"),
+            Map.entry("image/png", ".png"),
+            Map.entry("image/webp", ".webp"),
+            Map.entry("application/pdf", ".pdf"),
+            Map.entry("application/msword", ".doc"),
+            Map.entry("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx"),
+            Map.entry("application/vnd.ms-excel", ".xls"),
+            Map.entry("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"),
+            Map.entry("video/mp4", ".mp4"),
+            Map.entry("video/quicktime", ".mov"),
+            Map.entry("video/3gpp", ".3gp"),
+            Map.entry("video/webm", ".webm")
     );
     private static final Set<String> ALLOWED_CATEGORIES = Set.of("kyc", "project", "report", "general", "vet", "expense", "deposit", "banner");
 
@@ -66,11 +71,11 @@ public class FileStorageService {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Fayl tanlanmagan");
         }
         if (file.getSize() > MAX_SIZE_BYTES) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Fayl hajmi 10MB dan oshmasligi kerak");
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Fayl hajmi 100MB dan oshmasligi kerak");
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat JPEG, PNG, WEBP rasm yoki PDF, Word, Excel hujjatlari qabul qilinadi");
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat rasm (JPEG, PNG, WEBP), video (MP4, MOV, WEBM) yoki hujjatlar (PDF, Word, Excel) qabul qilinadi");
         }
 
         String safeCategory = ALLOWED_CATEGORIES.contains(category == null ? "" : category.toLowerCase())
