@@ -457,7 +457,7 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
               if (index == 0 && user != null) {
                 Provider.of<DashboardProvider>(context, listen: false).fetchDashboard();
               }
-              if (index == 3 && user != null) {
+              if (index == 3 && user != null && user['role'] != 'FARMER') {
                 Provider.of<InvestmentProvider>(context, listen: false).fetchMyInvestments();
               }
               if (index == 4 && user != null) {
@@ -494,10 +494,10 @@ class _AppShellScaffoldState extends State<AppShellScaffold> {
                 ),
                 label: 'Yangi loyiha',
               ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up_rounded),
-                activeIcon: Icon(Icons.trending_up_rounded, size: 24),
-                label: 'Investitsiyalar',
+              BottomNavigationBarItem(
+                icon: Icon(user?['role'] == 'FARMER' ? Icons.inventory_2_outlined : Icons.trending_up_rounded),
+                activeIcon: Icon(user?['role'] == 'FARMER' ? Icons.inventory_2_rounded : Icons.trending_up_rounded, size: 24),
+                label: user?['role'] == 'FARMER' ? 'Loyihalarim' : 'Investitsiyalar',
               ),
               const BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline_rounded),

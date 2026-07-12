@@ -14,6 +14,8 @@ import '../widgets/investment_card.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/storage/secure_storage.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../projects/presentation/pages/my_projects_page.dart';
 
 class MyInvestmentsPage extends StatefulWidget {
   const MyInvestmentsPage({super.key});
@@ -51,6 +53,12 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final user = auth.user;
+    if (user != null && user['role'] == 'FARMER') {
+      return const MyProjectsPage();
+    }
+
     final provider = Provider.of<InvestmentProvider>(context);
     final visibleInvestments = _filterInvestments(provider.investments);
 
