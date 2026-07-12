@@ -146,6 +146,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                           'title': projectTitle,
                           'farmerId': farmerId,
                         }),
+                        onViewCoopServices: () => context.push('/coop-market'),
                         onDailyLog: () => context.push('/projects/${widget.projectId}/daily-log'),
                         onAddExpense: () => context.push('/projects/${widget.projectId}/expenses/add', extra: {'expensePolicy': expensePolicy}),
                       ),

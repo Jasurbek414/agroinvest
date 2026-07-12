@@ -12,7 +12,8 @@ class ProjectLinksSection extends StatelessWidget {
   final VoidCallback? onViewInvestors;
   final VoidCallback? onViewReports;
   final VoidCallback? onViewExpenses;
-  final VoidCallback onViewVetInspections;
+  final VoidCallback? onViewVetInspections;
+  final VoidCallback? onViewCoopServices;
   final VoidCallback onDailyLog;
   final VoidCallback onAddExpense;
 
@@ -26,6 +27,7 @@ class ProjectLinksSection extends StatelessWidget {
     required this.onViewReports,
     required this.onViewExpenses,
     required this.onViewVetInspections,
+    required this.onViewCoopServices,
     required this.onDailyLog,
     required this.onAddExpense,
   });
@@ -33,18 +35,17 @@ class ProjectLinksSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = project;
-    final totalInvestors = p['totalInvestors'] as num?;
+    final totalInvestors = p['totalInvestors'] as num? ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (totalInvestors != null && totalInvestors > 0)
-          _LinkRow(
-            icon: Icons.groups_rounded,
-            label: 'Sherik investorlar',
-            trailing: '$totalInvestors ta',
-            onTap: isLoggedIn ? onViewInvestors : null,
-          ),
+        _LinkRow(
+          icon: Icons.groups_rounded,
+          label: 'Sherik investorlar',
+          trailing: '$totalInvestors ta',
+          onTap: isLoggedIn ? onViewInvestors : null,
+        ),
 
         _LinkRow(
           icon: Icons.history_rounded,
@@ -61,7 +62,13 @@ class ProjectLinksSection extends StatelessWidget {
         _LinkRow(
           icon: Icons.health_and_safety_rounded,
           label: 'Veterinar nazorati',
-          onTap: onViewVetInspections,
+          onTap: isLoggedIn ? onViewVetInspections : null,
+        ),
+
+        _LinkRow(
+          icon: Icons.handyman_rounded,
+          label: 'Qo\'shimcha xizmatlar',
+          onTap: isLoggedIn ? onViewCoopServices : null,
         ),
         const SizedBox(height: AppSpacing.xl),
 
