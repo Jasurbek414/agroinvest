@@ -37,6 +37,7 @@ import 'features/expenses/presentation/pages/project_expenses_page.dart';
 import 'features/expenses/presentation/pages/add_expense_page.dart';
 import 'features/vet/presentation/pages/project_vet_page.dart';
 import 'features/vet/presentation/pages/add_vet_inspection_page.dart';
+import 'features/projects/presentation/pages/project_services_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/profile/presentation/pages/edit_profile_page.dart';
 import 'features/profile/presentation/pages/contracts_page.dart';
@@ -213,6 +214,16 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         GoRoute(
           path: '/projects/:id/vet/add',
           builder: (context, state) => AddVetInspectionPage(projectId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/projects/:id/services',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return ProjectServicesPage(
+              projectId: state.pathParameters['id']!,
+              projectTitle: extra['title']?.toString(),
+            );
+          },
         ),
         GoRoute(
           path: '/wallet',
