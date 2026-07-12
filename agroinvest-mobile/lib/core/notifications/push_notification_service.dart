@@ -28,7 +28,16 @@ class PushNotificationService {
   bool _initialized = false;
 
   Future<void> initialize() async {
-    if (_initialized) return;
+    if (_initialized) {
+      // Ensure the token is registered for the current user session even if Firebase is already initialized
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await _registerToken(token);
+        }
+      } catch (_) {}
+      return;
+    }
     try {
       await Firebase.initializeApp();
       final messaging = FirebaseMessaging.instance;
