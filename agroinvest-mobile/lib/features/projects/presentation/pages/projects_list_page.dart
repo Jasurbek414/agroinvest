@@ -71,12 +71,15 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           builder: (context, scrollController) {
             return StatefulBuilder(
               builder: (context, setModalState) {
-                final regions = [
-                  'Barchasi', 'Toshkent v.', 'Samarqand v.', 'Farg\'ona v.', 
-                  'Andijon v.', 'Buxoro v.', 'Namangan v.', 'Qashqadaryo v.',
-                  'Surxondaryo v.', 'Jizzax v.', 'Sirdaryo v.', 'Navoiy v.', 
-                  'Xorazm v.', 'Qoraqalpog\'iston'
-                ];
+                final backendRegions = Provider.of<ProjectsProvider>(context, listen: false).regions;
+                final regions = backendRegions.isNotEmpty
+                    ? ['Barchasi', ...backendRegions]
+                    : [
+                        'Barchasi', 'Toshkent v.', 'Samarqand v.', 'Farg\'ona v.', 
+                        'Andijon v.', 'Buxoro v.', 'Namangan v.', 'Qashqadaryo v.',
+                        'Surxondaryo v.', 'Jizzax v.', 'Sirdaryo v.', 'Navoiy v.', 
+                        'Xorazm v.', 'Qoraqalpog\'iston'
+                      ];
                 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -249,7 +252,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetch();
+      Provider.of<ProjectsProvider>(context, listen: false).fetchRegions();
+    });
   }
 
   @override

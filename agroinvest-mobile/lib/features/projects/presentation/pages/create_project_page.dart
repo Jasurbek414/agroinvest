@@ -81,6 +81,18 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
 
   Future<void> _loadPublicSettings() async {
     try {
+      final regionsList = await _projectRepository.getRegions();
+      if (regionsList.isNotEmpty && mounted) {
+        setState(() {
+          _regions.clear();
+          _regions.addAll(regionsList);
+          if (!_regions.contains(_selectedRegion)) {
+            _selectedRegion = _regions.first;
+          }
+        });
+      }
+    } catch (_) {}
+    try {
       final settings = await _projectRepository.getPublicSettings();
       final min = (settings['minInvestorSharePct'] as num?)?.toDouble() ?? 50;
       final max = (settings['maxInvestorSharePct'] as num?)?.toDouble() ?? 90;

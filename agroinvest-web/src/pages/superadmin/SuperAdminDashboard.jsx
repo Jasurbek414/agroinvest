@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Settings, Users, Wallet, Landmark, ShieldCheck, FolderKanban,
   ClipboardList, Receipt, HeartPulse, Scale, KeyRound, FolderTree, Megaphone,
-  LayoutDashboard, ArrowLeftRight, Send, Newspaper, FileText
+  LayoutDashboard, ArrowLeftRight, Send, Newspaper, FileText, MapPin
 } from 'lucide-react';
 import { getPlatformSettings } from '../../api/superadmin.api';
 import ErrorState from '../../components/ui/ErrorState';
@@ -31,6 +31,7 @@ import OverviewPanel from '../../components/superadmin/OverviewPanel';
 import BroadcastPanel from '../../components/superadmin/BroadcastPanel';
 import TransactionsPanel from '../../components/superadmin/TransactionsPanel';
 import ContractsPanel from '../../components/superadmin/ContractsPanel';
+import RegionsPanel from '../../components/superadmin/RegionsPanel';
 
 // SuperAdmin is a strict superset of ADMIN/MODERATOR (see navLinks.js) - every
 // operational queue they can reach lives here too, alongside SuperAdmin-only
@@ -50,6 +51,7 @@ const TABS = [
   {key: 'contracts', label: 'Shartnomalar', icon: FileText},
   {key: 'broadcast', label: 'Xabarnoma yuborish', icon: Send},
   { key: 'categories', label: 'Kategoriyalar', icon: FolderTree },
+  { key: 'regions', label: 'Hududlar boshqaruvi', icon: MapPin },
   { key: 'banners', label: 'Reklamalar', icon: Megaphone },
   { key: 'news', label: 'Yangiliklar', icon: Newspaper },
   { key: 'settings', label: 'Sozlamalar va audit', icon: Settings },
@@ -118,6 +120,7 @@ const SuperAdminDashboard = () => {
 
         {activeTab === 'permissions' && <PermissionsPanel />}
         {activeTab === 'categories' && <CategoriesPanel />}
+        {activeTab === 'regions' && <RegionsPanel />}
         {activeTab === 'banners' && <BannersPanel />}
         {activeTab === 'news' && <NewsPanel />}
         {activeTab === 'coop' && <CoopModerationPanel />}

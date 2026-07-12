@@ -6,11 +6,13 @@ class ProjectsProvider extends ChangeNotifier {
 
   List<dynamic> _projects = [];
   Map<String, dynamic>? _selectedProject;
+  List<String> _regions = [];
   bool _loading = false;
   String? _error;
 
   List<dynamic> get projects => _projects;
   Map<String, dynamic>? get selectedProject => _selectedProject;
+  List<String> get regions => _regions;
   bool get loading => _loading;
   String? get error => _error;
 
@@ -18,8 +20,21 @@ class ProjectsProvider extends ChangeNotifier {
   void reset() {
     _projects = [];
     _selectedProject = null;
+    _regions = [];
     _error = null;
     notifyListeners();
+  }
+
+  Future<void> fetchRegions() async {
+    try {
+      final list = await _repository.getRegions();
+      if (list.isNotEmpty) {
+        _regions = list;
+        notifyListeners();
+      }
+    } catch (_) {
+      // silent
+    }
   }
 
   Future<void> fetchProjects({String? status, String? assetType, String? animalType}) async {

@@ -71,4 +71,14 @@ class ProjectRepository {
       throw parseDioException(e);
     }
   }
+
+  Future<List<String>> getRegions() async {
+    try {
+      final response = await _dio.get('/regions');
+      final list = response.data['data'] as List<dynamic>;
+      return list.map((item) => item['name'].toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
 }
