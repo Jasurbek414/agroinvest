@@ -65,6 +65,7 @@ const NAV_LINKS_BY_ROLE = {
     { to: '/superadmin/dashboard?tab=vetInspections', label: 'Veterinar nazorati', icon: HeartPulse, section: 'Operatsion navbatlar' },
     { to: '/superadmin/dashboard?tab=disputes', label: 'Shikoyatlar', icon: Scale, section: 'Operatsion navbatlar' },
     { to: '/superadmin/dashboard?tab=transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight, section: 'Moliya' },
+    { to: '/superadmin/dashboard?tab=contracts', label: 'Shartnomalar', icon: FileCheck2, section: 'Moliya' },
     { to: '/superadmin/dashboard?tab=broadcast', label: 'Xabarnoma yuborish', icon: Send, section: 'Kontent' },
     { to: '/superadmin/dashboard?tab=categories', label: 'Kategoriyalar', icon: FolderTree, section: 'Kontent' },
     { to: '/superadmin/dashboard?tab=banners', label: 'Reklamalar', icon: Megaphone, section: 'Kontent' },
