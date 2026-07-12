@@ -81,7 +81,7 @@ public class InvestmentController {
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "investment-agreement-" + id.toString().substring(0, 8) + ".pdf");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"investment-agreement-" + id.toString().substring(0, 8) + ".pdf\"");
         
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
