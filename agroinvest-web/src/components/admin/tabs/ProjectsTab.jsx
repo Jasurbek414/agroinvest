@@ -753,7 +753,7 @@ const ProjectInvestmentsTab = ({ projectId }) => {
           
           <div className="flex items-center gap-2">
             <a 
-              href={`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/investments/${inv.id}/agreement`} 
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'}/investments/${inv.id}/agreement`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-[10px] font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 transition"
