@@ -52,4 +52,15 @@ public interface InvestmentRepository extends JpaRepository<Investment, UUID> {
            "lower(i.investor.phoneNumber) like lower(concat('%', :q, '%'))")
     @EntityGraph(attributePaths = {"project", "investor"})
     Page<Investment> findAllWithSearch(@Param("q") String q, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"project", "investor"})
+    Page<Investment> findByStatus(InvestmentStatus status, Pageable pageable);
+
+    @Query("select i from Investment i where " +
+           "i.status = :status and (" +
+           "lower(i.project.title) like lower(concat('%', :q, '%')) or " +
+           "lower(i.investor.fullName) like lower(concat('%', :q, '%')) or " +
+           "lower(i.investor.phoneNumber) like lower(concat('%', :q, '%')))")
+    @EntityGraph(attributePaths = {"project", "investor"})
+    Page<Investment> findByStatusAndSearch(@Param("status") InvestmentStatus status, @Param("q") String q, Pageable pageable);
 }

@@ -80,8 +80,9 @@ export const updateInvestmentContractUrl = (id, contractUrl) => {
   return api.put(`/superadmin/investments/${id}/contract`, {}, { params: { contractUrl } });
 };
 
-export const getPlatformInvestments = (page = 0, size = 20, q) => {
+export const getPlatformInvestments = (page = 0, size = 20, q, status) => {
   const params = { page, size, sort: 'createdAt,desc' };
   if (q) params.q = q;
+  if (status) params.status = status;
   return api.get('/superadmin/investments', { params });
 };

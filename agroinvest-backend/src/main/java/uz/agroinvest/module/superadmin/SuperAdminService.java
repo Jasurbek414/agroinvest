@@ -13,6 +13,7 @@ import uz.agroinvest.common.enums.KycStatus;
 import uz.agroinvest.common.enums.NotificationChannel;
 import uz.agroinvest.common.enums.ProjectStatus;
 import uz.agroinvest.common.enums.TransactionStatus;
+import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.common.enums.TransactionType;
 import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.common.enums.VetInspectionStatus;
@@ -517,12 +518,19 @@ public class SuperAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<InvestmentDto> getInvestments(String q, Pageable pageable) {
+    public Page<InvestmentDto> getInvestments(String q, InvestmentStatus status, Pageable pageable) {
         Page<Investment> page;
-        if (q == null || q.trim().isEmpty()) {
-            page = investmentRepository.findAllWithGraph(pageable);
-        } else {
+        boolean hasQ = q != null && !q.trim().isEmpty();
+        boolean hasStatus = status != null;
+
+        if (hasQ && hasStatus) {
+            page = investmentRepository.findByStatusAndSearch(status, q.trim(), pageable);
+        } else if (hasStatus) {
+            page = investmentRepository.findByStatus(status, pageable);
+        } else if (hasQ) {
             page = investmentRepository.findAllWithSearch(q.trim(), pageable);
+        } else {
+            page = investmentRepository.findAllWithGraph(pageable);
         }
         return page.map(this::mapToInvestmentDto);
     }

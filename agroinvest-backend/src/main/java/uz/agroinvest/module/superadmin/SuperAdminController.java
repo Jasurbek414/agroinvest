@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.agroinvest.common.enums.NotificationChannel;
 import uz.agroinvest.common.enums.TransactionStatus;
+import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.common.enums.TransactionType;
 import uz.agroinvest.common.enums.UserRole;
 import uz.agroinvest.common.response.ApiResponse;
@@ -197,9 +198,10 @@ public class SuperAdminController {
     @GetMapping("/investments")
     public ResponseEntity<ApiResponse<PageResponse<InvestmentDto>>> getInvestments(
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) InvestmentStatus status,
             Pageable pageable
     ) {
-        Page<InvestmentDto> page = superAdminService.getInvestments(q, pageable);
+        Page<InvestmentDto> page = superAdminService.getInvestments(q, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 }
