@@ -25,6 +25,7 @@ agroinvest-backend/*.iml
 agroinvest-backend/.classpath
 agroinvest-backend/.project
 agroinvest-backend/.settings/
+agroinvest-backend/src/main/resources/firebase-service-account.json
 
 # Node (Web Frontend) Build Outputs
 agroinvest-web/node_modules/
