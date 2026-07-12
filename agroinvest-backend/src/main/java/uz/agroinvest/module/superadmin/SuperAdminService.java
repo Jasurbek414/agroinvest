@@ -42,6 +42,7 @@ import uz.agroinvest.module.withdrawal.WithdrawalRepository;
 import uz.agroinvest.security.UserPrincipal;
 import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.investment.entity.Investment;
+import uz.agroinvest.module.investment.dto.InvestmentDto;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -512,6 +513,28 @@ public class SuperAdminService {
                 investmentId.toString(),
                 oldUrl,
                 contractUrl
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InvestmentDto> getInvestments(String q, Pageable pageable) {
+        Page<Investment> page = investmentRepository.findAllWithSearch(q != null && !q.trim().isEmpty() ? q.trim() : null, pageable);
+        return page.map(this::mapToInvestmentDto);
+    }
+
+    private InvestmentDto mapToInvestmentDto(Investment investment) {
+        return new InvestmentDto(
+                investment.getId(),
+                investment.getProject().getId(),
+                investment.getProject().getTitle(),
+                investment.getInvestor().getId(),
+                investment.getInvestor().getFullName(),
+                investment.getAmount(),
+                investment.getSharePct(),
+                investment.getContractUrl(),
+                investment.getContractSignedAt(),
+                investment.getStatus(),
+                investment.getCreatedAt()
         );
     }
 }

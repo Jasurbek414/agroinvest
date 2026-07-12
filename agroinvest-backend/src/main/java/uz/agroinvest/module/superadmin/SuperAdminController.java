@@ -19,6 +19,7 @@ import uz.agroinvest.common.response.PageResponse;
 import uz.agroinvest.module.superadmin.dto.AuditLogDto;
 import uz.agroinvest.module.superadmin.dto.PlatformSettingsDto;
 import uz.agroinvest.module.transaction.dto.TransactionDto;
+import uz.agroinvest.module.investment.dto.InvestmentDto;
 import uz.agroinvest.module.user.dto.UserDto;
 import uz.agroinvest.security.UserPrincipal;
 
@@ -191,5 +192,14 @@ public class SuperAdminController {
     ) {
         superAdminService.updateInvestmentContractUrl(id, contractUrl, principal);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @GetMapping("/investments")
+    public ResponseEntity<ApiResponse<PageResponse<InvestmentDto>>> getInvestments(
+            @RequestParam(required = false) String q,
+            Pageable pageable
+    ) {
+        Page<InvestmentDto> page = superAdminService.getInvestments(q, pageable);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 }

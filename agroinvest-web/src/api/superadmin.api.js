@@ -79,3 +79,9 @@ export const updateInvestorFarmerShares = (investorSharePct, farmerSharePct) => 
 export const updateInvestmentContractUrl = (id, contractUrl) => {
   return api.put(`/superadmin/investments/${id}/contract`, {}, { params: { contractUrl } });
 };
+
+export const getPlatformInvestments = (page = 0, size = 20, q) => {
+  const params = { page, size, sort: 'createdAt,desc' };
+  if (q) params.q = q;
+  return api.get('/superadmin/investments', { params });
+};

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Settings, Users, Wallet, Landmark, ShieldCheck, FolderKanban,
   ClipboardList, Receipt, HeartPulse, Scale, KeyRound, FolderTree, Megaphone,
-  LayoutDashboard, ArrowLeftRight, Send, Newspaper
+  LayoutDashboard, ArrowLeftRight, Send, Newspaper, FileText
 } from 'lucide-react';
 import { getPlatformSettings } from '../../api/superadmin.api';
 import ErrorState from '../../components/ui/ErrorState';
@@ -30,6 +30,7 @@ import VetInspectionsTab from '../../components/admin/tabs/VetInspectionsTab';
 import OverviewPanel from '../../components/superadmin/OverviewPanel';
 import BroadcastPanel from '../../components/superadmin/BroadcastPanel';
 import TransactionsPanel from '../../components/superadmin/TransactionsPanel';
+import ContractsPanel from '../../components/superadmin/ContractsPanel';
 
 // SuperAdmin is a strict superset of ADMIN/MODERATOR (see navLinks.js) - every
 // operational queue they can reach lives here too, alongside SuperAdmin-only
@@ -44,9 +45,10 @@ const TABS = [
   { key: 'reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList },
   { key: 'expenses', label: 'Harajatlar', icon: Receipt },
   { key: 'vetInspections', label: 'Veterinar nazorati', icon: HeartPulse },
-  { key: 'disputes', label: 'Shikoyatlar', icon: Scale },
-  { key: 'transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight },
-  { key: 'broadcast', label: 'Xabarnoma yuborish', icon: Send },
+  {key: 'disputes', label: 'Shikoyatlar', icon: Scale},
+  {key: 'transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight},
+  {key: 'contracts', label: 'Shartnomalar', icon: FileText},
+  {key: 'broadcast', label: 'Xabarnoma yuborish', icon: Send},
   { key: 'categories', label: 'Kategoriyalar', icon: FolderTree },
   { key: 'banners', label: 'Reklamalar', icon: Megaphone },
   { key: 'news', label: 'Yangiliklar', icon: Newspaper },
@@ -98,6 +100,7 @@ const SuperAdminDashboard = () => {
           </div>
         )}
         {activeTab === 'transactions' && <TransactionsPanel />}
+        {activeTab === 'contracts' && <ContractsPanel />}
         {activeTab === 'broadcast' && <BroadcastPanel />}
 
         {['withdrawals', 'deposits', 'kyc', 'projects', 'reports', 'expenses', 'vetInspections', 'disputes'].includes(activeTab) && (

@@ -41,4 +41,11 @@ public interface InvestmentRepository extends JpaRepository<Investment, UUID> {
     // Backs the public landing page's "total invested" stat tile.
     @Query("select coalesce(sum(i.amount), 0) from Investment i where i.status in :statuses")
     BigDecimal sumAmountByStatusIn(@Param("statuses") List<InvestmentStatus> statuses);
+
+    @Query("select i from Investment i where " +
+           "(:q is null or lower(i.project.title) like lower(concat('%', :q, '%')) or " +
+           "lower(i.investor.fullName) like lower(concat('%', :q, '%')) or " +
+           "lower(i.investor.phoneNumber) like lower(concat('%', :q, '%')))")
+    @EntityGraph(attributePaths = {"project", "investor"})
+    Page<Investment> findAllWithSearch(@Param("q") String q, Pageable pageable);
 }
