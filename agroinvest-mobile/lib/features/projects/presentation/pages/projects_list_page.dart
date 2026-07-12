@@ -218,22 +218,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           ),
         ),
       ),
-      // FAB button only for Farmers to create new project request
-      floatingActionButton: isFarmer
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: FloatingActionButton(
-                onPressed: () {
-                  context.push('/projects-new').then((_) => _fetch());
-                },
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 6,
-                shape: const CircleBorder(),
-                child: const Icon(Icons.add_rounded, size: 28),
-              ),
-            )
-          : null,
+
     );
   }
 

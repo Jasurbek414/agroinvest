@@ -74,11 +74,7 @@ class ProjectsSliverHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Search action button
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.search_rounded, color: AppColors.textDark, size: 20),
-                ),
+
                 // Market storefront action button
                 IconButton(
                   onPressed: () => context.push('/services'),
