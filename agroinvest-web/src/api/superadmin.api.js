@@ -75,3 +75,7 @@ export const updateInvestorFarmerShares = (investorSharePct, farmerSharePct) => 
   const params = { investorSharePct, farmerSharePct };
   return api.patch('/superadmin/settings/shares', {}, { params });
 };
+
+export const updateInvestmentContractUrl = (id, contractUrl) => {
+  return api.put(`/superadmin/investments/${id}/contract`, {}, { params: { contractUrl } });
+};

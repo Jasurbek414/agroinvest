@@ -40,6 +40,8 @@ import uz.agroinvest.module.vet.VetInspectionRepository;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.withdrawal.WithdrawalRepository;
 import uz.agroinvest.security.UserPrincipal;
+import uz.agroinvest.module.investment.InvestmentRepository;
+import uz.agroinvest.module.investment.entity.Investment;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -66,6 +68,7 @@ public class SuperAdminService {
     private final VetInspectionRepository vetInspectionRepository;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final InvestmentRepository investmentRepository;
 
     public SuperAdminService(
             UserRepository userRepository,
@@ -83,7 +86,8 @@ public class SuperAdminService {
             ExpenseRepository expenseRepository,
             VetInspectionRepository vetInspectionRepository,
             TransactionRepository transactionRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            InvestmentRepository investmentRepository
     ) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -101,6 +105,7 @@ public class SuperAdminService {
         this.vetInspectionRepository = vetInspectionRepository;
         this.transactionRepository = transactionRepository;
         this.notificationService = notificationService;
+        this.investmentRepository = investmentRepository;
     }
 
     @Transactional
@@ -486,5 +491,27 @@ public class SuperAdminService {
                 .updatedByName(setting.getUpdatedBy() != null ? setting.getUpdatedBy().getFullName() : null)
                 .updatedAt(setting.getUpdatedAt())
                 .build();
+    }
+
+    @Transactional
+    public void updateInvestmentContractUrl(UUID investmentId, String contractUrl, UserPrincipal principal) {
+        Investment investment = investmentRepository.findById(investmentId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Sarmoya topilmadi"));
+        
+        User superadmin = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+
+        String oldUrl = investment.getContractUrl();
+        investment.setContractUrl(contractUrl);
+        investmentRepository.save(investment);
+        
+        auditLogService.log(
+                superadmin,
+                "UPDATE_CONTRACT",
+                "Investment",
+                investmentId.toString(),
+                oldUrl,
+                contractUrl
+        );
     }
 }

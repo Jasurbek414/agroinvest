@@ -182,4 +182,14 @@ public class SuperAdminController {
         superAdminService.updateInvestorFarmerShares(investorSharePct, farmerSharePct, principal);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PutMapping("/investments/{id}/contract")
+    public ResponseEntity<ApiResponse<Void>> updateInvestmentContractUrl(
+            @PathVariable UUID id,
+            @RequestParam String contractUrl,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        superAdminService.updateInvestmentContractUrl(id, contractUrl, principal);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

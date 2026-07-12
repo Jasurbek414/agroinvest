@@ -40,6 +40,23 @@ public class AgreementService {
             throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Ushbu shartnomani ko'rishga ruxsatingiz yo'q");
         }
 
+        if (investment.getContractUrl() != null && !investment.getContractUrl().isEmpty()) {
+            try {
+                java.net.URL url = new java.net.URL(investment.getContractUrl());
+                try (java.io.InputStream in = url.openStream();
+                     ByteArrayOutputStream downloadOut = new ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[4096];
+                    int n;
+                    while ((n = in.read(buffer)) != -1) {
+                        downloadOut.write(buffer, 0, n);
+                    }
+                    return downloadOut.toByteArray();
+                }
+            } catch (Exception e) {
+                // fallback to auto-generator if S3 download fails
+            }
+        }
+
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(out);
             PdfDocument pdf = new PdfDocument(writer);

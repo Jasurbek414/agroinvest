@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getProjects, changeProjectStatus } from '../../../api/projects.api';
+import { getProjectInvestments } from '../../../api/investments.api';
 import { formatAmount } from '../../../utils/format';
 import { ASSET_TYPE_META, getAssetTypeMeta } from '../../../utils/assetType';
 import { 
@@ -479,10 +480,18 @@ const ProjectsTab = ({ onActionDone }) => {
               >
                 Vetting va Hujjatlar
               </button>
+              {selectedProject.status !== 'PENDING' && (
+                <button
+                  onClick={() => setModalTab('investments')}
+                  className={`py-3.5 text-xs font-bold border-b-2 px-4 transition ${modalTab === 'investments' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                >
+                  Sarmoyadorlar va Shartnomalar
+                </button>
+              )}
             </div>
 
             <div className="p-6 space-y-5 max-h-[55vh] overflow-y-auto">
-              {modalTab === 'details' ? (
+              {modalTab === 'details' && (
                 <>
                   <div className="space-y-1">
                     <h4 className="text-lg font-black text-gray-900 dark:text-slate-100">{selectedProject.title}</h4>
@@ -545,7 +554,8 @@ const ProjectsTab = ({ onActionDone }) => {
                     </div>
                   )}
                 </>
-              ) : (
+              )}
+              {modalTab === 'vetting' && (
                 /* Tab 2: Interactive Vetting Voids Checks */
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div className="p-4 bg-amber-50/20 dark:bg-amber-950/10 border border-amber-100/60 dark:border-amber-950 rounded-2xl flex gap-3 text-xs text-amber-700 dark:text-amber-500">
@@ -612,6 +622,9 @@ const ProjectsTab = ({ onActionDone }) => {
                   </div>
                 </div>
               )}
+              {modalTab === 'investments' && (
+                <ProjectInvestmentsTab projectId={selectedProject.id} />
+              )}
             </div>
 
             {/* Actions panel */}
@@ -653,6 +666,118 @@ const ProjectsTab = ({ onActionDone }) => {
         onCancel={() => setRejectTarget(null)}
         onConfirm={(reason) => { runAction(rejectTarget, false, reason); setRejectTarget(null); }}
       />
+    </div>
+  );
+};
+
+const ProjectInvestmentsTab = ({ projectId }) => {
+  const [investments, setInvestments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState(null);
+  const { showToast } = useToast();
+
+  const fetchInvestments = async () => {
+    setLoading(true);
+    try {
+      const res = await getProjectInvestments(projectId);
+      setInvestments(res.data || []);
+    } catch (err) {
+      showToast('Sarmoyalarni yuklashda xatolik yuz berdi', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInvestments();
+  }, [projectId]);
+
+  const handleUploadContract = async (investmentId, file) => {
+    setUploadingId(investmentId);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'contract');
+      
+      const api = (await import('../../../api/axios')).default;
+      const uploadRes = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const contractUrl = uploadRes.data.url;
+      
+      const { updateInvestmentContractUrl } = await import('../../../api/superadmin.api');
+      await updateInvestmentContractUrl(investmentId, contractUrl);
+      
+      showToast('Shartnoma muvaffaqiyatli yuklandi!');
+      fetchInvestments();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Yuklashda xatolik yuz berdi', 'error');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  if (investments.length === 0) {
+    return (
+      <div className="text-center py-10 text-gray-500 text-xs font-semibold">
+        Ushbu loyihaga hali hech kim sarmoya kiritmagan.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {investments.map((inv) => (
+        <div key={inv.id} className="p-4 bg-gray-50 dark:bg-slate-950/40 rounded-2xl border border-gray-100 dark:border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-black text-gray-900 dark:text-slate-100">{inv.investorName || 'Sarmoyador'}</p>
+            <p className="text-[10px] text-gray-400 mt-1">
+              Sarmoya summasi: <span className="font-extrabold text-gray-700 dark:text-gray-300">{formatAmount(inv.amount)}</span> | 
+              Ulush: <span className="font-extrabold text-gray-700 dark:text-gray-300">{inv.sharePct}%</span>
+            </p>
+            {inv.contractUrl && (
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-bold flex items-center gap-1">
+                <CheckCircle2 size={10} /> Maxsus shartnoma yuklangan
+              </p>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <a 
+              href={`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/investments/${inv.id}/agreement`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-[10px] font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 transition"
+            >
+              Ko'rish
+            </a>
+
+            <label className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-bold cursor-pointer transition flex items-center gap-1">
+              {uploadingId === inv.id ? 'Yuklanmoqda...' : (inv.contractUrl ? 'Almashtirish' : 'PDF yuklash')}
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                disabled={uploadingId === inv.id}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleUploadContract(inv.id, e.target.files[0]);
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
