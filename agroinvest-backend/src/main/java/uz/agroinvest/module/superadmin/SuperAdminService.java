@@ -518,7 +518,12 @@ public class SuperAdminService {
 
     @Transactional(readOnly = true)
     public Page<InvestmentDto> getInvestments(String q, Pageable pageable) {
-        Page<Investment> page = investmentRepository.findAllWithSearch(q != null && !q.trim().isEmpty() ? q.trim() : null, pageable);
+        Page<Investment> page;
+        if (q == null || q.trim().isEmpty()) {
+            page = investmentRepository.findAllWithGraph(pageable);
+        } else {
+            page = investmentRepository.findAllWithSearch(q.trim(), pageable);
+        }
         return page.map(this::mapToInvestmentDto);
     }
 
