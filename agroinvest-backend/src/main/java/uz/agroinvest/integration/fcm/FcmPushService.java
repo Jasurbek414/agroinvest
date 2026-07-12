@@ -1,65 +1,82 @@
 package uz.agroinvest.integration.fcm;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.Notification;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Map;
+import java.io.InputStream;
 
 /**
- * Push notification delivery - INFRASTRUCTURE ONLY, following the same
- * mock-by-default pattern as SmsService/TelegramService: until fcm.server-key
- * is configured with a real Firebase Cloud Messaging server key, this only
- * logs what would have been sent. The recipient is User.fcmToken, populated
- * via PATCH /api/v1/users/me/fcm-token once the mobile app's own
- * PushNotificationService is activated against a real Firebase project.
- *
- * Uses FCM's legacy HTTP API (server-key auth) rather than the newer HTTP v1
- * API (which needs a service-account JSON + OAuth2 token exchange) - simpler
- * to stand up for now; migrate to v1 when wiring real credentials if Google
- * has fully sunset the legacy endpoint by then.
+ * Push notification delivery - FCM HTTP v1 API integration using Firebase Admin SDK.
+ * Reads firebase-service-account.json from classpath to authenticate requests.
+ * If credentials are not present, runs in mock mode, logging what would have been sent.
  */
 @Service
 public class FcmPushService {
 
     private static final Logger logger = LoggerFactory.getLogger(FcmPushService.class);
-    private final WebClient webClient;
+    private boolean initialized = false;
 
-    @Value("${fcm.server-key:}")
-    private String serverKey;
+    @PostConstruct
+    public void init() {
+        try {
+            ClassPathResource resource = new ClassPathResource("firebase-service-account.json");
+            if (!resource.exists()) {
+                logger.warn("firebase-service-account.json not found in classpath. Push notifications will run in MOCK mode.");
+                return;
+            }
+            try (InputStream is = resource.getInputStream()) {
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(is))
+                        .build();
 
-    public FcmPushService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("https://fcm.googleapis.com").build();
+                if (FirebaseApp.getApps().isEmpty()) {
+                    FirebaseApp.initializeApp(options);
+                }
+                initialized = true;
+                logger.info("Firebase Admin SDK successfully initialized for Cloud Messaging V1 API.");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to initialize Firebase App", e);
+        }
     }
 
     public void sendPush(String fcmToken, String title, String body) {
         logger.info("Sending push to token={}: {} - {}", fcmToken, title, body);
 
-        if (serverKey == null || serverKey.isBlank() || fcmToken == null || fcmToken.isBlank()) {
-            logger.info("FCM server key or recipient token missing. Running in MOCK mode.");
+        if (fcmToken == null || fcmToken.isBlank()) {
+            logger.warn("Recipient FCM token is blank. Skipping push notification.");
+            return;
+        }
+
+        if (!initialized) {
+            logger.info("Firebase SDK not initialized (mock mode). Push notification logged but not sent.");
             return;
         }
 
         try {
-            Map<String, Object> payload = Map.of(
-                    "to", fcmToken,
-                    "notification", Map.of("title", title, "body", body)
-            );
+            Notification notification = Notification.builder()
+                    .setTitle(title)
+                    .setBody(body)
+                    .build();
 
-            webClient.post()
-                    .uri("/fcm/send")
-                    .header("Authorization", "key=" + serverKey)
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .subscribe(
-                            response -> logger.info("Push sent, response: {}", response),
-                            error -> logger.error("Failed to send push to {}", fcmToken, error)
-                    );
+            Message message = Message.builder()
+                    .setToken(fcmToken)
+                    .setNotification(notification)
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(message);
+            logger.info("Push notification successfully sent to Google FCM! Message ID: {}", response);
         } catch (Exception e) {
-            logger.error("Failed to execute sendPush to " + fcmToken, e);
+            logger.error("Failed to send push notification via Firebase Admin SDK to " + fcmToken, e);
         }
     }
 }

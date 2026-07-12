@@ -28,10 +28,12 @@ public class UserController {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final uz.agroinvest.integration.fcm.FcmPushService fcmPushService;
 
-    public UserController(UserService userService, UserRepository userRepository) {
+    public UserController(UserService userService, UserRepository userRepository, uz.agroinvest.integration.fcm.FcmPushService fcmPushService) {
         this.userService = userService;
         this.userRepository = userRepository;
+        this.fcmPushService = fcmPushService;
     }
 
     @GetMapping("/me")
@@ -55,6 +57,11 @@ public class UserController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         userService.updateFcmToken(principal.getId(), request.getFcmToken());
+        try {
+            fcmPushService.sendPush(request.getFcmToken(), "AgroInvest", "Sizning qurilmangiz bildirishnomalar tizimiga muvaffaqiyatli ulandi! 🎉");
+        } catch (Exception e) {
+            // Ignored to avoid breaking normal flow
+        }
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
