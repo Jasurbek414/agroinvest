@@ -51,7 +51,7 @@
         <!-- Set default icon and color for Firebase push notifications -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@android:drawable/ic_dialog_info" />
+            android:resource="@drawable/ic_notification" />
     </application>
     <queries>
         <intent>
