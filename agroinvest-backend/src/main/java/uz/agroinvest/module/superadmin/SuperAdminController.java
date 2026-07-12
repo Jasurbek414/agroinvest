@@ -204,4 +204,14 @@ public class SuperAdminController {
         Page<InvestmentDto> page = superAdminService.getInvestments(q, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
+
+    @PostMapping("/accounts/{userId}/topup")
+    public ResponseEntity<ApiResponse<Void>> topUpWallet(
+            @PathVariable UUID userId,
+            @RequestParam java.math.BigDecimal amount,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        superAdminService.topUpWallet(userId, amount, principal);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

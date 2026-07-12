@@ -86,3 +86,7 @@ export const getPlatformInvestments = (page = 0, size = 20, q, status) => {
   if (status) params.status = status;
   return api.get('/superadmin/investments', { params });
 };
+
+export const topUpWallet = (userId, amount) => {
+  return api.post(`/superadmin/accounts/${userId}/topup`, {}, { params: { amount } });
+};

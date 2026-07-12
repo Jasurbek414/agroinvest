@@ -39,6 +39,7 @@ import uz.agroinvest.module.user.dto.UserDto;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.vet.VetInspectionRepository;
 import uz.agroinvest.module.wallet.WalletRepository;
+import uz.agroinvest.module.wallet.entity.Wallet;
 import uz.agroinvest.module.withdrawal.WithdrawalRepository;
 import uz.agroinvest.security.UserPrincipal;
 import uz.agroinvest.module.investment.InvestmentRepository;
@@ -443,6 +444,37 @@ public class SuperAdminService {
 
         return userService.getUserDtoById(user.getId());
     }
+
+    @Transactional
+    public void topUpWallet(UUID userId, java.math.BigDecimal amount, UserPrincipal principal) {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "To'ldirish summasi 0 dan katta bo'lishi kerak");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Foydalanuvchi topilmadi"));
+        
+        Wallet wallet = walletRepository.findByUserIdForUpdate(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Hamyon topilmadi"));
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        Transaction transaction = Transaction.builder()
+                .user(user)
+                .type(TransactionType.DEPOSIT)
+                .amount(amount)
+                .status(TransactionStatus.COMPLETED)
+                .paymentProvider(uz.agroinvest.common.enums.PaymentProvider.MANUAL)
+                .metadata("{\"reason\": \"SuperAdmin manual top-up\"}")
+                .build();
+        transactionRepository.save(transaction);
+
+        User superadmin = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+        auditLogService.log(superadmin, "MANUAL_TOPUP_WALLET", "Wallet", wallet.getId().toString(),
+                null, "{\"userId\": \"" + userId + "\", \"amount\": \"" + amount + "\"}");
+    }
+
 
     private TransactionDto mapToTransactionDto(Transaction t) {
         return TransactionDto.builder()

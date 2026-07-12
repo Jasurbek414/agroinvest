@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { KeyRound, UserCog } from 'lucide-react';
-import { getAccounts, blockAccount, resetStaffPassword, changeStaffRole } from '../../api/superadmin.api';
+import { getAccounts, blockAccount, resetStaffPassword, changeStaffRole, topUpWallet } from '../../api/superadmin.api';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -35,6 +35,7 @@ const AccountsPanel = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [passwordTarget, setPasswordTarget] = useState(null);
   const [roleTarget, setRoleTarget] = useState(null);
+  const [topUpTarget, setTopUpTarget] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [role, setRole] = useState('');
   const [search, setSearch] = useState('');
@@ -96,6 +97,23 @@ const AccountsPanel = () => {
       fetchUsers(pageInfo.pageNumber);
     } catch (err) {
       showToast(err.error?.message || "Rolni o'zgartirishda xatolik yuz berdi", 'error');
+    }
+  };
+
+  const handleTopUp = async (amountStr) => {
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+      showToast('Summa 0 dan katta son bo\'lishi kerak', 'error');
+      return;
+    }
+    try {
+      await topUpWallet(topUpTarget.id, amount);
+      showToast(`${topUpTarget.fullName} balansi muvaffaqiyatli to'ldirildi!`);
+      setTopUpTarget(null);
+      setSelectedUser(null);
+      fetchUsers(pageInfo.pageNumber);
+    } catch (err) {
+      showToast(err.error?.message || 'Balansni to\'ldirishda xatolik yuz berdi', 'error');
     }
   };
 
@@ -201,6 +219,17 @@ const AccountsPanel = () => {
         confirmLabel="Parolni o'rnatish"
         onCancel={() => setPasswordTarget(null)}
         onConfirm={handleResetPassword}
+      />
+
+      <PromptDialog
+        open={!!topUpTarget}
+        title={`Balansni to'ldirish: ${topUpTarget?.fullName || ''}`}
+        label="To'ldirish summasi (UZS)"
+        placeholder="Masalan: 5000000"
+        required
+        confirmLabel="Balansni to'ldirish"
+        onCancel={() => setTopUpTarget(null)}
+        onConfirm={handleTopUp}
       />
 
       {roleTarget && (
@@ -331,6 +360,9 @@ const AccountsPanel = () => {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/30 flex justify-end gap-3">
+              {(selectedUser.role === 'FARMER' || selectedUser.role === 'INVESTOR') && (
+                <Button variant="primary" onClick={() => setTopUpTarget(selectedUser)}>Balansni to'ldirish</Button>
+              )}
               <Button variant="secondary" onClick={() => setSelectedUser(null)}>Yopish</Button>
             </div>
           </div>
