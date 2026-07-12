@@ -8,6 +8,7 @@ import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/pinned_sliver_header.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../providers/projects_provider.dart';
 import '../widgets/project_card/project_card.dart';
 import '../widgets/projects_animal_sub_filter.dart';
@@ -56,111 +57,192 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   void _showFilterBottomSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       backgroundColor: Colors.white,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Barcha filtrlar',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setModalState(() {
-                              _regionFilter = 'Barchasi';
-                              _sortFilter = 'Yangilari';
-                              _subCategoryFilter = 'Barchasi';
-                            });
-                            setState(() {});
-                            _fetch();
-                          },
-                          child: const Text('Tozalash', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    const SizedBox(height: 10),
-                    const Text('Saralash', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: ['Yangilari', 'ROI yuqori', 'Muddati kam'].map((sort) {
-                        final isSel = _sortFilter == sort;
-                        return ChoiceChip(
-                          label: Text(sort),
-                          selected: isSel,
-                          onSelected: (val) {
-                            if (val) {
-                              setModalState(() => _sortFilter = sort);
-                              setState(() {});
-                              _fetch();
-                            }
-                          },
-                          selectedColor: AppColors.primaryLight,
-                          labelStyle: TextStyle(
-                            color: isSel ? AppColors.primary : AppColors.textDark,
-                            fontWeight: FontWeight.bold,
+        return DraggableScrollableSheet(
+          initialChildSize: 0.72,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return StatefulBuilder(
+              builder: (context, setModalState) {
+                final regions = [
+                  'Barchasi', 'Toshkent v.', 'Samarqand v.', 'Farg\'ona v.', 
+                  'Andijon v.', 'Buxoro v.', 'Namangan v.', 'Qashqadaryo v.',
+                  'Surxondaryo v.', 'Jizzax v.', 'Sirdaryo v.', 'Navoiy v.', 
+                  'Xorazm v.', 'Qoraqalpog\'iston'
+                ];
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Hudud', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _regionFilter,
-                          isExpanded: true,
-                          items: ['Barchasi', 'Toshkent v.', 'Samarqand v.', 'Farg\'ona v.', 'Andijon v.', 'Buxoro v.', 'Namangan v.', 'Qashqadaryo v.']
-                              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                              .toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setModalState(() => _regionFilter = val);
-                              setState(() {});
-                              _fetch();
-                            }
-                          },
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      const SizedBox(height: 16),
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Barcha filtrlar',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textDark),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                _regionFilter = 'Barchasi';
+                                _sortFilter = 'Yangilari';
+                                _subCategoryFilter = 'Barchasi';
+                              });
+                              setState(() {});
+                              _fetch();
+                            },
+                            child: const Text('Tozalash', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
+                        ],
                       ),
-                      child: const Text('Qo\'llash', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ),
+                      const Divider(color: Color(0xFFF1F5F9), height: 1),
+                      const SizedBox(height: 16),
+                      
+                      // Scrollable content area
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            // Sorting section
+                            const Text('Saralash', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                _buildSortCard('Yangilari', Icons.new_releases_rounded, setModalState),
+                                const SizedBox(width: 8),
+                                _buildSortCard('ROI yuqori', Icons.trending_up_rounded, setModalState),
+                                const SizedBox(width: 8),
+                                _buildSortCard('Muddati kam', Icons.hourglass_bottom_rounded, setModalState),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // Regions grid/wrap section
+                            const Text('Hududlar (Viloyatlar)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: regions.map((r) {
+                                final isSel = _regionFilter == r;
+                                return ChoiceChip(
+                                  label: Text(r),
+                                  selected: isSel,
+                                  onSelected: (val) {
+                                    if (val) {
+                                      setModalState(() => _regionFilter = r);
+                                      setState(() {});
+                                      _fetch();
+                                    }
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color: isSel ? AppColors.primary : const Color(0xFFE2E8F0),
+                                      width: isSel ? 1.5 : 1.2,
+                                    ),
+                                  ),
+                                  selectedColor: const Color(0xFFDCFCE7),
+                                  backgroundColor: const Color(0xFFF8FAFC),
+                                  labelStyle: TextStyle(
+                                    color: isSel ? const Color(0xFF15803D) : AppColors.textDark,
+                                    fontWeight: isSel ? FontWeight.w900 : FontWeight.bold,
+                                    fontSize: 11.5,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
+                      
+                      // Bottom confirmation button
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                          ),
+                          child: const Text('Filtrni qo\'llash', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildSortCard(String value, IconData icon, StateSetter setModalState) {
+    final isSel = _sortFilter == value;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setModalState(() => _sortFilter = value);
+          setState(() {});
+          _fetch();
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSel ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSel ? AppColors.primary : const Color(0xFFE2E8F0),
+              width: isSel ? 1.5 : 1.2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: isSel ? const Color(0xFF15803D) : AppColors.textMuted, size: 20),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  color: isSel ? const Color(0xFF15803D) : AppColors.textDark,
+                  fontSize: 10.5,
+                  fontWeight: isSel ? FontWeight.w900 : FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -182,6 +264,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       assetType: _selectedAssetType,
       animalType: _showAnimalFilter ? _selectedAnimalType : null,
     );
+    Provider.of<NotificationProvider>(context, listen: false).fetchUnreadCount();
   }
 
   void _clearFilters() {
