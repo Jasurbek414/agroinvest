@@ -258,6 +258,10 @@ public class ProjectService {
             throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN);
         }
 
+        if (project.getFarmer().getKycStatus() != KycStatus.VERIFIED) {
+            throw new ApiException(ErrorCode.KYC_REQUIRED, HttpStatus.BAD_REQUEST, "Loyihani tasdiqlashga yuborish uchun profilingiz tasdiqlangan bo'lishi shart");
+        }
+
         if (project.getStatus() != ProjectStatus.DRAFT) {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat qoralama (DRAFT) loyihalarni ko'rib chiqishga yuborish mumkin");
         }
@@ -475,6 +479,35 @@ public class ProjectService {
         return projectRepository.findByFarmerId(farmerId, pageable).map(this::mapToDto);
     }
 
+    @Transactional
+    public ProjectDto proposePayout(UUID projectId, uz.agroinvest.module.project.dto.ProposePayoutRequest request, UserPrincipal principal) {
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, "Loyiha topilmadi"));
+
+        if (!project.getFarmer().getId().equals(principal.getId())) {
+            throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, "Faqat loyiha egasi bo'lgan fermer sotuv taklif qila oladi");
+        }
+
+        if (project.getStatus() != ProjectStatus.ACTIVE && project.getStatus() != ProjectStatus.MONITORING) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Faqat faol (ACTIVE) yoki kuzatuvdagi (MONITORING) loyihalarga sotuv taklif qilinadi");
+        }
+
+        if (request.getProposedSalePrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Sotuv narxi 0 dan katta bo'lishi kerak");
+        }
+
+        project.setProposedSalePrice(request.getProposedSalePrice());
+        project.setSaleDocuments(request.getSaleDocuments());
+        project.setPayoutProposedAt(LocalDateTime.now());
+
+        Project saved = projectRepository.save(project);
+
+        auditLogService.log(project.getFarmer(), "PROPOSE_PAYOUT", "Project", saved.getId().toString(),
+                null, "{\"proposedSalePrice\": \"" + request.getProposedSalePrice() + "\"}");
+
+        return mapToDto(saved);
+    }
+
     public ProjectDto mapToDto(Project project) {
         return ProjectDto.builder()
                 .id(project.getId())
@@ -515,6 +548,9 @@ public class ProjectService {
                 .reportFrequencyDays(project.getReportFrequencyDays())
                 .frozen(project.isFrozen())
                 .frozenReason(project.getFrozenReason())
+                .proposedSalePrice(project.getProposedSalePrice())
+                .saleDocuments(project.getSaleDocuments())
+                .payoutProposedAt(project.getPayoutProposedAt())
                 .createdAt(project.getCreatedAt())
                 .build();
     }

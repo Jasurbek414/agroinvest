@@ -142,10 +142,21 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     public ResponseEntity<ApiResponse<Void>> distributePayout(
             @PathVariable UUID id,
-            @RequestParam BigDecimal salePrice,
+            @RequestParam(required = false) BigDecimal salePrice,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         payoutService.distributePayout(id, salePrice, principal);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/{id}/propose-payout")
+    @PreAuthorize("hasRole('FARMER')")
+    public ResponseEntity<ApiResponse<ProjectDto>> proposePayout(
+            @PathVariable UUID id,
+            @RequestBody @jakarta.validation.Valid uz.agroinvest.module.project.dto.ProposePayoutRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProjectDto dto = projectService.proposePayout(id, request, principal);
+        return ResponseEntity.ok(ApiResponse.success(dto));
     }
 }

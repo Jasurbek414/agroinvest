@@ -106,9 +106,16 @@ public class PayoutService {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Loyiha muzlatilgan, foyda taqsimlash mumkin emas");
         }
 
-        if (salePrice.compareTo(BigDecimal.ZERO) <= 0) {
+        BigDecimal finalPrice = salePrice;
+        if (finalPrice == null) {
+            finalPrice = project.getProposedSalePrice();
+        }
+
+        if (finalPrice == null || finalPrice.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Sotish narxi noldan yuqori bo'lishi shart");
         }
+
+        salePrice = finalPrice;
 
         // Every expense must be resolved before money is split - a PENDING expense
         // approved after payout could never be reimbursed.

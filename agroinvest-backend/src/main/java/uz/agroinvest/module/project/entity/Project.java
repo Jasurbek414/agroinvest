@@ -202,6 +202,16 @@ public class Project {
     @JoinColumn(name = "frozen_by")
     private User frozenBy;
 
+    @Column(name = "proposed_sale_price")
+    private BigDecimal proposedSalePrice;
+
+    @Convert(converter = JsonListConverter.class)
+    @Column(name = "sale_documents", columnDefinition = "jsonb")
+    private List<String> saleDocuments;
+
+    @Column(name = "payout_proposed_at")
+    private LocalDateTime payoutProposedAt;
+
     // Optimistic lock: prevents a payout/status-transition from being run twice
     // concurrently (e.g. a double-clicked "distribute payout" admin action).
     @Version

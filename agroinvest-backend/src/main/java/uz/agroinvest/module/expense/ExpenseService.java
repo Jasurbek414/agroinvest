@@ -25,6 +25,8 @@ import uz.agroinvest.module.user.UserRepository;
 import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.security.UserPrincipal;
 
+import uz.agroinvest.module.superadmin.PlatformSettingsService;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,7 @@ public class ExpenseService {
     private final InvestmentRepository investmentRepository;
     private final NotificationService notificationService;
     private final AuditLogService auditLogService;
+    private final PlatformSettingsService platformSettingsService;
 
     public ExpenseService(
             ExpenseRepository expenseRepository,
@@ -48,7 +51,8 @@ public class ExpenseService {
             UserRepository userRepository,
             InvestmentRepository investmentRepository,
             NotificationService notificationService,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            PlatformSettingsService platformSettingsService
     ) {
         this.expenseRepository = expenseRepository;
         this.projectRepository = projectRepository;
@@ -56,6 +60,7 @@ public class ExpenseService {
         this.investmentRepository = investmentRepository;
         this.notificationService = notificationService;
         this.auditLogService = auditLogService;
+        this.platformSettingsService = platformSettingsService;
     }
 
     @Transactional
@@ -75,6 +80,18 @@ public class ExpenseService {
 
         User farmer = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+
+        BigDecimal maxExpensePct = platformSettingsService.getMaxExpensePct();
+        BigDecimal limit = project.getTargetAmount().multiply(maxExpensePct).divide(BigDecimal.valueOf(100));
+        BigDecimal existingExpensesSum = expenseRepository.findByProjectIdOrderByExpenseDateDescCreatedAtDesc(projectId).stream()
+                .filter(e -> e.getStatus() == ExpenseStatus.APPROVED || e.getStatus() == ExpenseStatus.PENDING)
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (existingExpensesSum.add(request.getAmount()).compareTo(limit) > 0) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                    "Tasdiqlangan va kutilayotgan umumiy xarajatlar loyiha byudjetining " + maxExpensePct.stripTrailingZeros().toPlainString() + "% idan (" + limit.stripTrailingZeros().toPlainString() + " so'm) oshib ketishi mumkin emas!");
+        }
 
         Expense expense = Expense.builder()
                 .project(project)
@@ -150,6 +167,20 @@ public class ExpenseService {
 
         User reviewer = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND));
+
+        if (approve) {
+            BigDecimal maxExpensePct = platformSettingsService.getMaxExpensePct();
+            BigDecimal limit = expense.getProject().getTargetAmount().multiply(maxExpensePct).divide(BigDecimal.valueOf(100));
+            BigDecimal existingApprovedSum = expenseRepository.findByProjectIdOrderByExpenseDateDescCreatedAtDesc(expense.getProject().getId()).stream()
+                    .filter(e -> e.getStatus() == ExpenseStatus.APPROVED)
+                    .map(Expense::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            if (existingApprovedSum.add(expense.getAmount()).compareTo(limit) > 0) {
+                throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                        "Ushbu xarajatni tasdiqlab bo'lmaydi. Umumiy xarajatlar limiti loyiha byudjetining " + maxExpensePct.stripTrailingZeros().toPlainString() + "% idan (" + limit.stripTrailingZeros().toPlainString() + " so'm) oshib ketadi!");
+            }
+        }
 
         expense.setStatus(approve ? ExpenseStatus.APPROVED : ExpenseStatus.REJECTED);
         expense.setReviewedBy(reviewer);

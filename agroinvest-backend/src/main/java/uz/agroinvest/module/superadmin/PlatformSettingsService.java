@@ -45,6 +45,10 @@ public class PlatformSettingsService {
         return getDecimal("max_investor_share_pct", BigDecimal.valueOf(90));
     }
 
+    public BigDecimal getMaxExpensePct() {
+        return getDecimal("max_expense_pct", BigDecimal.valueOf(80));
+    }
+
     public long getMaxInvestmentCancelHours() {
         return getLong("max_investment_cancel_hours", 24);
     }

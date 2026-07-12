@@ -62,5 +62,8 @@ public class ProjectDto {
     private Integer reportFrequencyDays;
     private boolean frozen;
     private String frozenReason;
+    private BigDecimal proposedSalePrice;
+    private List<String> saleDocuments;
+    private LocalDateTime payoutProposedAt;
     private LocalDateTime createdAt;
 }
