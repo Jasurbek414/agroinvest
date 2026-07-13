@@ -1,5 +1,10 @@
 package uz.agroinvest.module.coop;
 
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
+import uz.agroinvest.common.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,10 @@ public class CoopOfferService {
 
     private final CoopOfferRepository repository;
     private final UserRepository userRepository;
+
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
 
     public CoopOfferService(CoopOfferRepository repository, UserRepository userRepository) {
         this.repository = repository;
@@ -59,6 +68,23 @@ public class CoopOfferService {
                 .build();
         
         CoopOffer saved = repository.save(offer);
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "COOP_OFFER_SUBMISSION",
+                        "Investitsiyani bozorga chiqarish arizasi",
+                        creator.getFullName() + " o'zining investitsiyasini investitsiya bozoriga chiqarish bo'yicha ariza berdi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+
         return CoopOfferDto.fromEntity(saved);
     }
 
@@ -90,6 +116,22 @@ public class CoopOfferService {
         }
 
         offer.setStatus("WITHDRAWN");
-        repository.save(offer);
+        CoopOffer saved = repository.save(offer);
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "COOP_OFFER_WITHDRAWN",
+                        "Investitsiya bozori arizasi qaytarib olindi",
+                        saved.getCreatorName() + " o'zining investitsiya bozoridagi arizasini qaytarib oldi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
     }
 }
