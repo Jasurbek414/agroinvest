@@ -138,7 +138,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                                   return InvestmentCard(
                                     investment: inv,
                                     formatAmount: formatAmount,
-                                    onCancel: () => _confirmCancel(context, provider, inv['id']),
+                                    onCancel: () => _confirmCancel(context, provider, inv),
                                     onAddReview: () => _showReviewSheet(inv['id'], inv['projectTitle']?.toString() ?? 'Agro loyiha'),
                                     onViewContract: () => _viewAgreementDetails(inv),
                                   );
@@ -528,7 +528,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
     );
   }
 
-  void _confirmCancel(BuildContext context, InvestmentProvider provider, String investmentId) {
+  void _confirmCancel(BuildContext context, InvestmentProvider provider, Map<String, dynamic> inv) {
     showDialog(
       context: context,
       builder: (context) {
@@ -543,7 +543,14 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.push('/coop-market'); // Redirect to P2P Marketplace
+                final amount = double.tryParse(inv['amount']?.toString() ?? '0') ?? 0.0;
+                final share = double.tryParse(inv['sharePct']?.toString() ?? '0') ?? 0.0;
+                context.push('/coop-market', extra: {
+                  'preFilledType': 'CONTRACT_SALE',
+                  'preFilledTitle': '${inv['projectTitle'] ?? 'Loyiha'} shartnomasini qayta sotish',
+                  'preFilledAmount': amount.toStringAsFixed(0),
+                  'preFilledDescription': 'Ushbu loyihaga kiritilgan sarmoyamni (${share.toStringAsFixed(4)}% loyiha ulushi) qayta sotaman.',
+                });
               },
               child: const Text('Bozorga o\'tish', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
             ),

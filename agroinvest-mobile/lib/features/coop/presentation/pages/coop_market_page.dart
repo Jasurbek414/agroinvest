@@ -6,7 +6,18 @@ import '../widgets/coop_offer_card.dart';
 import '../widgets/add_coop_offer_sheet.dart';
 
 class CoopMarketPage extends StatefulWidget {
-  const CoopMarketPage({super.key});
+  final String? preFilledType;
+  final String? preFilledTitle;
+  final String? preFilledAmount;
+  final String? preFilledDescription;
+
+  const CoopMarketPage({
+    super.key,
+    this.preFilledType,
+    this.preFilledTitle,
+    this.preFilledAmount,
+    this.preFilledDescription,
+  });
 
   @override
   State<CoopMarketPage> createState() => _CoopMarketPageState();
@@ -26,6 +37,11 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
   void initState() {
     super.initState();
     _fetchOffers();
+    if (widget.preFilledTitle != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAddOfferDialog();
+      });
+    }
   }
 
   Future<void> _fetchOffers() async {
@@ -87,7 +103,13 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (context) {
-        return AddCoopOfferSheet(onSubmit: _submitNewOffer);
+        return AddCoopOfferSheet(
+          onSubmit: _submitNewOffer,
+          preFilledType: widget.preFilledType,
+          preFilledTitle: widget.preFilledTitle,
+          preFilledAmount: widget.preFilledAmount,
+          preFilledDescription: widget.preFilledDescription,
+        );
       },
     );
   }

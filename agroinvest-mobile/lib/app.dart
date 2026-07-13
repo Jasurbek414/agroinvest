@@ -139,7 +139,18 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
         ),
         GoRoute(path: '/session-expired', builder: (context, state) => const SessionExpiredPage()),
         GoRoute(path: '/services', builder: (context, state) => const ServicesPage()),
-        GoRoute(path: '/coop-market', builder: (context, state) => const CoopMarketPage()),
+        GoRoute(
+          path: '/coop-market',
+          builder: (context, state) {
+            final extra = state.extra as Map<dynamic, dynamic>? ?? const {};
+            return CoopMarketPage(
+              preFilledType: extra['preFilledType']?.toString(),
+              preFilledTitle: extra['preFilledTitle']?.toString(),
+              preFilledAmount: extra['preFilledAmount']?.toString(),
+              preFilledDescription: extra['preFilledDescription']?.toString(),
+            );
+          },
+        ),
         GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
         GoRoute(path: '/kyc', builder: (context, state) => const KycPage()),
         GoRoute(path: '/disputes', builder: (context, state) => const DisputesPage()),

@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:agroinvest_mobile/core/constants/app_colors.dart';
 import 'package:agroinvest_mobile/core/widgets/document_upload_picker.dart';
+import 'package:agroinvest_mobile/core/storage/secure_storage.dart';
 
 class AddCoopOfferSheet extends StatefulWidget {
   final Future<void> Function(Map<String, dynamic> payload) onSubmit;
+  final String? preFilledType;
+  final String? preFilledTitle;
+  final String? preFilledAmount;
+  final String? preFilledDescription;
 
-  const AddCoopOfferSheet({super.key, required this.onSubmit});
+  const AddCoopOfferSheet({
+    super.key,
+    required this.onSubmit,
+    this.preFilledType,
+    this.preFilledTitle,
+    this.preFilledAmount,
+    this.preFilledDescription,
+  });
 
   @override
   State<AddCoopOfferSheet> createState() => _AddCoopOfferSheetState();
@@ -28,6 +41,31 @@ class _AddCoopOfferSheetState extends State<AddCoopOfferSheet> {
   String _formType = 'BUSINESS_PLAN';
   bool _submitting = false;
   List<String> _docUrls = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _formType = widget.preFilledType ?? 'BUSINESS_PLAN';
+    _titleController.text = widget.preFilledTitle ?? '';
+    _amountController.text = widget.preFilledAmount ?? '';
+    _descController.text = widget.preFilledDescription ?? '';
+    _loadUserPhone();
+  }
+
+  Future<void> _loadUserPhone() async {
+    try {
+      final userDataStr = await SecureStorage.getUserData();
+      if (userDataStr != null) {
+        final userData = jsonDecode(userDataStr);
+        final phone = userData['phoneNumber']?.toString();
+        if (phone != null && phone.isNotEmpty) {
+          setState(() {
+            _phoneController.text = phone;
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
