@@ -3,6 +3,7 @@ package uz.agroinvest.module.coop.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record SaveCoopOfferRequest(
     @NotBlank(message = "Sarlavha bo'sh bo'lmasligi kerak")
@@ -18,5 +19,7 @@ public record SaveCoopOfferRequest(
     BigDecimal amount,
 
     @NotBlank(message = "Telefon raqami kiritilishi shart")
-    String contactPhone
+    String contactPhone,
+
+    UUID investmentId
 ) {}

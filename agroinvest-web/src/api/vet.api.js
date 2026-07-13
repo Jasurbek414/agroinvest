@@ -17,3 +17,8 @@ export const getPendingVetInspections = (page = 0, size = 12) => {
 export const verifyVetInspection = (id, approve, comment) => {
   return api.patch(`/vet-inspections/${id}/verify`, { approve, comment });
 };
+
+export const getActiveVeterinarians = () => api.get('/vet-inspections/veterinarians');
+export const getSuperAdminVeterinarians = () => api.get('/superadmin/veterinarians');
+export const createVeterinarian = (payload) => api.post('/superadmin/veterinarians', payload);
+export const deleteVeterinarian = (id) => api.delete(`/superadmin/veterinarians/${id}`);

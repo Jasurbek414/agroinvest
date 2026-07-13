@@ -148,6 +148,7 @@ class _AgroInvestAppState extends State<AgroInvestApp> {
               preFilledTitle: extra['preFilledTitle']?.toString(),
               preFilledAmount: extra['preFilledAmount']?.toString(),
               preFilledDescription: extra['preFilledDescription']?.toString(),
+              preFilledInvestmentId: extra['preFilledInvestmentId']?.toString(),
             );
           },
         ),

@@ -10,6 +10,7 @@ class CoopMarketPage extends StatefulWidget {
   final String? preFilledTitle;
   final String? preFilledAmount;
   final String? preFilledDescription;
+  final String? preFilledInvestmentId;
 
   const CoopMarketPage({
     super.key,
@@ -17,6 +18,7 @@ class CoopMarketPage extends StatefulWidget {
     this.preFilledTitle,
     this.preFilledAmount,
     this.preFilledDescription,
+    this.preFilledInvestmentId,
   });
 
   @override
@@ -109,6 +111,7 @@ class _CoopMarketPageState extends State<CoopMarketPage> {
           preFilledTitle: widget.preFilledTitle,
           preFilledAmount: widget.preFilledAmount,
           preFilledDescription: widget.preFilledDescription,
+          preFilledInvestmentId: widget.preFilledInvestmentId,
         );
       },
     );

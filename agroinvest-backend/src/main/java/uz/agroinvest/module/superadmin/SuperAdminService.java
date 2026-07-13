@@ -579,7 +579,9 @@ public class SuperAdminService {
                 investment.getContractUrl(),
                 investment.getContractSignedAt(),
                 investment.getStatus(),
-                investment.getCreatedAt()
+                investment.getCreatedAt(),
+                false,
+                null
         );
     }
 }

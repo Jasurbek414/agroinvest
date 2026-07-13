@@ -45,6 +45,9 @@ public class CoopOffer {
     @Column(name = "contact_phone", nullable = false)
     private String contactPhone;
 
+    @Column(name = "investment_id")
+    private UUID investmentId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

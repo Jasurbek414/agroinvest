@@ -15,7 +15,8 @@ public record CoopOfferDto(
     UUID creatorId,
     String creatorName,
     String contactPhone,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    UUID investmentId
 ) {
     public static CoopOfferDto fromEntity(CoopOffer offer) {
         return new CoopOfferDto(
@@ -28,7 +29,8 @@ public record CoopOfferDto(
             offer.getCreatorId(),
             offer.getCreatorName(),
             offer.getContactPhone(),
-            offer.getCreatedAt()
+            offer.getCreatedAt(),
+            offer.getInvestmentId()
         );
     }
 }

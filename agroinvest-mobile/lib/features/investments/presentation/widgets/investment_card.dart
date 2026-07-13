@@ -11,6 +11,7 @@ class InvestmentCard extends StatelessWidget {
   final VoidCallback onAddReview;
   final VoidCallback onViewContract;
   final VoidCallback? onSignContract;
+  final VoidCallback? onWithdraw;
 
   const InvestmentCard({
     super.key,
@@ -20,6 +21,7 @@ class InvestmentCard extends StatelessWidget {
     required this.onAddReview,
     required this.onViewContract,
     this.onSignContract,
+    this.onWithdraw,
   });
 
   @override
@@ -108,9 +110,28 @@ class InvestmentCard extends StatelessWidget {
                             style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: AppColors.textDark),
                           ),
                           const SizedBox(height: 2),
-                          Row(
+                           Row(
                             children: [
                               StatusBadge(status: status),
+                              if (investment['hasPendingCoopOffer'] == true) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange[50],
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: Colors.orange[200]!, width: 0.5),
+                                  ),
+                                  child: Text(
+                                    'Ko\'rib chiqilmoqda',
+                                    style: TextStyle(
+                                      color: Colors.orange[800],
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                               if (date.isNotEmpty) ...[
                                 const SizedBox(width: 8),
                                 Icon(Icons.calendar_month_outlined, size: 10, color: AppColors.textMuted),
@@ -218,18 +239,34 @@ class InvestmentCard extends StatelessWidget {
                     ],
                     if (status == 'RESERVED' || status == 'CONFIRMED') ...[
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: onCancel,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange[800],
-                            side: BorderSide(color: Colors.orange[300]!, width: 1.2),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      if (investment['hasPendingCoopOffer'] == true) ...[
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: onWithdraw,
+                            icon: const Icon(Icons.cancel_schedule_send_rounded, size: 13),
+                            label: const Text('Qaytarib olish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red[800],
+                              side: BorderSide(color: Colors.red[300]!, width: 1.2),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           ),
-                          child: const Text('Qayta sotish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                         ),
-                      ),
+                      ] else ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: onCancel,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.orange[800],
+                              side: BorderSide(color: Colors.orange[300]!, width: 1.2),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: const Text('Qayta sotish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                          ),
+                        ),
+                      ],
                     ],
                     if (status == 'PAID_OUT') ...[
                       const SizedBox(width: 10),

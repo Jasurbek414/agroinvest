@@ -298,6 +298,7 @@ const CoopModerationPanel = () => {
                   { id: 'PENDING', label: 'Kutilayotganlar' },
                   { id: 'APPROVED', label: 'Tasdiqlanganlar' },
                   { id: 'REJECTED', label: 'Rad etilganlar' },
+                  { id: 'WITHDRAWN', label: 'Qaytarib olinganlar' },
                 ].map((st) => (
                   <button
                     key={st.id}
@@ -331,6 +332,7 @@ const CoopModerationPanel = () => {
                         {o.status === 'PENDING' && <Badge tone="yellow">Moderatsiyada</Badge>}
                         {o.status === 'APPROVED' && <Badge tone="green">Faol / Tasdiqlangan</Badge>}
                         {o.status === 'REJECTED' && <Badge tone="red">Rad etilgan</Badge>}
+                        {o.status === 'WITHDRAWN' && <Badge tone="gray">Qaytarib olingan</Badge>}
                         
                         <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
                           <Calendar size={11} /> {formatDate(o.createdAt)}
@@ -447,6 +449,7 @@ const CoopModerationPanel = () => {
                     {detailTarget.status === 'PENDING' && <Badge tone="yellow">Moderatsiyada</Badge>}
                     {detailTarget.status === 'APPROVED' && <Badge tone="green">Tasdiqlangan</Badge>}
                     {detailTarget.status === 'REJECTED' && <Badge tone="red">Rad etilgan</Badge>}
+                    {detailTarget.status === 'WITHDRAWN' && <Badge tone="gray">Qaytarib olingan</Badge>}
                   </p>
                 </div>
               </div>

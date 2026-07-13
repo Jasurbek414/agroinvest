@@ -141,6 +141,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                                     onCancel: () => _confirmCancel(context, provider, inv),
                                     onAddReview: () => _showReviewSheet(inv['id'], inv['projectTitle']?.toString() ?? 'Agro loyiha'),
                                     onViewContract: () => _viewAgreementDetails(inv),
+                                    onWithdraw: () => _withdrawResellOffer(context, provider, inv['pendingCoopOfferId']),
                                   );
                                 },
                               ),
@@ -550,6 +551,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
                   'preFilledTitle': '${inv['projectTitle'] ?? 'Loyiha'} shartnomasini qayta sotish',
                   'preFilledAmount': amount.toStringAsFixed(0),
                   'preFilledDescription': 'Ushbu loyihaga kiritilgan sarmoyamni (${share.toStringAsFixed(4)}% loyiha ulushi) qayta sotaman.',
+                  'preFilledInvestmentId': inv['id'],
                 });
               },
               child: const Text('Bozorga o\'tish', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
@@ -558,6 +560,47 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
         );
       },
     );
+  }
+
+  Future<void> _withdrawResellOffer(BuildContext context, InvestmentProvider provider, String? offerId) async {
+    if (offerId == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Arizani qaytarib olish'),
+        content: const Text('Qayta sotish arizasini bekor qilmoqchimisiz? E\'lon bozordan olib tashlanadi.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Yo\'q'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ha, bekor qilish', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final res = await _dio.delete('/coop-offers/$offerId');
+      if (res.statusCode == 200) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Qayta sotish arizasi bekor qilindi (qaytarib olindi)')),
+          );
+        }
+        provider.fetchUserInvestments();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Xatolik: arizani bekor qilib bo\'lmadi')),
+        );
+      }
+    }
   }
 }
 

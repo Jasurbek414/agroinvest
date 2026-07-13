@@ -71,4 +71,14 @@ public class CoopOfferController {
         service.deleteOffer(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    /** User withdraws their own offer */
+    @DeleteMapping("/api/v1/coop-offers/{id}")
+    public ResponseEntity<ApiResponse<Void>> withdrawOffer(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        service.withdrawOffer(id, principal);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

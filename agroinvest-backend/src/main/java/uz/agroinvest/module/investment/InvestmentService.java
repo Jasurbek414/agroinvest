@@ -22,6 +22,9 @@ import uz.agroinvest.module.user.entity.User;
 import uz.agroinvest.module.wallet.WalletRepository;
 import uz.agroinvest.module.wallet.entity.Wallet;
 import uz.agroinvest.security.UserPrincipal;
+import uz.agroinvest.module.coop.CoopOfferRepository;
+import uz.agroinvest.module.coop.entity.CoopOffer;
+import java.util.List;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +42,7 @@ public class InvestmentService {
     private final TransactionRepository transactionRepository;
     private final PlatformSettingsService platformSettingsService;
     private final AuditLogService auditLogService;
+    private final CoopOfferRepository coopOfferRepository;
 
     public InvestmentService(
             InvestmentRepository investmentRepository,
@@ -47,7 +51,8 @@ public class InvestmentService {
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
             PlatformSettingsService platformSettingsService,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            CoopOfferRepository coopOfferRepository
     ) {
         this.investmentRepository = investmentRepository;
         this.projectRepository = projectRepository;
@@ -56,6 +61,7 @@ public class InvestmentService {
         this.transactionRepository = transactionRepository;
         this.platformSettingsService = platformSettingsService;
         this.auditLogService = auditLogService;
+        this.coopOfferRepository = coopOfferRepository;
     }
 
     @Transactional
@@ -325,6 +331,12 @@ public class InvestmentService {
     }
 
     private InvestmentDto mapToDto(Investment investment) {
+        List<CoopOffer> activeCoopOffers = coopOfferRepository.findByInvestmentIdAndStatusIn(
+                investment.getId(), List.of("PENDING", "APPROVED")
+        );
+        boolean hasPending = !activeCoopOffers.isEmpty();
+        UUID offerId = hasPending ? activeCoopOffers.get(0).getId() : null;
+
         return new InvestmentDto(
                 investment.getId(),
                 investment.getProject().getId(),
@@ -336,7 +348,9 @@ public class InvestmentService {
                 investment.getContractUrl(),
                 investment.getContractSignedAt(),
                 investment.getStatus(),
-                investment.getCreatedAt()
+                investment.getCreatedAt(),
+                hasPending,
+                offerId
         );
     }
 }

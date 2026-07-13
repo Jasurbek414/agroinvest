@@ -10,6 +10,7 @@ class AddCoopOfferSheet extends StatefulWidget {
   final String? preFilledTitle;
   final String? preFilledAmount;
   final String? preFilledDescription;
+  final String? preFilledInvestmentId;
 
   const AddCoopOfferSheet({
     super.key,
@@ -18,6 +19,7 @@ class AddCoopOfferSheet extends StatefulWidget {
     this.preFilledTitle,
     this.preFilledAmount,
     this.preFilledDescription,
+    this.preFilledInvestmentId,
   });
 
   @override
@@ -318,6 +320,7 @@ class _AddCoopOfferSheetState extends State<AddCoopOfferSheet> {
         'type': _formType,
         'amount': double.tryParse(_amountController.text) ?? 0.0,
         'contactPhone': _phoneController.text,
+        if (widget.preFilledInvestmentId != null) 'investmentId': widget.preFilledInvestmentId,
       };
       
       await widget.onSubmit(payload);

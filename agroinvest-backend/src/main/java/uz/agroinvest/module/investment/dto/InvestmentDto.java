@@ -26,4 +26,6 @@ public class InvestmentDto {
     private LocalDateTime contractSignedAt;
     private InvestmentStatus status;
     private LocalDateTime createdAt;
+    private Boolean hasPendingCoopOffer;
+    private UUID pendingCoopOfferId;
 }
