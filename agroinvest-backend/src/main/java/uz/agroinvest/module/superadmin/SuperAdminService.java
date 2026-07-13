@@ -1,5 +1,7 @@
 package uz.agroinvest.module.superadmin;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,7 @@ import uz.agroinvest.security.UserPrincipal;
 import uz.agroinvest.module.investment.InvestmentRepository;
 import uz.agroinvest.module.investment.entity.Investment;
 import uz.agroinvest.module.investment.dto.InvestmentDto;
+import uz.agroinvest.module.coop.CoopOfferRepository;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -72,6 +75,10 @@ public class SuperAdminService {
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
     private final InvestmentRepository investmentRepository;
+
+    @Autowired
+    @Lazy
+    private CoopOfferRepository coopOfferRepository;
 
     public SuperAdminService(
             UserRepository userRepository,
@@ -320,6 +327,7 @@ public class SuperAdminService {
         queues.put("expenses", expenseRepository.countByStatus(ExpenseStatus.PENDING));
         queues.put("vetInspections", vetInspectionRepository.countByStatus(VetInspectionStatus.PENDING));
         queues.put("disputes", disputeRepository.countByStatusIn(List.of(DisputeStatus.OPEN, DisputeStatus.INVESTIGATING)));
+        queues.put("coop", coopOfferRepository.countByStatus("PENDING"));
         overview.put("queues", queues);
 
         return overview;

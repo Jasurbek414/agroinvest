@@ -14,4 +14,5 @@ public interface CoopOfferRepository extends JpaRepository<CoopOffer, UUID> {
     Page<CoopOffer> findAllByStatus(String status, Pageable pageable);
     Page<CoopOffer> findAllByTypeAndStatus(String type, String status, Pageable pageable);
     List<CoopOffer> findByInvestmentIdAndStatusIn(UUID investmentId, List<String> statuses);
+    long countByStatus(String status);
 }

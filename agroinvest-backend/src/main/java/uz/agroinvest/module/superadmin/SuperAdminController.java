@@ -100,6 +100,7 @@ public class SuperAdminController {
     }
 
     @GetMapping("/overview")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'MODERATOR')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPlatformOverview() {
         return ResponseEntity.ok(ApiResponse.success(superAdminService.getPlatformOverview()));
     }

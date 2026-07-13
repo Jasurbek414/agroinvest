@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { getNavLinks } from './navLinks';
+import { getPlatformOverview } from '../../api/superadmin.api';
 
 // Slide-in nav drawer for < md screens. Previously the navbar's link row was
 // simply `hidden` below md with no replacement, so mobile users (the majority
@@ -10,6 +11,26 @@ import { getNavLinks } from './navLinks';
 const MobileDrawer = ({ open, onClose }) => {
   const { user } = useAuthStore();
   const location = useLocation();
+  const [queues, setQueues] = useState({});
+
+  useEffect(() => {
+    if (!user || !open || !['SUPERADMIN', 'ADMIN', 'MODERATOR'].includes(user.role)) return;
+
+    const fetchQueues = async () => {
+      try {
+        const res = await getPlatformOverview();
+        if (res?.data?.queues) {
+          setQueues(res.data.queues);
+        }
+      } catch (err) {
+        console.error('Failed to fetch mobile drawer counts:', err);
+      }
+    };
+
+    fetchQueues();
+    const interval = setInterval(fetchQueues, 15000);
+    return () => clearInterval(interval);
+  }, [user, open]);
   
   const links = user ? getNavLinks(user.role) : [];
   const isDashboard = location.pathname.endsWith('/dashboard');
@@ -51,18 +72,29 @@ const MobileDrawer = ({ open, onClose }) => {
                       {section}
                     </div>
                   )}
-                  <Link
-                    to={to}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                      isLinkActive
-                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
-                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    {label}
-                  </Link>
+                  {(() => {
+                    const tab = to.includes('tab=') ? to.split('tab=')[1] : null;
+                    const count = tab ? queues[tab] : null;
+                    return (
+                      <Link
+                        to={to}
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                          isLinkActive
+                            ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
+                            : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <Icon size={18} />
+                        <span className="truncate">{label}</span>
+                        {count > 0 && (
+                          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 ml-auto text-[9px] font-extrabold text-white bg-rose-500 rounded-full shadow-sm">
+                            {count}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })()}
                 </React.Fragment>
               );
             });
