@@ -35,6 +35,39 @@ class _AddVetInspectionPageState extends State<AddVetInspectionPage> {
   bool _submitting = false;
   String? _error;
 
+  List<dynamic> _vets = [];
+  bool _loadingVets = false;
+  String? _selectedVetId;
+  bool _isManualEntry = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVeterinarians();
+  }
+
+  Future<void> _loadVeterinarians() async {
+    setState(() => _loadingVets = true);
+    try {
+      final list = await _repository.fetchActiveVeterinarians();
+      setState(() {
+        _vets = list;
+        if (_vets.isNotEmpty) {
+          _isManualEntry = false;
+          _selectedVetId = _vets.first['id']?.toString();
+          _vetNameController.text = _vets.first['name']?.toString() ?? '';
+          _licenseController.text = _vets.first['licenseNo']?.toString() ?? '';
+        } else {
+          _isManualEntry = true;
+        }
+      });
+    } catch (_) {
+      setState(() => _isManualEntry = true);
+    } finally {
+      setState(() => _loadingVets = false);
+    }
+  }
+
   @override
   void dispose() {
     _vetNameController.dispose();
@@ -123,30 +156,76 @@ class _AddVetInspectionPageState extends State<AddVetInspectionPage> {
                   const SizedBox(height: AppSpacing.lg),
                 ],
 
-                const Text('Veterinar F.I.SH', style: AppTypography.label),
-                const SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _vetNameController,
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
-                  decoration: const InputDecoration(
-                    hintText: 'Aliyev Vali G\'aniyevich',
-                    prefixIcon: Icon(Icons.medical_services_rounded, color: AppColors.textMuted),
+                if (_loadingVets) ...[
+                  const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                  const SizedBox(height: AppSpacing.xl),
+                ] else if (_vets.isNotEmpty) ...[
+                  const Text('Veterinar shifokorni tanlang', style: AppTypography.label),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<String>(
+                    value: _selectedVetId,
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark, fontSize: 13),
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.person_pin_rounded, color: AppColors.textMuted),
+                    ),
+                    items: [
+                      ..._vets.map((v) => DropdownMenuItem<String>(
+                            value: v['id']?.toString(),
+                            child: Text('${v['name']} (${v['specialty'] ?? 'Chorvachilik'})', overflow: TextOverflow.ellipsis),
+                          )),
+                      const DropdownMenuItem<String>(
+                        value: 'custom',
+                        child: Text('Boshqa (Qo\'lda kiritish)'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedVetId = val;
+                          if (val == 'custom') {
+                            _isManualEntry = true;
+                            _vetNameController.text = '';
+                            _licenseController.text = '';
+                          } else {
+                            _isManualEntry = false;
+                            final selectedVet = _vets.firstWhere((v) => v['id']?.toString() == val);
+                            _vetNameController.text = selectedVet['name']?.toString() ?? '';
+                            _licenseController.text = selectedVet['licenseNo']?.toString() ?? '';
+                          }
+                        });
+                      }
+                    },
                   ),
-                  validator: (val) => (val == null || val.trim().isEmpty) ? 'Veterinar ismini kiriting' : null,
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
 
-                const Text('Litsenziya raqami (ixtiyoriy)', style: AppTypography.label),
-                const SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _licenseController,
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
-                  decoration: const InputDecoration(
-                    hintText: 'VET-12345',
-                    prefixIcon: Icon(Icons.badge_rounded, color: AppColors.textMuted),
+                if (_isManualEntry || _vets.isEmpty) ...[
+                  const Text('Veterinar F.I.SH', style: AppTypography.label),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: _vetNameController,
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'Aliyev Vali G\'aniyevich',
+                      prefixIcon: Icon(Icons.medical_services_rounded, color: AppColors.textMuted),
+                    ),
+                    validator: (val) => (val == null || val.trim().isEmpty) ? 'Veterinar ismini kiriting' : null,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  const Text('Litsenziya raqami (ixtiyoriy)', style: AppTypography.label),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: _licenseController,
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'VET-12345',
+                      prefixIcon: Icon(Icons.badge_rounded, color: AppColors.textMuted),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
 
                 const Text('Ko\'rik sanasi', style: AppTypography.label),
                 const SizedBox(height: AppSpacing.sm),

@@ -592,7 +592,7 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
             const SnackBar(content: Text('Qayta sotish arizasi bekor qilindi (qaytarib olindi)')),
           );
         }
-        provider.fetchUserInvestments();
+        provider.fetchMyInvestments();
       }
     } catch (e) {
       if (context.mounted) {

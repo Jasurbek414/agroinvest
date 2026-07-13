@@ -38,4 +38,13 @@ class VetRepository {
       throw parseDioException(e);
     }
   }
+
+  Future<List<dynamic>> fetchActiveVeterinarians() async {
+    try {
+      final response = await _dio.get('/vet-inspections/veterinarians');
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw parseDioException(e);
+    }
+  }
 }
