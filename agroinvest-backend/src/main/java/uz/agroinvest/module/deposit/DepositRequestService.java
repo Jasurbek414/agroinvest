@@ -1,5 +1,10 @@
 package uz.agroinvest.module.deposit;
 
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
+import uz.agroinvest.common.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -43,6 +48,10 @@ public class DepositRequestService {
     private final TransactionRepository transactionRepository;
     private final AuditLogService auditLogService;
 
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
+
     public DepositRequestService(
             DepositRequestRepository depositRequestRepository,
             WalletRepository walletRepository,
@@ -68,6 +77,22 @@ public class DepositRequestService {
                 .proofUrl(request.getProofUrl())
                 .status(DepositStatus.PENDING)
                 .build());
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "DEPOSIT_REQUEST",
+                        "Yangi to'lov so'rovi",
+                        user.getFullName() + " tomonidan " + request.getAmount() + " UZS lik to'lov kvitansiyasi yuborildi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
 
         return mapToDto(saved);
     }

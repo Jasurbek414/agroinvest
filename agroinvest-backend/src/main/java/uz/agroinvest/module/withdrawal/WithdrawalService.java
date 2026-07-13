@@ -1,5 +1,10 @@
 package uz.agroinvest.module.withdrawal;
 
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
+import uz.agroinvest.common.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -38,6 +43,10 @@ public class WithdrawalService {
     private final EncryptionUtil encryptionUtil;
     private final AuditLogService auditLogService;
     private final OtpService otpService;
+
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
 
     public WithdrawalService(
             WithdrawalRepository withdrawalRepository,
@@ -98,6 +107,23 @@ public class WithdrawalService {
                 .build();
 
         WithdrawalRequest saved = withdrawalRepository.save(withdrawalRequest);
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User adminUser : admins) {
+                notificationService.createNotification(
+                        adminUser,
+                        "WITHDRAWAL_REQUEST",
+                        "Yangi pul yechish so'rovnomasi",
+                        user.getFullName() + " tomonidan " + request.getAmount() + " UZS pul yechish arizasi berildi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+
         return mapToDto(saved);
     }
 

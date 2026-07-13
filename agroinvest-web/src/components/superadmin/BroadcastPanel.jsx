@@ -23,6 +23,20 @@ const CHANNEL_OPTIONS = [
   { value: 'TELEGRAM', label: 'Telegram' },
 ];
 
+const KYC_OPTIONS = [
+  { value: '', label: 'Barcha KYC holatlar' },
+  { value: 'VERIFIED', label: 'Faqat tasdiqlangan (VERIFIED)' },
+  { value: 'PENDING', label: 'Faqat kutilayotgan (PENDING)' },
+  { value: 'REJECTED', label: 'Faqat rad etilgan (REJECTED)' },
+  { value: 'NOT_STARTED', label: 'Faqat boshlamagan (NOT_STARTED)' },
+];
+
+const BLOCKED_OPTIONS = [
+  { value: '', label: 'Barcha holatlar (faol + bloklangan)' },
+  { value: 'false', label: 'Faqat faollar (bloklanmagan)' },
+  { value: 'true', label: 'Faqat bloklanganlar' },
+];
+
 const selectClasses = 'w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500';
 
 // SuperAdmin announcement blast: one message to every (non-blocked) user of the
@@ -32,6 +46,9 @@ const BroadcastPanel = () => {
   const [message, setMessage] = useState('');
   const [role, setRole] = useState('');
   const [channel, setChannel] = useState('IN_APP');
+  const [kycStatus, setKycStatus] = useState('');
+  const [blocked, setBlocked] = useState('false');
+  const [userIdsText, setUserIdsText] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [sending, setSending] = useState(false);
   const { showToast } = useToast();
@@ -42,7 +59,16 @@ const BroadcastPanel = () => {
     setConfirming(false);
     setSending(true);
     try {
-      const res = await broadcastNotification({ title: title.trim(), message: message.trim(), role: role || undefined, channel });
+      const payload = {
+        title: title.trim(),
+        message: message.trim(),
+        role: role || undefined,
+        channel,
+        kycStatus: kycStatus || undefined,
+        blocked: blocked === '' ? undefined : blocked === 'true',
+        userIds: userIdsText ? userIdsText.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+      };
+      const res = await broadcastNotification(payload);
       showToast(`Xabarnoma ${res.data?.recipients ?? 0} ta foydalanuvchiga yuborildi`);
       setTitle('');
       setMessage('');
@@ -72,7 +98,7 @@ const BroadcastPanel = () => {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Auditoriya</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Auditoriya (Roli bo'yicha)</label>
               <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClasses}>
                 {AUDIENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -83,6 +109,35 @@ const BroadcastPanel = () => {
                 {CHANNEL_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">KYC statusi bo'yicha</label>
+              <select value={kycStatus} onChange={(e) => setKycStatus(e.target.value)} className={selectClasses}>
+                {KYC_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Bloklanganlik holati bo'yicha</label>
+              <select value={blocked} onChange={(e) => setBlocked(e.target.value)} className={selectClasses}>
+                {BLOCKED_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">
+              Aniq foydalanuvchilar IDlari (ixtiyoriy, vergul bilan ajratilgan)
+            </label>
+            <input
+              type="text"
+              value={userIdsText}
+              onChange={(e) => setUserIdsText(e.target.value)}
+              placeholder="Masalan: 3fa85f64-5717-4562-b3fc-2c963f66afa6, 928a6f23-..."
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+            />
+            <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-500">Agar IDlar kiritilsa, yuqoridagi boshqa barcha filtrlarga e'tibor berilmaydi va faqat shu foydalanuvchilarga jo'natiladi.</p>
           </div>
 
           <Input

@@ -1,6 +1,10 @@
 package uz.agroinvest.module.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,6 +32,10 @@ public class UserService {
     private final EncryptionUtil encryptionUtil;
     private final ObjectMapper objectMapper;
     private final AuditLogService auditLogService;
+
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
 
     public UserService(UserRepository userRepository, EncryptionUtil encryptionUtil, ObjectMapper objectMapper, AuditLogService auditLogService) {
         this.userRepository = userRepository;
@@ -93,6 +101,23 @@ public class UserService {
         }
 
         User saved = userRepository.save(user);
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "KYC_REQUEST",
+                        "Yangi KYC vetting arizasi",
+                        saved.getFullName() + " shaxsini tasdiqlash uchun ariza topshirdi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+
         return mapToDto(saved);
     }
 

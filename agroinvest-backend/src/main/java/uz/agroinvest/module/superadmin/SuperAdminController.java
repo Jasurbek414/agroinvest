@@ -16,6 +16,8 @@ import uz.agroinvest.common.enums.TransactionStatus;
 import uz.agroinvest.common.enums.InvestmentStatus;
 import uz.agroinvest.common.enums.TransactionType;
 import uz.agroinvest.common.enums.UserRole;
+import uz.agroinvest.common.enums.KycStatus;
+import java.util.UUID;
 import uz.agroinvest.common.response.ApiResponse;
 import uz.agroinvest.common.response.PageResponse;
 import uz.agroinvest.module.superadmin.dto.AuditLogDto;
@@ -107,10 +109,13 @@ public class SuperAdminController {
             @RequestParam String title,
             @RequestParam String message,
             @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) List<UUID> userIds,
+            @RequestParam(required = false) KycStatus kycStatus,
+            @RequestParam(required = false) Boolean blocked,
             @RequestParam(required = false) NotificationChannel channel,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        long sent = superAdminService.broadcastNotification(title, message, role, channel, principal);
+        long sent = superAdminService.broadcastNotification(title, message, role, userIds, kycStatus, blocked, channel, principal);
         return ResponseEntity.ok(ApiResponse.success(Map.of("recipients", sent)));
     }
 

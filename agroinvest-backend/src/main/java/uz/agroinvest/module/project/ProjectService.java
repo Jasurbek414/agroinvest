@@ -1,5 +1,9 @@
 package uz.agroinvest.module.project;
 
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -54,6 +58,10 @@ public class ProjectService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final AuditLogService auditLogService;
+
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -138,6 +146,25 @@ public class ProjectService {
                 .build();
 
         Project savedProject = projectRepository.save(project);
+
+        if (savedProject.getStatus() == ProjectStatus.PENDING) {
+            // Notify admins
+            try {
+                List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+                for (User admin : admins) {
+                    notificationService.createNotification(
+                            admin,
+                            "PROJECT_REQUEST",
+                            "Yangi loyiha arizasi",
+                            farmer.getFullName() + " tomonidan '" + savedProject.getTitle() + "' nomli yangi loyiha tasdiqlash uchun topshirildi.",
+                            uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                    );
+                }
+            } catch (Exception ex) {
+                // ignore
+            }
+        }
+
         return mapToDto(savedProject);
     }
 

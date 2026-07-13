@@ -332,19 +332,37 @@ public class SuperAdminService {
      * to thousands of users would hold this request open for the whole send.
      */
     @Transactional
-    public long broadcastNotification(String title, String message, UserRole role, NotificationChannel channel, UserPrincipal principal) {
+    public long broadcastNotification(
+            String title,
+            String message,
+            UserRole role,
+            List<UUID> userIds,
+            KycStatus kycStatus,
+            Boolean blocked,
+            NotificationChannel channel,
+            UserPrincipal principal
+    ) {
         if (title == null || title.isBlank() || message == null || message.isBlank()) {
             throw new ApiException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, "Sarlavha va xabar matni bo'sh bo'lishi mumkin emas");
         }
         NotificationChannel effectiveChannel = channel != null ? channel : NotificationChannel.IN_APP;
 
-        List<User> recipients = role != null
-                ? userRepository.findByRoleIn(List.of(role))
-                : userRepository.findAll();
+        List<User> recipients;
+        if (userIds != null && !userIds.isEmpty()) {
+            recipients = userRepository.findAllById(userIds);
+        } else if (role != null) {
+            recipients = userRepository.findByRoleIn(List.of(role));
+        } else {
+            recipients = userRepository.findAll();
+        }
 
         long sent = 0;
         for (User recipient : recipients) {
-            if (recipient.isBlocked()) continue;
+            if (blocked != null && recipient.isBlocked() != blocked) continue;
+            if (kycStatus != null && recipient.getKycStatus() != kycStatus) continue;
+            // Default: if target is all users, skip blocked users unless explicitly asked
+            if (blocked == null && recipient.isBlocked()) continue;
+
             notificationService.createNotification(recipient, "ANNOUNCEMENT", title, message, effectiveChannel);
             sent++;
         }

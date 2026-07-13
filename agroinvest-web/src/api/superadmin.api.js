@@ -30,9 +30,12 @@ export const changeStaffRole = (id, role) => {
 
 export const getPlatformOverview = () => api.get('/superadmin/overview');
 
-export const broadcastNotification = ({ title, message, role, channel }) => {
+export const broadcastNotification = ({ title, message, role, userIds, kycStatus, blocked, channel }) => {
   const params = { title, message };
   if (role) params.role = role;
+  if (userIds && userIds.length > 0) params.userIds = userIds.join(',');
+  if (kycStatus) params.kycStatus = kycStatus;
+  if (blocked !== undefined && blocked !== null) params.blocked = blocked;
   if (channel) params.channel = channel;
   return api.post('/superadmin/broadcast', {}, { params });
 };

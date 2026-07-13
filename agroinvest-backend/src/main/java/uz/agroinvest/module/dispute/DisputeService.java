@@ -1,5 +1,9 @@
 package uz.agroinvest.module.dispute;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import uz.agroinvest.module.notification.NotificationService;
+import uz.agroinvest.common.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,6 +36,10 @@ public class DisputeService {
     private final UserRepository userRepository;
     private final InvestmentRepository investmentRepository;
     private final AuditLogService auditLogService;
+
+    @Autowired
+    @Lazy
+    private NotificationService notificationService;
 
     public DisputeService(
             DisputeRepository disputeRepository,
@@ -82,6 +90,23 @@ public class DisputeService {
                 .build();
 
         Dispute savedDispute = disputeRepository.save(dispute);
+
+        // Notify admins
+        try {
+            List<User> admins = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.SUPERADMIN));
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "DISPUTE_SUBMISSION",
+                        "Yangi shikoyat topshirildi",
+                        filer.getFullName() + " tomonidan " + (against != null ? against.getFullName() : "noma'lum shaxs") + " ustidan shikoyat ochildi.",
+                        uz.agroinvest.common.enums.NotificationChannel.IN_APP
+                );
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+
         return mapToDto(savedDispute);
     }
 
