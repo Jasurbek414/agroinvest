@@ -18,4 +18,8 @@ public class SaveNewsRequest {
     private String imageUrl;
 
     private boolean isActive = true;
+
+    private java.time.LocalDateTime startDate;
+
+    private java.time.LocalDateTime endDate;
 }

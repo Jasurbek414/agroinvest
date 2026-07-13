@@ -29,7 +29,7 @@ public class NewsService {
 
     @Transactional(readOnly = true)
     public Page<NewsDto> getActiveNews(Pageable pageable) {
-        return newsRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable).map(this::mapToDto);
+        return newsRepository.findActiveNews(java.time.LocalDateTime.now(), pageable).map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
@@ -47,6 +47,8 @@ public class NewsService {
                 .body(request.getBody())
                 .imageUrl(request.getImageUrl())
                 .isActive(request.isActive())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
                 .createdBy(createdBy)
                 .build());
         return mapToDto(saved);
@@ -61,6 +63,8 @@ public class NewsService {
         news.setBody(request.getBody());
         news.setImageUrl(request.getImageUrl());
         news.setActive(request.isActive());
+        news.setStartDate(request.getStartDate());
+        news.setEndDate(request.getEndDate());
 
         return mapToDto(newsRepository.save(news));
     }
@@ -80,6 +84,8 @@ public class NewsService {
                 .body(news.getBody())
                 .imageUrl(news.getImageUrl())
                 .isActive(news.isActive())
+                .startDate(news.getStartDate())
+                .endDate(news.getEndDate())
                 .createdAt(news.getCreatedAt())
                 .build();
     }

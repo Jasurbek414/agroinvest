@@ -35,6 +35,12 @@ public class News {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    @Column(name = "start_date")
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date")
+    private LocalDateTime endDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;

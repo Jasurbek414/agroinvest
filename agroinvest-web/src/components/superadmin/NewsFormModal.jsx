@@ -4,11 +4,22 @@ import ImageUploadPicker from '../ui/ImageUploadPicker';
 import { useToast } from '../ui/ToastProvider';
 
 const NewsFormModal = ({ news, onClose, onSaved }) => {
+  const anonymityHelper = (dtStr) => {
+    if (!dtStr) return '';
+    try {
+      return new Date(dtStr).toISOString().slice(0, 16);
+    } catch (_) {
+      return '';
+    }
+  };
+
   const isEdit = !!news;
   const [title, setTitle] = useState(news?.title || '');
   const [body, setBody] = useState(news?.body || '');
   const [imageUrls, setImageUrls] = useState(news?.imageUrl ? [news.imageUrl] : []);
   const [isActive, setIsActive] = useState(news ? news.isActive : true);
+  const [startDate, setStartDate] = useState(anonymityHelper(news?.startDate));
+  const [endDate, setEndDate] = useState(anonymityHelper(news?.endDate));
   const [saving, setSaving] = useState(false);
   const { showToast } = useToast();
 
@@ -24,6 +35,8 @@ const NewsFormModal = ({ news, onClose, onSaved }) => {
       body: body.trim(),
       imageUrl: imageUrls[0] || null,
       isActive,
+      startDate: startDate ? new Date(startDate).toISOString() : null,
+      endDate: endDate ? new Date(endDate).toISOString() : null,
     };
 
     setSaving(true);
@@ -77,6 +90,27 @@ const NewsFormModal = ({ news, onClose, onSaved }) => {
           <div>
             <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Rasm (ixtiyoriy)</label>
             <ImageUploadPicker category="banner" urls={imageUrls} onChange={setImageUrls} maxImages={1} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Nashr qilish vaqti</label>
+              <input
+                type="datetime-local"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-xs outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Tugash vaqti</label>
+              <input
+                type="datetime-local"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl text-xs outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">

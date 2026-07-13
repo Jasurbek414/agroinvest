@@ -68,6 +68,11 @@ const NewsPanel = () => {
                   {n.isActive ? <Badge tone="green">Faol</Badge> : <Badge tone="gray">Nofaol</Badge>}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-slate-400 line-clamp-2">{n.body}</p>
+                {(n.startDate || n.endDate) && (
+                  <p className="text-[11px] text-gray-400">
+                    Muddati: {n.startDate ? formatDate(n.startDate) : '...'} – {n.endDate ? formatDate(n.endDate) : '...'}
+                  </p>
+                )}
                 <div className="flex items-center justify-between pt-1">
                   <p className="text-[11px] text-gray-400">{formatDate(n.createdAt)}</p>
                   <div className="flex gap-2">

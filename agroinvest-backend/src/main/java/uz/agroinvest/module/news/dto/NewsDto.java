@@ -16,5 +16,7 @@ public class NewsDto {
     private String body;
     private String imageUrl;
     private boolean isActive;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private LocalDateTime createdAt;
 }
