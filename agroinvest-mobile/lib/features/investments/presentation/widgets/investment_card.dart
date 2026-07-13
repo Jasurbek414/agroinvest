@@ -237,7 +237,7 @@ class InvestmentCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (status == 'RESERVED' || status == 'CONFIRMED') ...[
+                    if (status == 'RESERVED' || status == 'CONFIRMED' || status == 'ACTIVE') ...[
                       const SizedBox(width: 10),
                       if (investment['hasPendingCoopOffer'] == true) ...[
                         Expanded(

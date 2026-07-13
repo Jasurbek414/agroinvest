@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Settings, Users, Wallet, Landmark, ShieldCheck, FolderKanban,
   ClipboardList, Receipt, HeartPulse, Scale, KeyRound, FolderTree, Megaphone,
-  LayoutDashboard, ArrowLeftRight, Send, Newspaper, FileText, MapPin
+  LayoutDashboard, ArrowLeftRight, Send, Newspaper, FileText, MapPin, Store
 } from 'lucide-react';
 import { getPlatformSettings } from '../../api/superadmin.api';
 import ErrorState from '../../components/ui/ErrorState';
@@ -46,10 +46,11 @@ const TABS = [
   { key: 'reports', label: 'Kutilayotgan hisobotlar', icon: ClipboardList },
   { key: 'expenses', label: 'Harajatlar', icon: Receipt },
   { key: 'vetInspections', label: 'Veterinar nazorati', icon: HeartPulse },
-  {key: 'disputes', label: 'Shikoyatlar', icon: Scale},
-  {key: 'transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight},
-  {key: 'contracts', label: 'Shartnomalar', icon: FileText},
-  {key: 'broadcast', label: 'Xabarnoma yuborish', icon: Send},
+  { key: 'coop', label: 'Investitsiya bozori', icon: Store },
+  { key: 'disputes', label: 'Shikoyatlar', icon: Scale },
+  { key: 'transactions', label: 'Tranzaksiyalar', icon: ArrowLeftRight },
+  { key: 'contracts', label: 'Shartnomalar', icon: FileText },
+  { key: 'broadcast', label: 'Xabarnoma yuborish', icon: Send },
   { key: 'categories', label: 'Kategoriyalar', icon: FolderTree },
   { key: 'regions', label: 'Hududlar boshqaruvi', icon: MapPin },
   { key: 'banners', label: 'Reklamalar', icon: Megaphone },
