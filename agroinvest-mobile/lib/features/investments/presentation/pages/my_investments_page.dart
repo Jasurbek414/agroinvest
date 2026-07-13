@@ -533,30 +533,19 @@ class _MyInvestmentsPageState extends State<MyInvestmentsPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sarmoyani bekor qilish'),
-          content: const Text('Haqiqatan ham ushbu sarmoyani bekor qilmoqchimisiz? (Mablag\' hamyoningizga qaytariladi)'),
+          title: const Text('Sarmoyani qayta sotish'),
+          content: const Text('Loyihaga sarmoya kiritilgandan so\'ng uni bekor qilib pulni to\'g\'ridan-to\'g\'ri qaytarib bo\'lmaydi. Sarmoyangizni qaytarish uchun uni Investitsiya bozorida (P2P bozorda) boshqa investorlarga sotishingiz mumkin.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Orqaga'),
+              child: const Text('Tushunarli'),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: () {
                 Navigator.pop(context);
-                final success = await provider.cancelUserInvestment(investmentId);
-                if (mounted) {
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sarmoya bekor qilindi va pulingiz qaytarildi'), backgroundColor: AppColors.primary),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(provider.error ?? 'Xatolik yuz berdi'), backgroundColor: AppColors.danger),
-                    );
-                  }
-                }
+                context.push('/coop-market'); // Redirect to P2P Marketplace
               },
-              child: const Text('Bekor qilish', style: TextStyle(color: AppColors.danger)),
+              child: const Text('Bozorga o\'tish', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
             ),
           ],
         );

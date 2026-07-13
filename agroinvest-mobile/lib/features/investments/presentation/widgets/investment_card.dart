@@ -222,12 +222,12 @@ class InvestmentCard extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: onCancel,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.danger,
-                            side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.2),
+                            foregroundColor: Colors.orange[800],
+                            side: BorderSide(color: Colors.orange[300]!, width: 1.2),
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text('Bekor qilish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                          child: const Text('Qayta sotish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                         ),
                       ),
                     ],
