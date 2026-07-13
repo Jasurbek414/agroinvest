@@ -151,10 +151,10 @@ public class SuperAdminService {
      * KYC tab's generic getUsers(), which mixed in every investor/farmer too.
      */
     @Transactional(readOnly = true)
-    public Page<UserDto> getAccounts(UserRole role, Boolean blocked, String q, Pageable pageable) {
-        List<UserRole> roles = role != null ? List.of(role) : List.of(UserRole.values());
+    public Page<UserDto> getAccounts(List<UserRole> roles, Boolean blocked, String q, Pageable pageable) {
+        List<UserRole> finalRoles = (roles != null && !roles.isEmpty()) ? roles : List.of(UserRole.values());
         String normalizedQ = (q == null || q.isBlank()) ? null : q.trim();
-        return userRepository.searchByRoles(roles, blocked, normalizedQ, pageable).map(userService::mapToDto);
+        return userRepository.searchByRoles(finalRoles, blocked, normalizedQ, pageable).map(userService::mapToDto);
     }
 
     @Transactional

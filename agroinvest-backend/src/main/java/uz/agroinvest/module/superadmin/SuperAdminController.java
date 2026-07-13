@@ -1,5 +1,6 @@
 package uz.agroinvest.module.superadmin;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -56,12 +57,12 @@ public class SuperAdminController {
 
     @GetMapping("/accounts")
     public ResponseEntity<ApiResponse<PageResponse<UserDto>>> getAccounts(
-            @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) List<UserRole> roles,
             @RequestParam(required = false) Boolean blocked,
             @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        Page<UserDto> page = superAdminService.getAccounts(role, blocked, q, pageable);
+        Page<UserDto> page = superAdminService.getAccounts(roles, blocked, q, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 

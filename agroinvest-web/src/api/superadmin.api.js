@@ -5,9 +5,9 @@ export const createAdminAccount = (phone, name, password, role) => {
   return api.post('/superadmin/accounts', {}, { params });
 };
 
-export const getAccounts = (page = 0, size = 20, { role, blocked, q, sort = 'createdAt,desc' } = {}) => {
+export const getAccounts = (page = 0, size = 20, { roles, blocked, q, sort = 'createdAt,desc' } = {}) => {
   const params = { page, size };
-  if (role) params.role = role;
+  if (roles) params.roles = Array.isArray(roles) ? roles.join(',') : roles;
   if (blocked !== undefined) params.blocked = blocked;
   if (q) params.q = q;
   if (sort) params.sort = sort;

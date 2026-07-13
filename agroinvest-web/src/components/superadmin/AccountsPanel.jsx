@@ -38,6 +38,7 @@ const AccountsPanel = () => {
   const [topUpTarget, setTopUpTarget] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [role, setRole] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState('investors'); // 'investors', 'farmers', 'staff'
   const [blockedFilter, setBlockedFilter] = useState(''); // '', 'false', 'true'
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 350);
@@ -49,9 +50,19 @@ const AccountsPanel = () => {
     let blockedParam = undefined;
     if (blockedFilter === 'true') blockedParam = true;
     if (blockedFilter === 'false') blockedParam = false;
+
+    let rolesParam = undefined;
+    if (activeSubTab === 'investors') {
+      rolesParam = ['INVESTOR'];
+    } else if (activeSubTab === 'farmers') {
+      rolesParam = ['FARMER'];
+    } else if (activeSubTab === 'staff') {
+      rolesParam = role ? [role] : ['SUPERADMIN', 'ADMIN', 'MODERATOR', 'VERIFIER'];
+    }
+
     try {
       const res = await getAccounts(page, 20, { 
-        role: role || undefined, 
+        roles: rolesParam, 
         blocked: blockedParam, 
         q: debouncedSearch || undefined 
       });
@@ -64,7 +75,14 @@ const AccountsPanel = () => {
     }
   };
 
-  useEffect(() => { fetchUsers(0); }, [role, blockedFilter, debouncedSearch]);
+  useEffect(() => {
+    setRole('');
+    fetchUsers(0);
+  }, [activeSubTab]);
+
+  useEffect(() => {
+    fetchUsers(0);
+  }, [role, blockedFilter, debouncedSearch]);
 
   const handleUnblock = async (id) => {
     try {
@@ -132,8 +150,29 @@ const AccountsPanel = () => {
 
   return (
     <Card padded={false} className="overflow-hidden">
-      <div className="p-6 border-b border-gray-100 dark:border-slate-700">
+      <div className="p-6 border-b border-gray-100 dark:border-slate-700 bg-gray-50/20 dark:bg-slate-900/10">
         <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Foydalanuvchi hisoblari</h2>
+      </div>
+
+      {/* Sub tabs */}
+      <div className="flex border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/30 px-6">
+        {[
+          { key: 'investors', label: 'Sarmoyadorlar' },
+          { key: 'farmers', label: 'Fermerlar' },
+          { key: 'staff', label: 'Tizim xodimlari' },
+        ].map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setActiveSubTab(t.key)}
+            className={`py-4 px-4 font-bold text-xs border-b-2 transition-all ${
+              activeSubTab === t.key
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <DataTable
@@ -148,13 +187,19 @@ const AccountsPanel = () => {
         searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
         filters={
           <div className="flex gap-2">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
-            >
-              {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            {activeSubTab === 'staff' && (
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
+              >
+                <option value="">Barcha xodimlar</option>
+                <option value="ADMIN">Admin</option>
+                <option value="MODERATOR">Moderator</option>
+                <option value="VERIFIER">Verifikator</option>
+                <option value="SUPERADMIN">SuperAdmin</option>
+              </select>
+            )}
             <select
               value={blockedFilter}
               onChange={(e) => setBlockedFilter(e.target.value)}
@@ -395,7 +440,10 @@ const AccountsPanel = () => {
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/30 flex justify-end gap-3">
               {(selectedUser.role === 'FARMER' || selectedUser.role === 'INVESTOR') && (
-                <Button variant="primary" onClick={() => setTopUpTarget(selectedUser)}>Balansni to'ldirish</Button>
+                <Button variant="primary" onClick={() => {
+                  setTopUpTarget(selectedUser);
+                  setSelectedUser(null);
+                }}>Balansni to'ldirish</Button>
               )}
               <Button variant="secondary" onClick={() => setSelectedUser(null)}>Yopish</Button>
             </div>
