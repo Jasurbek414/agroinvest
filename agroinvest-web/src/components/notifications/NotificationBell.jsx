@@ -52,10 +52,11 @@ const NotificationBell = () => {
   };
 
   const handleItemClick = async (notification) => {
-    if (!notification.isRead) {
+    const isNotificationRead = notification.isRead !== undefined ? notification.isRead : notification.read;
+    if (!isNotificationRead) {
       try {
         await markAsRead(notification.id);
-        setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)));
+        setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, isRead: true, read: true } : n)));
         setUnreadCount((c) => Math.max(0, c - 1));
       } catch {
         // non-critical - leave it unread visually if the request failed
@@ -66,7 +67,7 @@ const NotificationBell = () => {
   const handleMarkAll = async () => {
     try {
       await markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, read: true })));
       setUnreadCount(0);
     } catch {
       // non-critical
@@ -109,11 +110,11 @@ const NotificationBell = () => {
                   key={n.id}
                   onClick={() => handleItemClick(n)}
                   className={`w-full text-left px-4 py-3 border-b border-gray-50 dark:border-slate-700/60 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-700/60 transition ${
-                    !n.isRead ? 'bg-primary-50/40 dark:bg-primary-950/40' : ''
+                    !(n.isRead !== undefined ? n.isRead : n.read) ? 'bg-primary-50/40 dark:bg-primary-950/40' : ''
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    {!n.isRead && <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400 shrink-0" />}
+                    {!(n.isRead !== undefined ? n.isRead : n.read) && <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400 shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 dark:text-slate-100 truncate">{n.title}</p>
                       <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
