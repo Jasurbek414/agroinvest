@@ -57,10 +57,11 @@ public class SuperAdminController {
     @GetMapping("/accounts")
     public ResponseEntity<ApiResponse<PageResponse<UserDto>>> getAccounts(
             @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) Boolean blocked,
             @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        Page<UserDto> page = superAdminService.getAccounts(role, q, pageable);
+        Page<UserDto> page = superAdminService.getAccounts(role, blocked, q, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 

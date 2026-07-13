@@ -38,6 +38,7 @@ const AccountsPanel = () => {
   const [topUpTarget, setTopUpTarget] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [role, setRole] = useState('');
+  const [blockedFilter, setBlockedFilter] = useState(''); // '', 'false', 'true'
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 350);
   const { showToast } = useToast();
@@ -45,8 +46,15 @@ const AccountsPanel = () => {
   const fetchUsers = async (page = 0) => {
     setLoading(true);
     setError(null);
+    let blockedParam = undefined;
+    if (blockedFilter === 'true') blockedParam = true;
+    if (blockedFilter === 'false') blockedParam = false;
     try {
-      const res = await getAccounts(page, 20, { role: role || undefined, q: debouncedSearch || undefined });
+      const res = await getAccounts(page, 20, { 
+        role: role || undefined, 
+        blocked: blockedParam, 
+        q: debouncedSearch || undefined 
+      });
       setUsers(res.data.content || []);
       setPageInfo({ pageNumber: res.data.pageNumber, totalPages: res.data.totalPages });
     } catch (err) {
@@ -56,7 +64,7 @@ const AccountsPanel = () => {
     }
   };
 
-  useEffect(() => { fetchUsers(0); }, [role, debouncedSearch]);
+  useEffect(() => { fetchUsers(0); }, [role, blockedFilter, debouncedSearch]);
 
   const handleUnblock = async (id) => {
     try {
@@ -139,13 +147,24 @@ const AccountsPanel = () => {
         onSearchChange={setSearch}
         searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
         filters={
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
-          >
-            {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <select
+              value={blockedFilter}
+              onChange={(e) => setBlockedFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">Barcha holatlar</option>
+              <option value="false">Faol</option>
+              <option value="true">Bloklangan</option>
+            </select>
+          </div>
         }
         page={{ ...pageInfo, onPageChange: fetchUsers }}
         columns={[
@@ -153,6 +172,21 @@ const AccountsPanel = () => {
           { key: 'phoneNumber', header: 'Telefon', render: (u) => <span className="text-xs font-mono text-gray-400">{u.phoneNumber}</span> },
           { key: 'role', header: 'Rol', render: (u) => <span className="text-xs font-bold text-gray-500 dark:text-slate-400">{u.role}</span> },
           { key: 'status', header: 'Holat', render: (u) => <Badge tone={u.isBlocked ? 'red' : 'green'}>{u.isBlocked ? 'Bloklangan' : 'Faol'}</Badge> },
+          {
+            key: 'createdAt',
+            header: "Ro'yxatdan o'tgan sana",
+            render: (u) => (
+              <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">
+                {u.createdAt ? new Date(u.createdAt).toLocaleDateString('uz-UZ', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'Noma\'lum'}
+              </span>
+            )
+          },
           {
             key: 'actions',
             header: 'Amallar',

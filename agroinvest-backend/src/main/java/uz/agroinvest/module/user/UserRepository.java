@@ -42,10 +42,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             + "(cast(:q as string) is null or lower(u.fullName) like lower(concat('%', cast(:q as string), '%')) or u.phoneNumber like concat('%', cast(:q as string), '%'))")
     Page<User> search(@Param("role") UserRole role, @Param("q") String q, Pageable pageable);
 
-    // Backs SuperAdminService#getAccounts - restricts the listing to staff roles
-    // (admin/moderator/verifier/superadmin) so it's a genuinely separate view from
-    // the investor/farmer end-user list, rather than reusing the same generic query.
     @Query("select u from User u where u.role in :roles and "
+            + "(:blocked is null or u.isBlocked = :blocked) and "
             + "(cast(:q as string) is null or lower(u.fullName) like lower(concat('%', cast(:q as string), '%')) or u.phoneNumber like concat('%', cast(:q as string), '%'))")
-    Page<User> searchByRoles(@Param("roles") List<UserRole> roles, @Param("q") String q, Pageable pageable);
+    Page<User> searchByRoles(
+            @Param("roles") List<UserRole> roles, 
+            @Param("blocked") Boolean blocked, 
+            @Param("q") String q, 
+            Pageable pageable
+    );
 }
