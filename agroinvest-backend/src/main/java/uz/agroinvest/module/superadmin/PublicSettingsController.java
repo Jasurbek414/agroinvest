@@ -83,4 +83,13 @@ public class PublicSettingsController {
         stats.put("totalInvestedAmount", investmentRepository.sumAmountByStatusIn(COMMITTED_INVESTMENT_STATUSES));
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
+
+    /** Public/Authenticated endpoint for investors to fetch company bank details and document */
+    @GetMapping("/bank-details")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getBankDetails() {
+        Map<String, String> details = new LinkedHashMap<>();
+        details.put("bankDetails", platformSettingsService.getString("company_bank_details", "AGROINVEST MChJ\r\nATB 'Hamkorbank'\r\nMFO: 00083\r\nH/r: 20208000600123456001\r\nSTIR: 301234567"));
+        details.put("bankDocUrl", platformSettingsService.getString("company_bank_doc_url", ""));
+        return ResponseEntity.ok(ApiResponse.success(details));
+    }
 }

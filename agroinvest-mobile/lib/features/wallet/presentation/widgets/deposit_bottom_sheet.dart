@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/image_upload_picker.dart';
+import '../../../../core/network/dio_client.dart';
 import '../providers/wallet_provider.dart';
 
 /// Manual top-up request form: real Payme/Click gateway integration is dormant
@@ -20,6 +23,33 @@ class _DepositBottomSheetState extends State<DepositBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   List<String> _proofUrls = [];
   bool _submitting = false;
+
+  String? _bankDetails;
+  String? _bankDocUrl;
+  bool _loadingDetails = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBankDetails();
+  }
+
+  Future<void> _fetchBankDetails() async {
+    setState(() => _loadingDetails = true);
+    try {
+      final dio = DioClient().dio;
+      final res = await dio.get('/settings/bank-details');
+      if (res.statusCode == 200) {
+        setState(() {
+          _bankDetails = res.data['data']['bankDetails']?.toString();
+          _bankDocUrl = res.data['data']['bankDocUrl']?.toString();
+        });
+      }
+    } catch (_) {}
+    finally {
+      if (mounted) setState(() => _loadingDetails = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -48,10 +78,94 @@ class _DepositBottomSheetState extends State<DepositBottomSheet> {
             ),
             const SizedBox(height: 6),
             const Text(
-              "Bank o'tkazmasi qilib, summani va (ixtiyoriy) chek rasmini yuboring - admin tasdiqlagach hamyoningizga tushadi.",
+              "Kompaniya hisob raqamiga to'lov qilib, summani va to'lov cheki (kvitansiyasi) rasmini yuboring - admin tasdiqlagach balansingiz to'ldiriladi.",
               style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            if (_loadingDetails) ...[
+              const Center(child: Padding(
+                padding: EdgeInsets.all(12.0),
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )),
+              const SizedBox(height: 16),
+            ] else if (_bankDetails != null && _bankDetails!.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Kompaniya bank hisob raqami:",
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _bankDetails!,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[900], height: 1.4, fontFamily: 'monospace', fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: _bankDetails!));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Hisob raqami rekvizitlari nusxalandi!")),
+                              );
+                            },
+                            icon: const Icon(Icons.copy_rounded, size: 12),
+                            label: const Text("Nusxalash", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        if (_bankDocUrl != null && _bankDocUrl!.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final uri = Uri.parse(_bankDocUrl!);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              icon: const Icon(Icons.file_download_rounded, size: 12),
+                              label: const Text("Hujjatni yuklash", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.primary, width: 1.2),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
             TextFormField(
               controller: _amountController,
               keyboardType: TextInputType.number,

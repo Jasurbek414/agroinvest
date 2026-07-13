@@ -20,6 +20,8 @@ const SETTING_LABELS = {
   app_version_name: 'Mobil ilova versiya nomi (versionName)',
   app_download_url: 'Mobil ilova yuklab olish manzili (APK URL)',
   app_force_update: 'Mobil ilovani majburiy yangilash (true/false)',
+  company_bank_details: 'Kompaniya bank hisob raqami rekvizitlari',
+  company_bank_doc_url: 'Kompaniya bank rekvizitlari hujjati (.pdf/.jpg) URL',
 };
 
 const isNumeric = (value) => value !== '' && !Number.isNaN(Number(value));
@@ -42,22 +44,36 @@ const SettingRow = ({ setting, onSave }) => {
     }
   };
 
+  const isTextarea = setting.settingKey === 'company_bank_details';
+  const isUrl = setting.settingKey === 'company_bank_doc_url' || setting.settingKey === 'app_download_url';
+
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-700 pb-3 text-sm">
+    <div className="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-slate-700 pb-3 text-sm">
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-800 dark:text-slate-200 text-xs truncate">
+        <p className="font-bold text-gray-800 dark:text-slate-200 text-xs">
           {SETTING_LABELS[setting.settingKey] || setting.settingKey}
         </p>
-        <input
-          type={numeric ? 'number' : 'text'}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="mt-1.5 w-40 px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-sm outline-none focus:ring-1 focus:ring-primary-500"
-        />
+        {isTextarea ? (
+          <textarea
+            value={value}
+            rows={3}
+            onChange={(e) => setValue(e.target.value)}
+            className="mt-1.5 w-full px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-xs outline-none focus:ring-1 focus:ring-primary-500 whitespace-pre-wrap"
+          />
+        ) : (
+          <input
+            type={numeric ? 'number' : 'text'}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className={`mt-1.5 ${isUrl ? 'w-full max-w-md' : 'w-40'} px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-sm outline-none focus:ring-1 focus:ring-primary-500`}
+          />
+        )}
       </div>
-      <Button variant="secondary" size="sm" disabled={!dirty || saving} onClick={handleSave}>
-        {saving ? 'Saqlanmoqda...' : 'Saqlash'}
-      </Button>
+      <div className="pt-5">
+        <Button variant="secondary" size="sm" disabled={!dirty || saving} onClick={handleSave}>
+          {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+        </Button>
+      </div>
     </div>
   );
 };
